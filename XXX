@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- IMPORTANT: viewport fix — prevents the wide table from shrinking the entire page.
+     initial-scale=1 keeps the layout at 1:1. maximum-scale=1 stops accidental double-tap zoom.
+     user-scalable=yes still allows manual pinch-zoom for accessibility. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Order Book & Mtr Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================
+     RESET + VIEWPORT LOCK
+     ========================================================= */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: #eef2f7;
+    color: #0f172a;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* =========================================================
+     TOP NAV / TABS
+     ========================================================= */
+  #tabs {
+    display: flex;
+    background: linear-gradient(180deg, #0f172a 0%, #131f38 100%);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 12px rgba(15,23,42,0.18);
+    padding: 4px 4px 0 4px;
+    gap: 2px;
+    padding-top: calc(4px + env(safe-area-inset-top));
+  }
+  #tabs .tab {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 6px 12px 6px;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: clamp(11px, 3.2vw, 13px);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    user-select: none;
+    position: relative;
+    transition: color .15s ease, background-color .15s ease;
+    min-width: 0;
+  }
+  #tabs .tab .ic {
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.9;
+  }
+  #tabs .tab .lbl {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #tabs .tab:hover { color: #e2e8f0; }
+  #tabs .tab.active {
+    color: #ffffff;
+    background: rgba(14,165,233,0.14);
+  }
+  #tabs .tab.active::after {
+    content: "";
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: #38bdf8;
+    box-shadow: 0 0 12px rgba(56,189,248,0.7);
+  }
+
+  /* =========================================================
+     PANELS
+     ========================================================= */
+  .panel { display: none; padding: 10px; max-width: 100%; }
+  .panel.active { display: block; }
+
+  /* =========================================================
+     FILTER CARD
+     ========================================================= */
+  .filters-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 10px rgba(15,23,42,0.03);
+  }
+  .filters-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .filters-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .filters-title .dot {
+    width: 6px; height: 6px; border-radius: 999px; background: #38bdf8;
+    box-shadow: 0 0 8px rgba(56,189,248,0.6);
+  }
+  .filters-toggle {
+    display: none;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .filters-toggle:active { background: #e2e8f0; }
+
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .ac-wrap {
+    position: relative;
+    min-width: 0;
+  }
+  .ac-wrap::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -7px;
+    left: 10px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: #ffffff;
+    padding: 0 5px;
+    color: #64748b;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ac-wrap input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 16px;
+    font-family: inherit;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 9px;
+    outline: none;
+    color: #0f172a;
+    transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+    min-width: 0;
+  }
+  .ac-wrap input::placeholder { color: #94a3b8; font-weight: 400; }
+  .ac-wrap input:hover { border-color: #94a3b8; }
+  .ac-wrap input:focus {
+    border-color: #0ea5e9;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+  }
+
+  /* Autocomplete dropdown */
+  .ac-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 60;
+    display: none;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .ac-list.show { display: block; }
+  .ac-list div {
+    padding: 10px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ac-list div:last-child { border-bottom: none; }
+  .ac-list div:hover, .ac-list div.hover { background: #eff6ff; color: #0369a1; }
+
+  /* =========================================================
+     TOOLBAR / BUTTONS / STATUS
+     ========================================================= */
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 16px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+    color: #ffffff;
+    background: #0ea5e9;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.08);
+    transition: transform .05s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+    min-height: 38px;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #0284c7; }
+  .btn:active { transform: translateY(1px); }
+  .btn.gray { background: #ffffff; color: #334155; border-color: #cbd5e1; }
+  .btn.gray:hover { background: #f1f5f9; border-color: #94a3b8; }
+  .btn.blue { background: #2563eb; }
+  .btn.blue:hover { background: #1d4ed8; }
+  .btn.red  { background: #dc2626; }
+  .btn.red:hover { background: #b91c1c; }
+  .btn.green { background: #16a34a; }
+  .btn.green:hover { background: #15803d; }
+  .btn.wa-btn { background: #25d366; color: #fff; }
+  .btn.wa-btn:hover { background: #1ebc59; }
+  .btn .ic { font-size: 13px; line-height: 1; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 7px 12px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 999px;
+    color: #075985;
+    margin-left: auto;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .status::before {
+    content: "";
+    width: 7px; height: 7px; border-radius: 999px;
+    background: #38bdf8;
+    box-shadow: 0 0 6px rgba(56,189,248,0.7);
+    flex: 0 0 auto;
+  }
+  .status.loading { background: #fef9c3; border-color: #fde68a; color: #854d0e; }
+  .status.loading::before { background: #eab308; box-shadow: 0 0 6px rgba(234,179,8,0.7); animation: pulse 1s ease-in-out infinite; }
+  .status.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .status.error::before { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
+  .status.ok::before { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(1.25); }
+  }
+
+  /* =========================================================
+     DATA TABLE
+     ========================================================= */
+  .table-wrap {
+    overflow: auto;
+    max-height: 72vh;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 14px rgba(15,23,42,0.05);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    max-width: 100%;
+  }
+  .table-wrap table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+  }
+  .table-wrap th,
+  .table-wrap td {
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 3px 8px;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1.3;
+    vertical-align: middle;
+    color: #0f172a;
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .table-wrap td.wrap {
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 340px;
+    max-height: 2.7em;
+    vertical-align: middle;
+  }
+  .table-wrap th {
+    background: #0f172a;
+    color: #f1f5f9;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    border-right: 1px solid #1e293b;
+    border-bottom: 2px solid #38bdf8;
+    padding: 6px 10px;
+    white-space: nowrap;
+    vertical-align: middle;
+    max-width: none;
+    max-height: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+  }
+  .table-wrap tbody tr:nth-child(even) td { background: #fafbfd; }
+  .table-wrap tbody tr:hover td { background: #eff6ff; cursor: pointer; }
+  .table-wrap tbody tr td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: #ffffff;
+    border-right: 2px solid #cbd5e1;
+    font-weight: 600;
+  }
+  .table-wrap tbody tr:nth-child(even) td:first-child { background: #f1f5f9; }
+  .table-wrap tbody tr:hover td:first-child { background: #dbeafe; }
+  .table-wrap thead tr th:first-child {
+    z-index: 6;
+    left: 0;
+    background: #0f172a;
+    border-right: 2px solid #38bdf8;
+  }
+  .table-wrap tbody tr td.sticky-party {
+    position: sticky;
+    left: var(--col1-w, 60px);
+    z-index: 3;
+    background: #ffffff;
+    border-right: 2px solid #cbd5e1;
+    font-weight: 600;
+  }
+  .table-wrap tbody tr:nth-child(even) td.sticky-party { background: #f1f5f9; }
+  .table-wrap tbody tr:hover td.sticky-party { background: #dbeafe; }
+  .table-wrap thead tr th.sticky-party {
+    z-index: 5;
+    left: var(--col1-w, 60px);
+    background: #0f172a;
+    border-right: 2px solid #38bdf8;
+  }
+
+  /* Filter Chips */
+  .chips { display: none; flex-wrap: wrap; gap: 6px; padding: 6px 2px 8px 2px; align-items: center; }
+  .chips.show { display: flex; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600;
+    background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 4px 4px 4px 10px;
+    border-radius: 999px; box-shadow: 0 1px 2px rgba(15,23,42,0.05); max-width: 240px; overflow: hidden;
+    white-space: nowrap; text-overflow: ellipsis;
+  }
+  .chip .k { color: #0369a1; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; font-size: 10px; }
+  .chip button {
+    display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+    border-radius: 999px; background: #f1f5f9; border: none; color: #475569; font-size: 15px; cursor: pointer;
+  }
+  .chip-clear-all {
+    font-size: 11px; font-weight: 700; background: transparent; border: 1px dashed #cbd5e1;
+    color: #64748b; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: #0f172a; color: #f1f5f9; padding: 10px 18px; border-radius: 999px; font-size: 12.5px;
+    font-weight: 600; box-shadow: 0 8px 24px rgba(15,23,42,0.35); opacity: 0; pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease; z-index: 10000; display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: #10b981; }
+  tr.blank-challan td.challan-col { background: #fee2e2 !important; color: #991b1b; font-weight: 600; }
+  .table-wrap td a { color: #1d4ed8; text-decoration: underline; font-weight: 600; cursor: pointer; }
+  .empty {
+    padding: 40px 24px; text-align: center; background: #ffffff; border: 1px dashed #cbd5e1;
+    font-size: 13px; color: #64748b; border-radius: 12px; line-height: 1.6;
+  }
+  .empty::before { content: "📊"; display: block; font-size: 28px; margin-bottom: 8px; }
+
+  /* Modals */
+  #preview {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.72); backdrop-filter: blur(6px);
+    display: none; z-index: 9999; padding: 16px; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+  }
+  #preview.show { display: flex; }
+  #preview .box {
+    background: #ffffff; border-radius: 14px; padding: 14px; width: min(720px, 96vw);
+    max-height: 80vh; display: flex; flex-direction: column; align-items: center; gap: 10px; overflow: auto;
+  }
+  #preview .actions { display: flex; gap: 8px; }
+  #preview .actions button { padding: 10px 20px; font-weight: 600; border: none; border-radius: 9px; cursor: pointer; color: #fff; }
+  #preview .actions .open { background: #2563eb; }
+  #preview .actions .close { background: #dc2626; }
+
+  #pdfChoice {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.72); backdrop-filter: blur(6px);
+    display: none; z-index: 10001; padding: 20px; align-items: center; justify-content: center;
+  }
+  #pdfChoice.show { display: flex; }
+  #pdfChoice .box {
+    background: #ffffff; border-radius: 16px; padding: 22px 20px 18px; width: min(420px, 96vw);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35); text-align: center;
+  }
+  #pdfChoice .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  #pdfChoice .actions button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px;
+    font-weight: 700; border: none; border-radius: 11px; cursor: pointer; color: #ffffff; min-height: 52px;
+  }
+  #pdfChoice .actions .dl { background: #2563eb; }
+  #pdfChoice .actions .wa { background: #25d366; }
+  #pdfChoice .cancel { background: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 9px 18px; border-radius: 10px; cursor: pointer; }
+
+  /* Settings Box */
+  .setting-box {
+    background: #ffffff; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 12px; border-radius: 12px;
+  }
+  .setting-box label {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #0f172a;
+  }
+  .setting-box input[type=text] {
+    width: 100%; padding: 11px 12px; font-size: 16px; border: 1px solid #cbd5e1; border-radius: 9px;
+    margin-bottom: 10px; background: #f8fafc; color: #0f172a; outline: none;
+  }
+  .setting-box .row { display: flex; gap: 8px; align-items: center; }
+
+  /* =========================================================
+     MTR CALCULATOR TAB STYLING (ISOLATED TO #panel-calc)
+     ========================================================= */
+  #panel-calc .calc-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  #panel-calc .calc-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.03);
+  }
+  #panel-calc .calc-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  #panel-calc textarea {
+    width: 100%;
+    height: 90px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #f8fafc;
+    color: #0f172a;
+    outline: none;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  #panel-calc textarea:focus {
+    border-color: #0ea5e9;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+  }
+  #panel-calc .calc-ctrls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  #panel-calc .multiplier-input {
+    width: 120px;
+    padding: 9px 10px;
+    font-size: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #f8fafc;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  #panel-calc .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  #panel-calc .stat-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  #panel-calc .stat-box .lbl {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  #panel-calc .stat-box .val {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 2px;
+  }
+  #panel-calc .stat-box.highlight .val {
+    color: #0284c7;
+  }
+  #calcTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+  }
+  #calcTable th, #calcTable td {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+    text-align: right;
+  }
+  #calcTable th:first-child, #calcTable td:first-child { text-align: left; font-weight: 600; }
+  #calcTable th {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  #calcTable tr:nth-child(even) td { background: #fafbfd; }
+  #calcTable tr.total-row td {
+    background: #f1f5f9;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-top: 2px solid #0f172a;
+  }
+  #calcTable input.row-mtr-input {
+    width: 75px;
+    padding: 4px 6px;
+    font-size: 13px;
+    text-align: right;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    font-weight: 600;
+  }
+
+  /* =========================================================
+     PURE EXCEL-STYLE PRINT VIEW (Calculations)
+     ========================================================= */
+  @media print {
+    body * { visibility: hidden !important; }
+    #panel-calc, #panel-calc #printArea, #panel-calc #printArea * {
+      visibility: visible !important;
+    }
+    #panel-calc {
+      display: block !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 10px !important;
+      background: #ffffff !important;
+    }
+    #panel-calc .no-print { display: none !important; }
+    #calcTable {
+      border: 1.5pt solid #000 !important;
+      border-collapse: collapse !important;
+      width: 100% !important;
+    }
+    #calcTable th, #calcTable td {
+      border: 1pt solid #000 !important;
+      color: #000 !important;
+      background: #fff !important;
+      padding: 6px 8px !important;
+      font-size: 11pt !important;
+    }
+    #calcTable th {
+      font-weight: bold !important;
+      background: #f2f2f2 !important;
+    }
+    #calcTable tr.total-row td {
+      border-top: 2pt solid #000 !important;
+      border-bottom: 2pt solid #000 !important;
+      font-weight: bold !important;
+    }
+    #calcTable input.row-mtr-input {
+      border: none !important;
+      background: transparent !important;
+      font-weight: bold !important;
+    }
+  }
+
+  /* Responsive styles */
+  @media (max-width: 480px) {
+    .filters-toggle { display: inline-flex; }
+    .filters.collapsed { display: none; }
+    #tabs .tab { padding: 8px 3px 10px 3px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV: Added MTR CALC TAB -->
+<div id="tabs" role="tablist">
+  <button class="tab active" data-tab="all" role="tab" aria-selected="true">
+    <span class="ic" aria-hidden="true">📋</span><span class="lbl">ALL ORDERS</span>
+  </button>
+  <button class="tab" data-tab="nochallan" role="tab" aria-selected="false">
+    <span class="ic" aria-hidden="true">⚠️</span><span class="lbl">NO CHALLAN</span>
+  </button>
+  <button class="tab" data-tab="calc" role="tab" aria-selected="false">
+    <span class="ic" aria-hidden="true">🧮</span><span class="lbl">MTR CALC</span>
+  </button>
+  <button class="tab" data-tab="settings" role="tab" aria-selected="false">
+    <span class="ic" aria-hidden="true">⚙️</span><span class="lbl">SETTINGS</span>
+  </button>
+</div>
+
+<!-- ===== TAB 1: ALL ORDERS ===== -->
+<div class="panel active" id="panel-all">
+  <div class="filters-box">
+    <div class="filters-head">
+      <div class="filters-title"><span class="dot"></span>Filters</div>
+      <button type="button" class="filters-toggle" data-target="filters-all">Hide</button>
+    </div>
+    <div class="filters" id="filters-all">
+      <div class="ac-wrap" data-label="Party"><input id="f-party" placeholder="Party Name" data-col="party" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Order"><input id="f-order" placeholder="Order No (comma for multi)" data-col="order" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Challan"><input id="f-challan" placeholder="Challan No (comma for multi)" data-col="challan" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="DS No"><input id="f-design" placeholder="DS No (comma for multi)" data-col="design" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Material"><input id="f-material" placeholder="Material (METRIAL)" data-col="material" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Job Work"><input id="f-job" placeholder="Job Work" data-col="job" autocomplete="off"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn gray" onclick="clearFilters('all')"><span class="ic">✕</span>CLEAR</button>
+      <button class="btn blue" onclick="downloadPDF('all')"><span class="ic">⇩</span>PDF</button>
+      <span class="status" id="status-all">No data loaded</span>
+    </div>
+  </div>
+  <div class="chips" id="chips-all" role="region" aria-label="Active filters"></div>
+  <div class="table-wrap" id="wrap-all">
+    <div class="empty">Add Data Endpoint URL in Settings to load orders.</div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: NO CHALLAN ===== -->
+<div class="panel" id="panel-nochallan">
+  <div class="filters-box">
+    <div class="filters-head">
+      <div class="filters-title"><span class="dot"></span>Filters</div>
+      <button type="button" class="filters-toggle" data-target="filters-nochallan">Hide</button>
+    </div>
+    <div class="filters" id="filters-nochallan">
+      <div class="ac-wrap" data-label="Party"><input id="f2-party" placeholder="Party Name" data-col="party" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Order"><input id="f2-order" placeholder="Order No (comma for multi)" data-col="order" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Challan"><input id="f2-challan" placeholder="Challan No (comma for multi)" data-col="challan" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="DS No"><input id="f2-design" placeholder="DS No (comma for multi)" data-col="design" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Material"><input id="f2-material" placeholder="Material (METRIAL)" data-col="material" autocomplete="off"></div>
+      <div class="ac-wrap" data-label="Job Work"><input id="f2-job" placeholder="Job Work" data-col="job" autocomplete="off"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn gray" onclick="clearFilters('nochallan')"><span class="ic">✕</span>CLEAR</button>
+      <button class="btn blue" onclick="downloadPDF('nochallan')"><span class="ic">⇩</span>PDF</button>
+      <span class="status" id="status-nochallan">No data loaded</span>
+    </div>
+  </div>
+  <div class="chips" id="chips-nochallan" role="region" aria-label="Active filters"></div>
+  <div class="table-wrap" id="wrap-nochallan">
+    <div class="empty">Rows with empty Challan Number will appear here.</div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: MTR CALCULATOR (NEW FEATURE) ===== -->
+<div class="panel" id="panel-calc">
+  <div class="calc-container">
+    <div class="calc-card no-print">
+      <div class="calc-title">🔢 Paste Item Numbers</div>
+      <textarea id="calcInput" placeholder="e.g. 1207-1204-1203-1214-1216-1224-1215-1208-1209-1214-1216-1220-1201-1225-1226">1207-1204-1203-1214-1216-1224-1215-1208-1209-1214-1216-1220-1201-1225-1226</textarea>
+      
+      <div class="calc-ctrls">
+        <label style="font-weight:700; font-size:12px; color:#475569;">
+          MTR PER COLOUR:
+          <input type="number" id="calcGlobalMtr" class="multiplier-input" value="12" step="any">
+        </label>
+        <button class="btn blue" onclick="runCalculation()"><span class="ic">⚡</span>CALCULATE</button>
+        <button class="btn gray" onclick="clearCalc()"><span class="ic">✕</span>CLEAR</button>
+        <button class="btn gray" onclick="window.print()"><span class="ic">🖨️</span>PRINT (EXCEL VIEW)</button>
+        <button class="btn wa-btn" onclick="sendToWhatsApp()"><span class="ic">💬</span>SEND TO WHATSAPP</button>
+      </div>
+    </div>
+
+    <!-- Live Stats -->
+    <div class="stats-grid no-print">
+      <div class="stat-box">
+        <div class="lbl">Total Items Scanned</div>
+        <div class="val" id="statScanned">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="lbl">Unique Items</div>
+        <div class="val" id="statUnique">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="lbl">Total Colours (Count)</div>
+        <div class="val" id="statColours">0</div>
+      </div>
+      <div class="stat-box highlight">
+        <div class="lbl">Total Mtr</div>
+        <div class="val" id="statTotalMtr">0</div>
+      </div>
+    </div>
+
+    <!-- Excel View Area for Report & Print -->
+    <div id="printArea" class="table-wrap" style="max-height:none;">
+      <div style="padding:8px 0; font-weight:700; font-size:14px; display:none;" class="only-print">
+        FABRIC REPORT &mdash; Date: <span id="calcPrintDate"></span>
+      </div>
+      <table id="calcTable">
+        <thead>
+          <tr>
+            <th style="width: 50px;">SR.</th>
+            <th>ITEM NUMBER</th>
+            <th style="width: 120px;">COLOUR</th>
+            <th style="width: 150px;">MTR PER COLOUR</th>
+            <th style="width: 150px;">COLOUR * MTR</th>
+            <th style="width: 140px;">TOTAL MTR</th>
+          </tr>
+        </thead>
+        <tbody id="calcTbody">
+          <tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Paste item numbers above and tap Calculate.</td></tr>
+        </tbody>
+        <tfoot id="calcTfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: SETTINGS ===== -->
+<div class="panel" id="panel-settings">
+  <div class="setting-box">
+    <label><span class="num">1</span>DATA ENDPOINT URL (Apps Script / API link)</label>
+    <input type="text" id="dataUrl" placeholder="Paste your data link here" autocomplete="off" spellcheck="false">
+    <div class="row">
+      <button class="btn" onclick="saveDataUrl()"><span class="ic">✓</span>SAVE</button>
+      <button class="btn red" onclick="clearDataUrl()"><span class="ic">✕</span>CLEAR</button>
+      <span class="msg" id="dataMsg"></span>
+    </div>
+  </div>
+  <div class="setting-box">
+    <label><span class="num">2</span>UPLOAD ENDPOINT URL (for future upload feature)</label>
+    <input type="text" id="uploadUrl" placeholder="Paste your upload link here" autocomplete="off" spellcheck="false">
+    <div class="row">
+      <button class="btn" onclick="saveUploadUrl()"><span class="ic">✓</span>SAVE</button>
+      <button class="btn red" onclick="clearUploadUrl()"><span class="ic">✕</span>CLEAR</button>
+      <span class="msg" id="uploadMsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW OVERLAY -->
+<div id="preview">
+  <div class="box">
+    <div class="title" id="previewTitle">Preview</div>
+    <div id="previewContent"></div>
+  </div>
+  <div class="actions">
+    <button class="open" onclick="openFullLink()">OPEN FULL</button>
+    <button class="close" onclick="closePreview()">CLOSE</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite">Copied</div>
+
+<!-- PDF ACTION MODAL -->
+<div id="pdfChoice" role="dialog" aria-modal="true" aria-label="PDF action">
+  <div class="box">
+    <div class="head">
+      <span class="badge">PDF</span>
+      <span class="title">Ready to send</span>
+    </div>
+    <div class="msg" id="pdfChoiceMsg">Choose how you want to use the file.</div>
+    <div class="actions">
+      <button type="button" class="dl" onclick="pdfDownload()">
+        <span class="ic">⬇</span>
+        <span class="lbl">Download<span class="sub">Save to device</span></span>
+      </button>
+      <button type="button" class="wa" onclick="pdfShare()">
+        <span class="ic">💬</span>
+        <span class="lbl">WhatsApp<span class="sub">or other apps</span></span>
+      </button>
+    </div>
+    <button type="button" class="cancel" onclick="closePdfChoice()">Cancel</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+/* =========================================================================
+   EXISTING APP LOGIC (PRESERVED 100%)
+   ========================================================================= */
+const state = {
+  data: { headers: [], rows: [] },
+  pages: { all: 1, nochallan: 1 },
+  orderGroups: [],
+  previewUrl: null,
+  linkColumns: { order: -1, ds: -1 },
+  cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 }
+};
+
+/* Tab Switching */
+document.querySelectorAll('#tabs .tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('#tabs .tab').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    t.setAttribute('aria-selected','true');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+/* Filters Toggle */
+document.querySelectorAll('.filters-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = document.getElementById(btn.dataset.target);
+    if (!target) return;
+    const collapsed = target.classList.toggle('collapsed');
+    btn.textContent = collapsed ? 'Show' : 'Hide';
+  });
+});
+
+function loadSettings() {
+  document.getElementById('dataUrl').value   = localStorage.getItem('dataUrl')   || '';
+  document.getElementById('uploadUrl').value = localStorage.getItem('uploadUrl') || '';
+}
+function saveDataUrl() {
+  const v = document.getElementById('dataUrl').value.trim();
+  localStorage.setItem('dataUrl', v);
+  document.getElementById('dataMsg').textContent = 'Saved ✓';
+  fetchData();
+}
+function clearDataUrl() {
+  localStorage.removeItem('dataUrl');
+  document.getElementById('dataUrl').value = '';
+  document.getElementById('dataMsg').textContent = 'Cleared';
+  state.data = { headers: [], rows: [] };
+  state.orderGroups = [];
+  renderAll();
+}
+function saveUploadUrl() {
+  const v = document.getElementById('uploadUrl').value.trim();
+  localStorage.setItem('uploadUrl', v);
+  document.getElementById('uploadMsg').textContent = 'Saved ✓';
+}
+function clearUploadUrl() {
+  localStorage.removeItem('uploadUrl');
+  document.getElementById('uploadUrl').value = '';
+  document.getElementById('uploadMsg').textContent = 'Cleared';
+}
+
+async function fetchData() {
+  const url = localStorage.getItem('dataUrl');
+  if (!url) { renderAll(); return; }
+  setStatus('all', 'Loading…', 'loading');
+  setStatus('nochallan', 'Loading…', 'loading');
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
+      setStatus('all', 'Not JSON. Starts: ' + text.slice(0, 100), 'error');
+      setStatus('nochallan', 'Not JSON.', 'error');
+      return;
+    }
+    const json = JSON.parse(text);
+    if (Array.isArray(json)) {
+      state.data.headers = json[0] || [];
+      state.data.rows = json.slice(1).map(r => ({ values: r, links: [], bgs: [], fgs: [], bolds: [] }));
+    } else {
+      state.data.headers = json.headers || [];
+      state.data.rows = (json.rows || []).map(r => ({
+        values: r.values || r,
+        links:  r.links  || [],
+        bgs:    r.bgs    || [],
+        fgs:    r.fgs    || [],
+        bolds:  r.bolds  || []
+      }));
+    }
+    setStatus('all', 'Loaded ' + state.data.rows.length + ' rows', 'ok');
+    setStatus('nochallan', 'Loaded ' + state.data.rows.length + ' rows', 'ok');
+    detectColumns();
+    buildOrderGroups();
+    buildAutocomplete();
+    renderAll();
+  } catch (e) {
+    setStatus('all', 'Error: ' + e.message, 'error');
+    setStatus('nochallan', 'Error: ' + e.message, 'error');
+  }
+}
+function setStatus(tab, txt, kind) {
+  const el = document.getElementById('status-' + tab);
+  if (!el) return;
+  el.textContent = txt;
+  el.classList.remove('loading', 'error', 'ok');
+  if (kind) el.classList.add(kind);
+}
+
+function detectColumns() {
+  const hs = state.data.headers.map(h => (h || '').toString().toLowerCase().trim());
+  state.cols.party = hs.findIndex(h => h.indexOf('party') >= 0);
+  state.cols.order = hs.findIndex(h => h.indexOf('order') === 0 || h.indexOf('order no') >= 0);
+  state.cols.challan = hs.findIndex(h => {
+    const n = h.replace(/\s+/g, '');
+    return n.indexOf('challan') >= 0 || n.indexOf('chall') >= 0;
+  });
+  state.cols.design = hs.findIndex(h => {
+    const n = h.replace(/\s+/g, '');
+    return n === 'ds' || n === 'dsno' || n.indexOf('dsno') === 0 ||
+           n.indexOf('designno') >= 0 || n.indexOf('design') === 0;
+  });
+  state.cols.material = hs.findIndex(h => {
+    const n = h.replace(/\s+/g, '').toLowerCase();
+    return n.indexOf('material') >= 0 || n.indexOf('matrial') >= 0 || n.indexOf('metrial') >= 0;
+  });
+  state.cols.job = hs.findIndex(h => h.replace(/\s+/g, '').indexOf('job') >= 0);
+  state.linkColumns.order = state.cols.order;
+  state.linkColumns.ds    = state.cols.design;
+}
+
+function isLinkColumn(i) {
+  return i === state.linkColumns.order || i === state.linkColumns.ds;
+}
+function colIndex(key) {
+  return state.cols[key] != null ? state.cols[key] : -1;
+}
+
+function buildOrderGroups() {
+  const oi = colIndex('order');
+  if (oi < 0) { state.orderGroups = []; return; }
+  const groups = [];
+  let lastMain = '';
+  state.data.rows.forEach(r => {
+    const v = (r.values[oi] || '').toString().trim();
+    if (!v) { r._mainOrder = lastMain; return; }
+    const isSub = /^\d{1,2}$/.test(v) && lastMain !== '';
+    if (!isSub) {
+      lastMain = v;
+      if (!groups.includes(v)) groups.push(v);
+    }
+    r._mainOrder = lastMain;
+  });
+  groups.sort((a, b) => {
+    const na = parseFloat(a), nb = parseFloat(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+  state.orderGroups = groups;
+}
+
+const autoData = { party: [], order: [], challan: [], design: [], material: [], job: [] };
+function buildAutocomplete() {
+  for (const key in autoData) {
+    const idx = colIndex(key);
+    if (idx < 0) { autoData[key] = []; continue; }
+    const set = new Set();
+    state.data.rows.forEach(r => {
+      const v = (r.values[idx] || '').toString().trim();
+      if (v) set.add(v);
+    });
+    autoData[key] = Array.from(set).sort((a,b) => {
+      const na = parseFloat(a), nb = parseFloat(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+  }
+  autoData.order = state.orderGroups.slice();
+}
+
+function attachAutocomplete(input) {
+  const wrap = input.parentElement;
+  const list = document.createElement('div');
+  list.className = 'ac-list';
+  wrap.appendChild(list);
+
+  function close() { list.classList.remove('show'); list.innerHTML = ''; }
+  function lastFragment() {
+    const parts = input.value.split(',');
+    return parts[parts.length - 1].trim().toLowerCase();
+  }
+  function prefixBeforeLastComma() {
+    const idx = input.value.lastIndexOf(',');
+    if (idx < 0) return '';
+    return input.value.slice(0, idx + 1).trim() + ' ';
+  }
+
+  function open(matches) {
+    if (!matches.length) { close(); return; }
+    list.innerHTML = matches.slice(0, 80).map(m => '<div>' + escapeHtml(m) + '</div>').join('');
+    list.classList.add('show');
+    list.querySelectorAll('div').forEach(d => {
+      d.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const chosen = d.textContent;
+        const key = input.dataset.col;
+        if (key === 'order' || key === 'challan' || key === 'design') {
+          input.value = prefixBeforeLastComma() + chosen;
+        } else {
+          input.value = chosen;
+        }
+        close();
+        const tab = input.id.startsWith('f2') ? 'nochallan' : 'all';
+        state.pages[tab] = 1;
+        renderAll();
+      });
+    });
+  }
+
+  input.addEventListener('input', () => {
+    const key = input.dataset.col;
+    const q = lastFragment();
+    const tab = input.id.startsWith('f2') ? 'nochallan' : 'all';
+    state.pages[tab] = 1;
+    renderAll();
+    if (!q) { open(autoData[key] || []); return; }
+    open((autoData[key] || []).filter(v => v.toLowerCase().includes(q)));
+  });
+  input.addEventListener('focus', () => {
+    const key = input.dataset.col;
+    const q = lastFragment();
+    const pool = autoData[key] || [];
+    if (!q) open(pool);
+    else open(pool.filter(v => v.toLowerCase().includes(q)));
+  });
+  input.addEventListener('blur', () => setTimeout(close, 150));
+}
+document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
+
+function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
+function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
+
+function getFiltered(tab) {
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  const fMulti = {
+    order:   parseMulti(document.getElementById(prefix + 'order').value),
+    challan: parseMulti(document.getElementById(prefix + 'challan').value),
+    design:  parseMulti(document.getElementById(prefix + 'design').value)
+  };
+  const fSingle = {
+    party:    norm(document.getElementById(prefix + 'party').value),
+    material: norm(document.getElementById(prefix + 'material').value),
+    job:      norm(document.getElementById(prefix + 'job').value)
+  };
+
+  const ci = state.cols;
+  let rows = state.data.rows;
+
+  if (tab === 'nochallan' && ci.challan >= 0) {
+    rows = rows.filter(r => !r.values[ci.challan] || r.values[ci.challan].toString().trim() === '');
+  }
+  if (fMulti.order.length && ci.order >= 0) {
+    const matched = [];
+    let currentMain = '';
+    state.data.rows.forEach(r => {
+      const raw = (r.values[ci.order] || '').toString().trim();
+      const isSubNumber = /^\d{1,2}$/.test(raw);
+      if (raw && (!currentMain || !isSubNumber)) currentMain = raw.toLowerCase();
+      const hit = fMulti.order.some(q => currentMain.includes(q));
+      if (hit) matched.push(r);
+    });
+    rows = matched;
+  }
+  if (fMulti.challan.length && ci.challan >= 0) {
+    rows = rows.filter(r => {
+      const cell = norm(r.values[ci.challan]);
+      if (!cell) return false;
+      return fMulti.challan.some(q => cell.includes(q));
+    });
+  }
+  if (fMulti.design.length && ci.design >= 0) {
+    rows = rows.filter(r => {
+      const cell = norm(r.values[ci.design]);
+      if (!cell) return false;
+      return fMulti.design.some(q => cell.includes(q));
+    });
+  }
+
+  const match = (r, idx, val) => {
+    if (idx < 0 || !val) return true;
+    return norm(r.values[idx]).includes(val);
+  };
+  return rows.filter(r =>
+    match(r, ci.party, fSingle.party) &&
+    match(r, ci.material, fSingle.material) &&
+    match(r, ci.job, fSingle.job)
+  );
+}
+
+function clearFilters(tab) {
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  ['party','order','challan','design','material','job'].forEach(k => {
+    document.getElementById(prefix + k).value = '';
+  });
+  state.pages[tab] = 1;
+  renderAll();
+}
+
+function renderAll() { renderTab('all'); renderTab('nochallan'); }
+
+function hasActiveFilter(tab) {
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  return ['party','order','challan','design','material','job'].some(k => {
+    const el = document.getElementById(prefix + k);
+    return el && el.value.trim() !== '';
+  });
+}
+
+function renderChips(tab) {
+  const container = document.getElementById('chips-' + tab);
+  if (!container) return;
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  const filterDefs = [
+    { key: 'party',    label: 'Party',    multi: false },
+    { key: 'order',    label: 'Order',    multi: true  },
+    { key: 'challan',  label: 'Challan',  multi: true  },
+    { key: 'design',   label: 'DS',       multi: true  },
+    { key: 'material', label: 'Material', multi: false },
+    { key: 'job',      label: 'Job',      multi: false }
+  ];
+  const chips = [];
+  filterDefs.forEach(f => {
+    const el = document.getElementById(prefix + f.key);
+    if (!el) return;
+    const raw = el.value.trim();
+    if (!raw) return;
+    if (f.multi) {
+      raw.split(',').map(s => s.trim()).filter(Boolean).forEach(part => {
+        chips.push({ key: f.key, label: f.label, value: part, multi: true });
+      });
+    } else {
+      chips.push({ key: f.key, label: f.label, value: raw, multi: false });
+    }
+  });
+  if (chips.length === 0) {
+    container.classList.remove('show');
+    container.innerHTML = '';
+    return;
+  }
+  container.classList.add('show');
+  container.innerHTML = chips.map(c =>
+    '<span class="chip" data-key="' + c.key + '" data-value="' + escapeAttr(c.value) + '" data-multi="' + (c.multi ? '1' : '0') + '">' +
+    '<span class="k">' + c.label + '</span> <span class="v">' + escapeHtml(c.value) + '</span>' +
+    '<button type="button" aria-label="Remove ' + c.label + ' filter">×</button>' +
+    '</span>'
+  ).join('') + '<button type="button" class="chip-clear-all">Clear All</button>';
+
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.querySelector('button').addEventListener('click', () => {
+      removeChipFilter(tab, chip.dataset.key, chip.dataset.value, chip.dataset.multi === '1');
+    });
+  });
+  container.querySelector('.chip-clear-all').addEventListener('click', () => clearFilters(tab));
+}
+
+function removeChipFilter(tab, key, value, isMulti) {
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  const input = document.getElementById(prefix + key);
+  if (!input) return;
+  if (isMulti) {
+    const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    input.value = parts.filter(p => p !== value).join(', ');
+  } else {
+    input.value = '';
+  }
+  state.pages[tab] = 1;
+  renderAll();
+}
+
+function renderTab(tab) {
+  const wrap = document.getElementById('wrap-' + tab);
+  renderChips(tab);
+  if (!state.data.headers.length) {
+    wrap.innerHTML = '<div class="empty">' +
+      (tab === 'nochallan' ? 'Rows with empty Challan Number will appear here.' : 'Add Data Endpoint URL in Settings to load orders.') +
+      '</div>';
+    return;
+  }
+  const rows = getFiltered(tab);
+  const challanIdx = state.cols.challan;
+  const partyIdx = state.cols.party;
+  const orderIdx = state.cols.order;
+  const activeFilter = hasActiveFilter(tab);
+
+  const isLongText = (v) => {
+    const s = (v || '').toString();
+    if (s.length < 42) return false;
+    return s.split(/\s+/).filter(Boolean).length >= 3;
+  };
+  const subOrderDisplay = (raw, main) => {
+    const s = (raw == null ? '' : raw.toString()).trim();
+    if (!activeFilter || !s) return s;
+    const isSub = /^\d{1,2}$/.test(s);
+    if (!isSub || !main || main === s) return s;
+    return s + '/' + main;
+  };
+
+  let html = '<table><thead><tr>';
+  state.data.headers.forEach((h, i) => {
+    const stickyCls = (i === partyIdx && partyIdx !== 0) ? ' class="sticky-party"' : '';
+    html += '<th' + stickyCls + '>' + escapeHtml(h || '') + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>';
+    state.data.headers.forEach((_, i) => {
+      let val = r.values[i] != null ? r.values[i] : '';
+      let displayVal = val;
+      if (i === orderIdx) displayVal = subOrderDisplay(val, r._mainOrder);
+      const isBlankChallan = (i === challanIdx && (!val || val.toString().trim() === ''));
+      const isParty = (i === partyIdx && partyIdx !== 0);
+      const doWrap = isLongText(displayVal);
+      let classes = [];
+      if (isBlankChallan) classes.push('challan-col');
+      if (isParty) classes.push('sticky-party');
+      if (doWrap && !isParty) classes.push('wrap');
+      const cls = classes.length ? ' class="' + classes.join(' ') + '"' : '';
+
+      const rawLink = r.links && r.links[i] ? r.links[i] : null;
+      const link = (isLinkColumn(i) && rawLink) ? rawLink : null;
+      const bg   = (r.bgs   && r.bgs[i])   ? r.bgs[i]   : '';
+      const fg   = (r.fgs   && r.fgs[i])   ? r.fgs[i]   : '';
+      const bold = (r.bolds && r.bolds[i]) ? true       : false;
+
+      let style = '';
+      if (bg && !isBlankChallan) style += 'background:' + bg + ';';
+      if (fg) style += 'color:' + fg + ';';
+      if (bold) style += 'font-weight:700;';
+      const styleAttr = style ? ' style="' + style + '"' : '';
+      const titleAttr = ' title="' + escapeAttr(displayVal.toString()) + '"';
+
+      let cellContent;
+      if (link) {
+        cellContent = '<a href="' + escapeAttr(link) + '" data-link="' + escapeAttr(link) + '" data-text="' + escapeAttr(displayVal.toString()) + '" onclick="return handleLinkClick(event, this)">' + escapeHtml(displayVal.toString()) + '</a>';
+      } else {
+        cellContent = escapeHtml(displayVal.toString());
+      }
+      html += '<td' + cls + styleAttr + titleAttr + '>' + cellContent + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+
+  const applyStickyOffset = () => {
+    const firstCell = wrap.querySelector('tbody tr td:first-child') || wrap.querySelector('thead tr th:first-child');
+    if (!firstCell) return;
+    const w = Math.ceil(firstCell.getBoundingClientRect().width);
+    if (w > 0) wrap.style.setProperty('--col1-w', w + 'px');
+  };
+  requestAnimationFrame(applyStickyOffset);
+}
+
+function copyRow(row) {
+  const c = state.cols;
+  const noteIdx = state.data.headers.findIndex(h => /note|detail|desc|descr|remark/i.test((h || '').toString()));
+  const parts = [];
+  const push = (label, i) => {
+    if (i < 0) return;
+    const v = (row.values[i] != null ? row.values[i] : '').toString().trim();
+    if (v) parts.push(label + ': ' + v);
+  };
+  push('Order', c.order);
+  push('DS', c.design);
+  push('Party', c.party);
+  push('Challan', c.challan);
+  if (noteIdx >= 0 && noteIdx !== c.order && noteIdx !== c.design) push('Note', noteIdx);
+  const text = parts.join(' | ');
+  if (!text) return;
+
+  const showToast = (msg) => {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(() => t.classList.remove('show'), 1600);
+  };
+
+  navigator.clipboard.writeText(text).then(() => showToast('Copied row'), () => showToast('Copy failed'));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+}
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function handleLinkClick(e, el) {
+  e.preventDefault();
+  showPreview(el.getAttribute('data-link'), el.getAttribute('data-text'));
+  return false;
+}
+function showPreview(url, title) {
+  state.previewUrl = url;
+  document.getElementById('previewTitle').textContent = title || 'Preview';
+  const content = document.getElementById('previewContent');
+  content.innerHTML = '';
+  let fileId = null;
+  let m = url.match(/\/file\/d\/([^\/]+)/) || url.match(/[?&]id=([^&]+)/);
+  if (m) fileId = m[1];
+  if (fileId) {
+    content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" width="500" height="500" style="border:1px solid #cbd5e1;background:#fff;"></iframe>';
+  } else {
+    content.innerHTML = '<img src="' + url + '" alt="preview">';
+  }
+  document.getElementById('preview').classList.add('show');
+}
+function closePreview() {
+  document.getElementById('preview').classList.remove('show');
+  state.previewUrl = null;
+}
+function openFullLink() {
+  if (state.previewUrl) window.open(state.previewUrl, '_blank', 'noopener');
+}
+
+function downloadPDF(tab) {
+  const rows = getFiltered(tab);
+  if (!rows.length) { alert('No rows to export'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  doc.text(tab === 'nochallan' ? 'ORDER BOOK — NO CHALLAN' : 'ORDER BOOK — ALL ORDERS', 20, 20);
+  const body = rows.map(r => r.values.map(v => v == null ? '' : v.toString()));
+  doc.autoTable({ head: [state.data.headers], body: body, startY: 40 });
+  openPdfChoice(doc.output('blob'), tab + '.pdf');
+}
+function openPdfChoice(blob, filename) {
+  const modal = document.getElementById('pdfChoice');
+  modal._blob = blob;
+  modal._filename = filename;
+  modal.classList.add('show');
+}
+function closePdfChoice() {
+  document.getElementById('pdfChoice').classList.remove('show');
+}
+function pdfDownload() {
+  const modal = document.getElementById('pdfChoice');
+  const url = URL.createObjectURL(modal._blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = modal._filename;
+  a.click();
+  closePdfChoice();
+}
+async function pdfShare() {
+  const modal = document.getElementById('pdfChoice');
+  const file = new File([modal._blob], modal._filename, { type: 'application/pdf' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file], title: modal._filename });
+  } else {
+    pdfDownload();
+  }
+  closePdfChoice();
+}
+
+/* =========================================================================
+   MTR CALCULATOR TAB LOGIC (ISOLATED)
+   ========================================================================= */
+let calcReportData = [];
+
+function runCalculation() {
+  const rawText = document.getElementById('calcInput').value;
+  const globalMtr = parseFloat(document.getElementById('calcGlobalMtr').value) || 0;
+  
+  // Split tokens by hyphen, space, comma, semicolon or newline
+  const tokens = rawText
+    .split(/[\s,;\-]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  if (tokens.length === 0) {
+    document.getElementById('calcTbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#991b1b; padding:20px;">No numbers detected. Please paste item numbers.</td></tr>';
+    document.getElementById('calcTfoot').innerHTML = '';
+    return;
+  }
+
+  // Count occurrences (preserve first-seen order)
+  const map = new Map();
+  tokens.forEach(tok => {
+    map.set(tok, (map.get(tok) || 0) + 1);
+  });
+
+  calcReportData = [];
+  map.forEach((colourCount, itemNum) => {
+    calcReportData.push({
+      itemNum: itemNum,
+      colour: colourCount,
+      mtr: globalMtr,
+      totalMtr: colourCount * globalMtr
+    });
+  });
+
+  renderCalcTable();
+}
+
+function renderCalcTable() {
+  const tbody = document.getElementById('calcTbody');
+  const tfoot = document.getElementById('calcTfoot');
+  tbody.innerHTML = '';
+  tfoot.innerHTML = '';
+
+  let totalColours = 0;
+  let grandTotalMtr = 0;
+
+  calcReportData.forEach((row, index) => {
+    totalColours += row.colour;
+    grandTotalMtr += row.totalMtr;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;">${index + 1}</td>
+      <td><strong>${escapeHtml(row.itemNum)}</strong></td>
+      <td style="text-align:right;">${row.colour}</td>
+      <td style="text-align:right;">
+        <input type="number" step="any" class="row-mtr-input" value="${row.mtr}" onchange="updateRowMtr(${index}, this.value)">
+      </td>
+      <td style="text-align:right; color:#64748b;">${row.colour} &times; ${row.mtr}</td>
+      <td style="text-align:right; font-weight:700;">${row.totalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Excel summary total row
+  tfoot.innerHTML = `
+    <tr class="total-row">
+      <td colspan="2" style="text-align:right;">TOTAL:</td>
+      <td style="text-align:right;">${totalColours}</td>
+      <td style="text-align:right;">-</td>
+      <td style="text-align:right;">-</td>
+      <td style="text-align:right; font-weight:800;">${grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+    </tr>
+  `;
+
+  // Update Stats Cards
+  const totalScanned = calcReportData.reduce((acc, r) => acc + r.colour, 0);
+  document.getElementById('statScanned').textContent = totalScanned;
+  document.getElementById('statUnique').textContent = calcReportData.length;
+  document.getElementById('statColours').textContent = totalColours;
+  document.getElementById('statTotalMtr').textContent = grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  document.getElementById('calcPrintDate').textContent = new Date().toLocaleDateString();
+}
+
+function updateRowMtr(index, val) {
+  const num = parseFloat(val) || 0;
+  calcReportData[index].mtr = num;
+  calcReportData[index].totalMtr = calcReportData[index].colour * num;
+  renderCalcTable();
+}
+
+function clearCalc() {
+  document.getElementById('calcInput').value = '';
+  document.getElementById('calcTbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Paste item numbers above and tap Calculate.</td></tr>';
+  document.getElementById('calcTfoot').innerHTML = '';
+  document.getElementById('statScanned').textContent = '0';
+  document.getElementById('statUnique').textContent = '0';
+  document.getElementById('statColours').textContent = '0';
+  document.getElementById('statTotalMtr').textContent = '0';
+}
+
+function sendToWhatsApp() {
+  if (!calcReportData.length) {
+    alert('Please calculate first before sending to WhatsApp.');
+    return;
+  }
+  let text = `*--- FABRIC REPORT ---*\n`;
+  text += `*Date:* ${new Date().toLocaleDateString()}\n\n`;
+  text += `*ITEM NO* | *COLOUR* | *MTR* | *TOTAL*\n`;
+  text += `------------------------------------\n`;
+  let totalColours = 0;
+  let grandTotalMtr = 0;
+
+  calcReportData.forEach(r => {
+    totalColours += r.colour;
+    grandTotalMtr += r.totalMtr;
+    text += `${r.itemNum} : ${r.colour} col x ${r.mtr}m = *${r.totalMtr}m*\n`;
+  });
+
+  text += `------------------------------------\n`;
+  text += `*TOTAL COLOURS:* ${totalColours}\n`;
+  text += `*TOTAL MTR:* ${grandTotalMtr.toLocaleString('en-IN')} MTR`;
+
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  window.open(waUrl, '_blank');
+}
+
+/* Run initial state */
+loadSettings();
+fetchData();
+runCalculation();
+</script>
+</body>
+</html>
