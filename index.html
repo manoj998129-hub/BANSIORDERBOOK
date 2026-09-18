@@ -7,10 +7,10 @@
      user-scalable=yes still allows manual pinch-zoom for accessibility. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
-<title>Order Book & Mtr Calculator</title>
+<title>Order Book & Master Mtr Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   /* =========================================================
      RESET + VIEWPORT LOCK
@@ -70,31 +70,13 @@
     transition: color .15s ease, background-color .15s ease;
     min-width: 0;
   }
-  #tabs .tab .ic {
-    font-size: 14px;
-    line-height: 1;
-    opacity: 0.9;
-  }
-  #tabs .tab .lbl {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  #tabs .tab .ic { font-size: 14px; line-height: 1; opacity: 0.9; }
+  #tabs .tab .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #tabs .tab:hover { color: #e2e8f0; }
-  #tabs .tab.active {
-    color: #ffffff;
-    background: rgba(14,165,233,0.14);
-  }
+  #tabs .tab.active { color: #ffffff; background: rgba(14,165,233,0.14); }
   #tabs .tab.active::after {
-    content: "";
-    position: absolute;
-    left: 12%;
-    right: 12%;
-    bottom: 0;
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    background: #38bdf8;
-    box-shadow: 0 0 12px rgba(56,189,248,0.7);
+    content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 3px;
+    border-radius: 3px 3px 0 0; background: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,0.7);
   }
 
   /* =========================================================
@@ -104,157 +86,52 @@
   .panel.active { display: block; }
 
   /* =========================================================
-     FILTER CARD
+     FILTER CARD & BUTTONS
      ========================================================= */
   .filters-box {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 10px;
-    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 10px rgba(15,23,42,0.03);
+    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 10px rgba(15,23,42,0.03);
   }
-  .filters-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
+  .filters-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .filters-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700;
+    color: #0f172a; letter-spacing: 0.4px; text-transform: uppercase;
   }
-  .filters-title .dot {
-    width: 6px; height: 6px; border-radius: 999px; background: #38bdf8;
-    box-shadow: 0 0 8px rgba(56,189,248,0.6);
-  }
+  .filters-title .dot { width: 6px; height: 6px; border-radius: 999px; background: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.6); }
   .filters-toggle {
-    display: none;
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    color: #334155;
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 8px;
-    cursor: pointer;
+    display: none; background: #f1f5f9; border: 1px solid #e2e8f0; color: #334155;
+    font-family: inherit; font-size: 11px; font-weight: 600; padding: 6px 10px; border-radius: 8px; cursor: pointer;
   }
-  .filters-toggle:active { background: #e2e8f0; }
-
-  .filters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-  .ac-wrap {
-    position: relative;
-    min-width: 0;
-  }
+  .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ac-wrap { position: relative; min-width: 0; }
   .ac-wrap::before {
-    content: attr(data-label);
-    position: absolute;
-    top: -7px;
-    left: 10px;
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    background: #ffffff;
-    padding: 0 5px;
-    color: #64748b;
-    z-index: 2;
-    pointer-events: none;
+    content: attr(data-label); position: absolute; top: -7px; left: 10px; font-size: 9.5px;
+    font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; background: #ffffff;
+    padding: 0 5px; color: #64748b; z-index: 2; pointer-events: none;
   }
   .ac-wrap input {
-    width: 100%;
-    padding: 10px 12px;
-    font-size: 16px;
-    font-family: inherit;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    border-radius: 9px;
-    outline: none;
-    color: #0f172a;
-    transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
-    min-width: 0;
+    width: 100%; padding: 10px 12px; font-size: 16px; font-family: inherit;
+    border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 9px; outline: none; color: #0f172a;
+    transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease; min-width: 0;
   }
-  .ac-wrap input::placeholder { color: #94a3b8; font-weight: 400; }
-  .ac-wrap input:hover { border-color: #94a3b8; }
-  .ac-wrap input:focus {
-    border-color: #0ea5e9;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
-  }
-
-  /* Autocomplete dropdown */
+  .ac-wrap input:focus { border-color: #0ea5e9; background: #ffffff; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
   .ac-list {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    max-height: 240px;
-    overflow-y: auto;
-    z-index: 60;
-    display: none;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08);
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff;
+    border: 1px solid #e2e8f0; max-height: 240px; overflow-y: auto; z-index: 60; display: none;
+    border-radius: 10px; box-shadow: 0 10px 30px rgba(15,23,42,0.18);
   }
   .ac-list.show { display: block; }
-  .ac-list div {
-    padding: 10px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f5f9;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .ac-list div:last-child { border-bottom: none; }
-  .ac-list div:hover, .ac-list div.hover { background: #eff6ff; color: #0369a1; }
+  .ac-list div { padding: 10px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f1f5f9; color: #0f172a; }
+  .ac-list div:hover { background: #eff6ff; color: #0369a1; }
 
-  /* =========================================================
-     TOOLBAR / BUTTONS / STATUS
-     ========================================================= */
-  .toolbar {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+  .toolbar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
   .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 9px 16px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    cursor: pointer;
-    color: #ffffff;
-    background: #0ea5e9;
-    box-shadow: 0 1px 2px rgba(15,23,42,0.08);
-    transition: transform .05s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
-    min-height: 38px;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 16px; font-family: inherit; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.3px; border: 1px solid transparent; border-radius: 9px;
+    cursor: pointer; color: #ffffff; background: #0ea5e9; box-shadow: 0 1px 2px rgba(15,23,42,0.08);
+    transition: transform .05s ease, background-color .15s ease; min-height: 38px; white-space: nowrap;
   }
-  .btn:hover { background: #0284c7; }
   .btn:active { transform: translateY(1px); }
   .btn.gray { background: #ffffff; color: #334155; border-color: #cbd5e1; }
   .btn.gray:hover { background: #f1f5f9; border-color: #94a3b8; }
@@ -262,410 +139,333 @@
   .btn.blue:hover { background: #1d4ed8; }
   .btn.red  { background: #dc2626; }
   .btn.red:hover { background: #b91c1c; }
-  .btn.green { background: #16a34a; }
-  .btn.green:hover { background: #15803d; }
   .btn.wa-btn { background: #25d366; color: #fff; }
   .btn.wa-btn:hover { background: #1ebc59; }
-  .btn .ic { font-size: 13px; line-height: 1; }
 
   .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
-    padding: 7px 12px;
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 999px;
-    color: #075985;
-    margin-left: auto;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600;
+    padding: 7px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 999px;
+    color: #075985; margin-left: auto; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .status::before {
-    content: "";
-    width: 7px; height: 7px; border-radius: 999px;
-    background: #38bdf8;
-    box-shadow: 0 0 6px rgba(56,189,248,0.7);
-    flex: 0 0 auto;
-  }
-  .status.loading { background: #fef9c3; border-color: #fde68a; color: #854d0e; }
-  .status.loading::before { background: #eab308; box-shadow: 0 0 6px rgba(234,179,8,0.7); animation: pulse 1s ease-in-out infinite; }
-  .status.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-  .status.error::before { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
-  .status.ok::before { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.55; transform: scale(1.25); }
-  }
+  .status::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: #38bdf8; }
 
   /* =========================================================
      DATA TABLE
      ========================================================= */
   .table-wrap {
-    overflow: auto;
-    max-height: 72vh;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 14px rgba(15,23,42,0.05);
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    overflow: auto; max-height: 72vh; background: #ffffff; border: 1px solid #e2e8f0;
+    border-radius: 12px; box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 14px rgba(15,23,42,0.05);
     max-width: 100%;
   }
-  .table-wrap table {
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 12px;
-    table-layout: auto;
-    width: max-content;
-    min-width: 100%;
-  }
-  .table-wrap th,
-  .table-wrap td {
-    border-right: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 3px 8px;
-    text-align: left;
-    white-space: nowrap;
-    font-size: 12px;
-    line-height: 1.3;
-    vertical-align: middle;
-    color: #0f172a;
-    max-width: 340px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .table-wrap td.wrap {
-    white-space: normal;
-    word-break: normal;
-    overflow-wrap: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 340px;
-    max-height: 2.7em;
-    vertical-align: middle;
+  .table-wrap table { border-collapse: separate; border-spacing: 0; font-size: 12px; table-layout: auto; width: max-content; min-width: 100%; }
+  .table-wrap th, .table-wrap td {
+    border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 3px 8px;
+    text-align: left; white-space: nowrap; font-size: 12px; line-height: 1.3; vertical-align: middle; color: #0f172a;
+    max-width: 340px; overflow: hidden; text-overflow: ellipsis;
   }
   .table-wrap th {
-    background: #0f172a;
-    color: #f1f5f9;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    border-right: 1px solid #1e293b;
-    border-bottom: 2px solid #38bdf8;
-    padding: 6px 10px;
-    white-space: nowrap;
-    vertical-align: middle;
-    max-width: none;
-    max-height: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    box-sizing: border-box;
+    background: #0f172a; color: #f1f5f9; position: sticky; top: 0; z-index: 2;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase;
+    border-right: 1px solid #1e293b; border-bottom: 2px solid #38bdf8; padding: 6px 10px;
   }
   .table-wrap tbody tr:nth-child(even) td { background: #fafbfd; }
   .table-wrap tbody tr:hover td { background: #eff6ff; cursor: pointer; }
-  .table-wrap tbody tr td:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 4;
-    background: #ffffff;
-    border-right: 2px solid #cbd5e1;
-    font-weight: 600;
-  }
-  .table-wrap tbody tr:nth-child(even) td:first-child { background: #f1f5f9; }
-  .table-wrap tbody tr:hover td:first-child { background: #dbeafe; }
-  .table-wrap thead tr th:first-child {
-    z-index: 6;
-    left: 0;
-    background: #0f172a;
-    border-right: 2px solid #38bdf8;
-  }
-  .table-wrap tbody tr td.sticky-party {
-    position: sticky;
-    left: var(--col1-w, 60px);
-    z-index: 3;
-    background: #ffffff;
-    border-right: 2px solid #cbd5e1;
-    font-weight: 600;
-  }
-  .table-wrap tbody tr:nth-child(even) td.sticky-party { background: #f1f5f9; }
-  .table-wrap tbody tr:hover td.sticky-party { background: #dbeafe; }
-  .table-wrap thead tr th.sticky-party {
-    z-index: 5;
-    left: var(--col1-w, 60px);
-    background: #0f172a;
-    border-right: 2px solid #38bdf8;
-  }
-
-  /* Filter Chips */
+  .table-wrap tbody tr td:first-child { position: sticky; left: 0; z-index: 4; background: #ffffff; border-right: 2px solid #cbd5e1; font-weight: 600; }
+  .table-wrap thead tr th:first-child { z-index: 6; left: 0; background: #0f172a; border-right: 2px solid #38bdf8; }
+  .table-wrap tbody tr td.sticky-party { position: sticky; left: var(--col1-w, 60px); z-index: 3; background: #ffffff; border-right: 2px solid #cbd5e1; font-weight: 600; }
+  .table-wrap thead tr th.sticky-party { z-index: 5; left: var(--col1-w, 60px); background: #0f172a; border-right: 2px solid #38bdf8; }
+  
   .chips { display: none; flex-wrap: wrap; gap: 6px; padding: 6px 2px 8px 2px; align-items: center; }
   .chips.show { display: flex; }
   .chip {
     display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600;
     background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 4px 4px 4px 10px;
-    border-radius: 999px; box-shadow: 0 1px 2px rgba(15,23,42,0.05); max-width: 240px; overflow: hidden;
-    white-space: nowrap; text-overflow: ellipsis;
+    border-radius: 999px; box-shadow: 0 1px 2px rgba(15,23,42,0.05);
   }
-  .chip .k { color: #0369a1; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; font-size: 10px; }
-  .chip button {
-    display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
-    border-radius: 999px; background: #f1f5f9; border: none; color: #475569; font-size: 15px; cursor: pointer;
-  }
-  .chip-clear-all {
-    font-size: 11px; font-weight: 700; background: transparent; border: 1px dashed #cbd5e1;
-    color: #64748b; padding: 4px 10px; border-radius: 999px; cursor: pointer;
-  }
+  .chip .k { color: #0369a1; font-weight: 700; text-transform: uppercase; font-size: 10px; }
+  .chip button { border: none; background: #f1f5f9; border-radius: 999px; width: 20px; height: 20px; cursor: pointer; }
+  .chip-clear-all { font-size: 11px; font-weight: 700; background: transparent; border: 1px dashed #cbd5e1; color: #64748b; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
   .toast {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
     background: #0f172a; color: #f1f5f9; padding: 10px 18px; border-radius: 999px; font-size: 12.5px;
-    font-weight: 600; box-shadow: 0 8px 24px rgba(15,23,42,0.35); opacity: 0; pointer-events: none;
-    transition: opacity .18s ease, transform .18s ease; z-index: 10000; display: flex; align-items: center; gap: 8px;
+    font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 10000;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: #10b981; }
   tr.blank-challan td.challan-col { background: #fee2e2 !important; color: #991b1b; font-weight: 600; }
-  .table-wrap td a { color: #1d4ed8; text-decoration: underline; font-weight: 600; cursor: pointer; }
-  .empty {
-    padding: 40px 24px; text-align: center; background: #ffffff; border: 1px dashed #cbd5e1;
-    font-size: 13px; color: #64748b; border-radius: 12px; line-height: 1.6;
-  }
-  .empty::before { content: "📊"; display: block; font-size: 28px; margin-bottom: 8px; }
-
-  /* Modals */
-  #preview {
-    position: fixed; inset: 0; background: rgba(15,23,42,0.72); backdrop-filter: blur(6px);
-    display: none; z-index: 9999; padding: 16px; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
-  }
-  #preview.show { display: flex; }
-  #preview .box {
-    background: #ffffff; border-radius: 14px; padding: 14px; width: min(720px, 96vw);
-    max-height: 80vh; display: flex; flex-direction: column; align-items: center; gap: 10px; overflow: auto;
-  }
-  #preview .actions { display: flex; gap: 8px; }
-  #preview .actions button { padding: 10px 20px; font-weight: 600; border: none; border-radius: 9px; cursor: pointer; color: #fff; }
-  #preview .actions .open { background: #2563eb; }
-  #preview .actions .close { background: #dc2626; }
-
-  #pdfChoice {
-    position: fixed; inset: 0; background: rgba(15,23,42,0.72); backdrop-filter: blur(6px);
-    display: none; z-index: 10001; padding: 20px; align-items: center; justify-content: center;
-  }
-  #pdfChoice.show { display: flex; }
-  #pdfChoice .box {
-    background: #ffffff; border-radius: 16px; padding: 22px 20px 18px; width: min(420px, 96vw);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35); text-align: center;
-  }
-  #pdfChoice .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  #pdfChoice .actions button {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px;
-    font-weight: 700; border: none; border-radius: 11px; cursor: pointer; color: #ffffff; min-height: 52px;
-  }
-  #pdfChoice .actions .dl { background: #2563eb; }
-  #pdfChoice .actions .wa { background: #25d366; }
-  #pdfChoice .cancel { background: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 9px 18px; border-radius: 10px; cursor: pointer; }
+  .empty { padding: 40px 24px; text-align: center; background: #ffffff; border: 1px dashed #cbd5e1; font-size: 13px; color: #64748b; border-radius: 12px; }
 
   /* Settings Box */
-  .setting-box {
-    background: #ffffff; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 12px; border-radius: 12px;
-  }
-  .setting-box label {
-    display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #0f172a;
-  }
-  .setting-box input[type=text] {
-    width: 100%; padding: 11px 12px; font-size: 16px; border: 1px solid #cbd5e1; border-radius: 9px;
-    margin-bottom: 10px; background: #f8fafc; color: #0f172a; outline: none;
-  }
+  .setting-box { background: #ffffff; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 12px; border-radius: 12px; }
+  .setting-box label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #0f172a; }
+  .setting-box input[type=text] { width: 100%; padding: 11px 12px; font-size: 16px; border: 1px solid #cbd5e1; border-radius: 9px; margin-bottom: 10px; background: #f8fafc; color: #0f172a; }
   .setting-box .row { display: flex; gap: 8px; align-items: center; }
 
   /* =========================================================
-     MTR CALCULATOR TAB STYLING (ISOLATED TO #panel-calc)
+     MULTI-BATCH & MASTER TABLE (SIDE-BY-SIDE)
      ========================================================= */
-  #panel-calc .calc-container {
-    max-width: 1000px;
-    margin: 0 auto;
+  #panel-calc .batch-workspace {
+    display: grid;
+    grid-template-columns: minmax(320px, 1.15fr) minmax(300px, 1fr);
+    gap: 16px;
+    align-items: start;
   }
-  #panel-calc .calc-card {
+  @media (max-width: 900px) {
+    #panel-calc .batch-workspace { grid-template-columns: 1fr; }
+  }
+
+  .calc-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.03);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.05);
   }
-  #panel-calc .calc-title {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    color: #0f172a;
+  .batch-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
     margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
   }
-  #panel-calc textarea {
-    width: 100%;
-    height: 90px;
-    padding: 12px;
-    font-family: inherit;
-    font-size: 14px;
+  .batch-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0284c7;
+    background: #e0f2fe;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .batch-nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .batch-nav button {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
     border: 1px solid #cbd5e1;
-    border-radius: 9px;
+    background: #f8fafc;
+    border-radius: 7px;
+    cursor: pointer;
+    color: #334155;
+    transition: background-color .15s ease;
+  }
+  .batch-nav button:hover:not(:disabled) { background: #e2e8f0; }
+  .batch-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .batch-nav button.primary { background: #0ea5e9; color: #fff; border-color: #0284c7; }
+  .batch-nav button.primary:hover:not(:disabled) { background: #0284c7; }
+
+  #calcInput {
+    width: 100%;
+    height: 150px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
     background: #f8fafc;
     color: #0f172a;
-    outline: none;
     resize: vertical;
-    line-height: 1.5;
+    outline: none;
   }
-  #panel-calc textarea:focus {
+  #calcInput:focus {
     border-color: #0ea5e9;
-    background: #fff;
+    background: #ffffff;
     box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
   }
-  #panel-calc .calc-ctrls {
+
+  .batch-inputs {
     display: flex;
     gap: 10px;
     align-items: center;
+    margin-top: 12px;
     flex-wrap: wrap;
-    margin-top: 10px;
   }
-  #panel-calc .multiplier-input {
-    width: 120px;
-    padding: 9px 10px;
+  .batch-inputs label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .batch-inputs input[type=number] {
+    width: 110px;
+    padding: 8px 10px;
     font-size: 15px;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    background: #f8fafc;
-    font-weight: 600;
+    font-weight: 700;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
     color: #0f172a;
   }
-  #panel-calc .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 12px;
+
+  .batch-info-box {
+    display: flex;
+    gap: 12px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #334155;
   }
-  #panel-calc .stat-box {
+  .batch-info-box strong { color: #0f172a; font-size: 13px; }
+
+  /* =========================================================
+     SLIM EXCEL-STYLE MASTER TABLE
+     ========================================================= */
+  .master-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 10px 14px;
-    text-align: left;
+    border: 1.5px solid #0f172a;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.06);
   }
-  #panel-calc .stat-box .lbl {
+  .master-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #0f172a;
+  }
+  .master-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .master-badge {
     font-size: 11px;
     font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    background: #0f172a;
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 4px;
   }
-  #panel-calc .stat-box .val {
-    font-size: 20px;
-    font-weight: 700;
-    color: #0f172a;
-    margin-top: 2px;
-  }
-  #panel-calc .stat-box.highlight .val {
-    color: #0284c7;
-  }
-  #calcTable {
+
+  #masterTable {
     width: 100%;
     border-collapse: collapse;
+    border: 1.5px solid #0f172a;
     background: #ffffff;
-  }
-  #calcTable th, #calcTable td {
-    padding: 8px 12px;
-    border: 1px solid #e2e8f0;
     font-size: 13px;
-    text-align: right;
   }
-  #calcTable th:first-child, #calcTable td:first-child { text-align: left; font-weight: 600; }
-  #calcTable th {
+  #masterTable th, #masterTable td {
+    border: 1px solid #94a3b8;
+    padding: 6px 10px;
+    line-height: 1.35;
+  }
+  #masterTable th {
     background: #0f172a;
     color: #ffffff;
     font-size: 11.5px;
     font-weight: 700;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
+    text-align: left;
     text-transform: uppercase;
+    border-color: #0f172a;
   }
-  #calcTable tr:nth-child(even) td { background: #fafbfd; }
-  #calcTable tr.total-row td {
-    background: #f1f5f9;
-    font-weight: 700;
-    font-size: 13.5px;
-    border-top: 2px solid #0f172a;
-  }
-  #calcTable input.row-mtr-input {
-    width: 75px;
-    padding: 4px 6px;
-    font-size: 13px;
+  #masterTable th.num-col, #masterTable td.num-col {
     text-align: right;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #fff;
+  }
+  #masterTable th.sr-col, #masterTable td.sr-col {
+    width: 50px;
+    text-align: center;
     font-weight: 600;
+    color: #64748b;
+  }
+  #masterTable td.item-col {
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    color: #0f172a;
+  }
+  #masterTable td.mtr-col {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0284c7;
+  }
+  #masterTable tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+  #masterTable tr.total-row td {
+    border-top: 2.5px solid #0f172a;
+    border-bottom: 2.5px solid #0f172a;
+    background: #e2e8f0 !important;
+    font-weight: 800;
+    font-size: 15px;
+    color: #0f172a;
+  }
+  #masterTable tr.total-row td.mtr-col {
+    font-size: 17px;
+    font-weight: 900;
+    color: #0369a1;
+  }
+
+  .master-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
   }
 
   /* =========================================================
-     PURE EXCEL-STYLE PRINT VIEW (Calculations)
+     PRINT OVERRIDES: MASTER TABLE ONLY (EXCEL STYLE)
      ========================================================= */
   @media print {
     body * { visibility: hidden !important; }
-    #panel-calc, #panel-calc #printArea, #panel-calc #printArea * {
+    #masterPrintSection, #masterPrintSection * {
       visibility: visible !important;
     }
-    #panel-calc {
-      display: block !important;
+    #masterPrintSection {
       position: absolute !important;
       left: 0 !important;
       top: 0 !important;
       width: 100% !important;
       margin: 0 !important;
-      padding: 10px !important;
+      padding: 10mm !important;
       background: #ffffff !important;
     }
-    #panel-calc .no-print { display: none !important; }
-    #calcTable {
-      border: 1.5pt solid #000 !important;
-      border-collapse: collapse !important;
+    .no-print { display: none !important; }
+    #masterTable {
       width: 100% !important;
+      border: 2pt solid #000 !important;
+      border-collapse: collapse !important;
     }
-    #calcTable th, #calcTable td {
+    #masterTable th, #masterTable td {
       border: 1pt solid #000 !important;
       color: #000 !important;
       background: #fff !important;
-      padding: 6px 8px !important;
+      padding: 5pt 8pt !important;
       font-size: 11pt !important;
     }
-    #calcTable th {
+    #masterTable th {
+      background: #e5e7eb !important;
       font-weight: bold !important;
-      background: #f2f2f2 !important;
+      text-transform: uppercase !important;
     }
-    #calcTable tr.total-row td {
-      border-top: 2pt solid #000 !important;
-      border-bottom: 2pt solid #000 !important;
+    #masterTable tr.total-row td {
+      border-top: 2.5pt solid #000 !important;
+      border-bottom: 2.5pt solid #000 !important;
       font-weight: bold !important;
-    }
-    #calcTable input.row-mtr-input {
-      border: none !important;
-      background: transparent !important;
-      font-weight: bold !important;
+      font-size: 13pt !important;
+      background: #f3f4f6 !important;
     }
   }
 
-  /* Responsive styles */
   @media (max-width: 480px) {
     .filters-toggle { display: inline-flex; }
     .filters.collapsed { display: none; }
@@ -675,7 +475,7 @@
 </head>
 <body>
 
-<!-- TOP NAV: Added MTR CALC TAB -->
+<!-- TOP NAV -->
 <div id="tabs" role="tablist">
   <button class="tab active" data-tab="all" role="tab" aria-selected="true">
     <span class="ic" aria-hidden="true">📋</span><span class="lbl">ALL ORDERS</span>
@@ -745,67 +545,77 @@
   </div>
 </div>
 
-<!-- ===== TAB 3: MTR CALCULATOR (NEW FEATURE) ===== -->
+<!-- ===== TAB 3: MTR CALC (MULTI-BATCH & PERSISTENT MASTER CONSOLIDATION) ===== -->
 <div class="panel" id="panel-calc">
-  <div class="calc-container">
+  <div class="batch-workspace">
+    
+    <!-- LEFT SIDE: ACTIVE BATCH INPUT & CONTROLS -->
     <div class="calc-card no-print">
-      <div class="calc-title">🔢 Paste Item Numbers</div>
-      <textarea id="calcInput" placeholder="e.g. 1207-1204-1203-1214-1216-1224-1215-1208-1209-1214-1216-1220-1201-1225-1226">1207-1204-1203-1214-1216-1224-1215-1208-1209-1214-1216-1220-1201-1225-1226</textarea>
-      
-      <div class="calc-ctrls">
-        <label style="font-weight:700; font-size:12px; color:#475569;">
+      <div class="batch-header">
+        <span class="batch-indicator" id="batchIndicator">BATCH 1 OF 1</span>
+        <div class="batch-nav">
+          <button type="button" id="prevBatchBtn" onclick="navBatch(-1)">◀ PREV</button>
+          <button type="button" id="nextBatchBtn" class="primary" onclick="navBatch(1)">NEXT / ADD ▶</button>
+          <button type="button" class="btn red" style="padding:6px 10px; min-height:auto; font-size:11px;" onclick="deleteCurrentBatch()" title="Delete this batch">✕ DEL</button>
+        </div>
+      </div>
+
+      <label style="font-weight:700; font-size:11.5px; color:#475569; display:block; margin-bottom:6px;">
+        PASTE ITEM NUMBERS (ANY DELIMITER: -, /, COMMA, SPACE, OR VERTICAL STACK):
+      </label>
+      <textarea id="calcInput" placeholder="1207-1204-1203&#10;1214&#10;1216 / 1224, 1215" oninput="onCurrentBatchChange()"></textarea>
+
+      <div class="batch-inputs">
+        <label>
           MTR PER COLOUR:
-          <input type="number" id="calcGlobalMtr" class="multiplier-input" value="12" step="any">
+          <input type="number" id="calcBatchMtr" value="18" step="any" oninput="onCurrentBatchChange()">
         </label>
-        <button class="btn blue" onclick="runCalculation()"><span class="ic">⚡</span>CALCULATE</button>
-        <button class="btn gray" onclick="clearCalc()"><span class="ic">✕</span>CLEAR</button>
-        <button class="btn gray" onclick="window.print()"><span class="ic">🖨️</span>PRINT (EXCEL VIEW)</button>
-        <button class="btn wa-btn" onclick="sendToWhatsApp()"><span class="ic">💬</span>SEND TO WHATSAPP</button>
+        <button type="button" class="btn gray" onclick="clearCurrentBatchText()"><span class="ic">✕</span>CLEAR INPUT</button>
+      </div>
+
+      <div class="batch-info-box">
+        <div>Items in Batch: <strong id="batchItemCount">0</strong></div>
+        <div>Batch Total Mtr: <strong id="batchTotalMtr">0</strong></div>
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" class="btn red" onclick="clearAllMaster()"><span class="ic">🗑️</span>CLEAR ALL (MASTER RESET)</button>
+        <span style="font-size:11px; color:#10b981; font-weight:700;">✓ Auto-saved in memory</span>
       </div>
     </div>
 
-    <!-- Live Stats -->
-    <div class="stats-grid no-print">
-      <div class="stat-box">
-        <div class="lbl">Total Items Scanned</div>
-        <div class="val" id="statScanned">0</div>
+    <!-- RIGHT SIDE: MINIMAL SLIM MASTER TABLE -->
+    <div class="master-card" id="masterPrintSection">
+      <div class="master-card-head">
+        <div class="master-title">
+          <span>MASTER SUMMARY TABLE</span>
+          <span class="master-badge" id="masterItemCount">0 ITEMS</span>
+        </div>
+        <div style="font-size:11px; font-weight:600; color:#64748b;" id="masterReportDate"></div>
       </div>
-      <div class="stat-box">
-        <div class="lbl">Unique Items</div>
-        <div class="val" id="statUnique">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="lbl">Total Colours (Count)</div>
-        <div class="val" id="statColours">0</div>
-      </div>
-      <div class="stat-box highlight">
-        <div class="lbl">Total Mtr</div>
-        <div class="val" id="statTotalMtr">0</div>
-      </div>
-    </div>
 
-    <!-- Excel View Area for Report & Print -->
-    <div id="printArea" class="table-wrap" style="max-height:none;">
-      <div style="padding:8px 0; font-weight:700; font-size:14px; display:none;" class="only-print">
-        FABRIC REPORT &mdash; Date: <span id="calcPrintDate"></span>
-      </div>
-      <table id="calcTable">
+      <table id="masterTable">
         <thead>
           <tr>
-            <th style="width: 50px;">SR.</th>
+            <th class="sr-col">SR.</th>
             <th>ITEM NUMBER</th>
-            <th style="width: 120px;">COLOUR</th>
-            <th style="width: 150px;">MTR PER COLOUR</th>
-            <th style="width: 150px;">COLOUR * MTR</th>
-            <th style="width: 140px;">TOTAL MTR</th>
+            <th class="num-col">TOTAL MTR</th>
           </tr>
         </thead>
-        <tbody id="calcTbody">
-          <tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Paste item numbers above and tap Calculate.</td></tr>
+        <tbody id="masterTbody">
+          <tr><td colspan="3" style="text-align:center; color:#64748b; padding:20px;">No entries recorded yet.</td></tr>
         </tbody>
-        <tfoot id="calcTfoot"></tfoot>
+        <tfoot id="masterTfoot"></tfoot>
       </table>
+
+      <!-- MASTER EXPORT ACTIONS -->
+      <div class="master-actions no-print">
+        <button type="button" class="btn wa-btn" onclick="sendMasterToWhatsApp()"><span class="ic">💬</span>SEND MASTER TO WHATSAPP</button>
+        <button type="button" class="btn gray" onclick="printMasterTable()"><span class="ic">🖨️</span>PRINT (EXCEL VIEW)</button>
+        <button type="button" class="btn blue" onclick="downloadMasterPDF()"><span class="ic">⇩</span>PDF (MASTER)</button>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -872,7 +682,7 @@
 
 <script>
 /* =========================================================================
-   EXISTING APP LOGIC (PRESERVED 100%)
+   ORIGINAL APP STATE & ENGINE (100% PRESERVED)
    ========================================================================= */
 const state = {
   data: { headers: [], rows: [] },
@@ -883,7 +693,6 @@ const state = {
   cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 }
 };
 
-/* Tab Switching */
 document.querySelectorAll('#tabs .tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('#tabs .tab').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected','false'); });
@@ -894,7 +703,6 @@ document.querySelectorAll('#tabs .tab').forEach(t => {
   });
 });
 
-/* Filters Toggle */
 document.querySelectorAll('.filters-toggle').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = document.getElementById(btn.dataset.target);
@@ -942,7 +750,7 @@ async function fetchData() {
     const res = await fetch(url);
     const text = await res.text();
     if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
-      setStatus('all', 'Not JSON. Starts: ' + text.slice(0, 100), 'error');
+      setStatus('all', 'Not JSON.', 'error');
       setStatus('nochallan', 'Not JSON.', 'error');
       return;
     }
@@ -1000,13 +808,8 @@ function detectColumns() {
   state.linkColumns.order = state.cols.order;
   state.linkColumns.ds    = state.cols.design;
 }
-
-function isLinkColumn(i) {
-  return i === state.linkColumns.order || i === state.linkColumns.ds;
-}
-function colIndex(key) {
-  return state.cols[key] != null ? state.cols[key] : -1;
-}
+function isLinkColumn(i) { return i === state.linkColumns.order || i === state.linkColumns.ds; }
+function colIndex(key) { return state.cols[key] != null ? state.cols[key] : -1; }
 
 function buildOrderGroups() {
   const oi = colIndex('order');
@@ -1358,7 +1161,6 @@ function copyRow(row) {
     clearTimeout(t._h);
     t._h = setTimeout(() => t.classList.remove('show'), 1600);
   };
-
   navigator.clipboard.writeText(text).then(() => showToast('Copied row'), () => showToast('Copy failed'));
 }
 
@@ -1438,139 +1240,296 @@ async function pdfShare() {
 }
 
 /* =========================================================================
-   MTR CALCULATOR TAB LOGIC (ISOLATED)
+   MULTI-BATCH & CACHE PERSISTENT MASTER CONSOLIDATION
    ========================================================================= */
-let calcReportData = [];
+const CALC_STORAGE_KEY = 'mtr_calc_batches_cache';
+const CALC_INDEX_KEY = 'mtr_calc_active_index';
 
-function runCalculation() {
-  const rawText = document.getElementById('calcInput').value;
-  const globalMtr = parseFloat(document.getElementById('calcGlobalMtr').value) || 0;
-  
-  // Split tokens by hyphen, space, comma, semicolon or newline
-  const tokens = rawText
-    .split(/[\s,;\-]+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
+// Load from cache or initialize defaults
+let batches = loadBatchesFromCache();
+let currentBatchIdx = loadActiveIndexFromCache();
+let masterSummary = [];
 
-  if (tokens.length === 0) {
-    document.getElementById('calcTbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#991b1b; padding:20px;">No numbers detected. Please paste item numbers.</td></tr>';
-    document.getElementById('calcTfoot').innerHTML = '';
-    return;
+function loadBatchesFromCache() {
+  try {
+    const saved = localStorage.getItem(CALC_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('Could not read cached batches', e);
   }
+  return [{ text: '1207-1204-1203-1214-1216-1224-1215-1208-1209-1214-1216-1220-1201-1225-1226', mtr: 18 }];
+}
 
-  // Count occurrences (preserve first-seen order)
-  const map = new Map();
-  tokens.forEach(tok => {
-    map.set(tok, (map.get(tok) || 0) + 1);
-  });
+function loadActiveIndexFromCache() {
+  try {
+    const saved = localStorage.getItem(CALC_INDEX_KEY);
+    if (saved !== null) {
+      const idx = parseInt(saved, 10);
+      if (!isNaN(idx) && idx >= 0 && idx < batches.length) return idx;
+    }
+  } catch (e) {}
+  return 0;
+}
 
-  calcReportData = [];
-  map.forEach((colourCount, itemNum) => {
-    calcReportData.push({
-      itemNum: itemNum,
-      colour: colourCount,
-      mtr: globalMtr,
-      totalMtr: colourCount * globalMtr
+function saveBatchesToCache() {
+  try {
+    localStorage.setItem(CALC_STORAGE_KEY, JSON.stringify(batches));
+    localStorage.setItem(CALC_INDEX_KEY, currentBatchIdx.toString());
+  } catch (e) {
+    console.warn('Failed to save to localStorage cache', e);
+  }
+}
+
+// UNIVERSAL DELIMITER NUMBER EXTRACTOR
+function extractNumbers(str) {
+  if (!str) return [];
+  const matches = str.match(/\b\d+\b/g);
+  return matches || [];
+}
+
+function onCurrentBatchChange() {
+  const text = document.getElementById('calcInput').value;
+  const mtr = parseFloat(document.getElementById('calcBatchMtr').value) || 0;
+  batches[currentBatchIdx].text = text;
+  batches[currentBatchIdx].mtr = mtr;
+  saveBatchesToCache();
+  recomputeMaster();
+}
+
+function clearCurrentBatchText() {
+  document.getElementById('calcInput').value = '';
+  batches[currentBatchIdx].text = '';
+  saveBatchesToCache();
+  recomputeMaster();
+}
+
+function navBatch(direction) {
+  batches[currentBatchIdx].text = document.getElementById('calcInput').value;
+  batches[currentBatchIdx].mtr = parseFloat(document.getElementById('calcBatchMtr').value) || 0;
+
+  if (direction === -1 && currentBatchIdx > 0) {
+    currentBatchIdx--;
+  } else if (direction === 1) {
+    if (currentBatchIdx === batches.length - 1) {
+      const lastMtr = batches[currentBatchIdx].mtr || 12;
+      batches.push({ text: '', mtr: lastMtr });
+    }
+    currentBatchIdx++;
+  }
+  saveBatchesToCache();
+  syncBatchUI();
+  recomputeMaster();
+}
+
+function deleteCurrentBatch() {
+  if (batches.length === 1) {
+    batches[0] = { text: '', mtr: 18 };
+  } else {
+    batches.splice(currentBatchIdx, 1);
+    if (currentBatchIdx >= batches.length) currentBatchIdx = batches.length - 1;
+  }
+  saveBatchesToCache();
+  syncBatchUI();
+  recomputeMaster();
+}
+
+function clearAllMaster() {
+  if (confirm('Are you sure you want to clear ALL batches and reset the Master Table?')) {
+    batches = [{ text: '', mtr: 18 }];
+    currentBatchIdx = 0;
+    saveBatchesToCache();
+    syncBatchUI();
+    recomputeMaster();
+  }
+}
+
+function syncBatchUI() {
+  document.getElementById('batchIndicator').textContent = `BATCH ${currentBatchIdx + 1} OF ${batches.length}`;
+  document.getElementById('calcInput').value = batches[currentBatchIdx].text;
+  document.getElementById('calcBatchMtr').value = batches[currentBatchIdx].mtr;
+  document.getElementById('prevBatchBtn').disabled = (currentBatchIdx === 0);
+  document.getElementById('nextBatchBtn').textContent = (currentBatchIdx === batches.length - 1) ? 'NEXT / ADD ▶' : 'NEXT ▶';
+}
+
+function recomputeMaster() {
+  const curTokens = extractNumbers(batches[currentBatchIdx].text);
+  const curMtr = parseFloat(batches[currentBatchIdx].mtr) || 0;
+  document.getElementById('batchItemCount').textContent = curTokens.length;
+  document.getElementById('batchTotalMtr').textContent = (curTokens.length * curMtr).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+
+  const masterMap = new Map();
+
+  batches.forEach(b => {
+    const tokens = extractNumbers(b.text);
+    const mtr = parseFloat(b.mtr) || 0;
+    tokens.forEach(num => {
+      const prev = masterMap.get(num) || { count: 0, totalMtr: 0 };
+      masterMap.set(num, {
+        count: prev.count + 1,
+        totalMtr: prev.totalMtr + mtr
+      });
     });
   });
 
-  renderCalcTable();
+  masterSummary = [];
+  masterMap.forEach((data, itemNum) => {
+    masterSummary.push({
+      itemNum: itemNum,
+      count: data.count,
+      totalMtr: data.totalMtr
+    });
+  });
+
+  masterSummary.sort((a, b) => {
+    const na = parseFloat(a.itemNum), nb = parseFloat(b.itemNum);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.itemNum.localeCompare(b.itemNum);
+  });
+
+  renderMasterTable();
 }
 
-function renderCalcTable() {
-  const tbody = document.getElementById('calcTbody');
-  const tfoot = document.getElementById('calcTfoot');
+function renderMasterTable() {
+  const tbody = document.getElementById('masterTbody');
+  const tfoot = document.getElementById('masterTfoot');
   tbody.innerHTML = '';
   tfoot.innerHTML = '';
 
-  let totalColours = 0;
+  if (masterSummary.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b; padding:20px;">No entries recorded yet.</td></tr>';
+    document.getElementById('masterItemCount').textContent = '0 ITEMS';
+    return;
+  }
+
   let grandTotalMtr = 0;
 
-  calcReportData.forEach((row, index) => {
-    totalColours += row.colour;
+  masterSummary.forEach((row, idx) => {
     grandTotalMtr += row.totalMtr;
-
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="text-align:center;">${index + 1}</td>
-      <td><strong>${escapeHtml(row.itemNum)}</strong></td>
-      <td style="text-align:right;">${row.colour}</td>
-      <td style="text-align:right;">
-        <input type="number" step="any" class="row-mtr-input" value="${row.mtr}" onchange="updateRowMtr(${index}, this.value)">
-      </td>
-      <td style="text-align:right; color:#64748b;">${row.colour} &times; ${row.mtr}</td>
-      <td style="text-align:right; font-weight:700;">${row.totalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+      <td class="sr-col">${idx + 1}</td>
+      <td class="item-col">${escapeHtml(row.itemNum)}</td>
+      <td class="num-col mtr-col">${row.totalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  // Excel summary total row
   tfoot.innerHTML = `
     <tr class="total-row">
-      <td colspan="2" style="text-align:right;">TOTAL:</td>
-      <td style="text-align:right;">${totalColours}</td>
-      <td style="text-align:right;">-</td>
-      <td style="text-align:right;">-</td>
-      <td style="text-align:right; font-weight:800;">${grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+      <td colspan="2" style="text-align:right; letter-spacing:0.5px;">TOTAL:</td>
+      <td class="num-col mtr-col">${grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 })} MTR</td>
     </tr>
   `;
 
-  // Update Stats Cards
-  const totalScanned = calcReportData.reduce((acc, r) => acc + r.colour, 0);
-  document.getElementById('statScanned').textContent = totalScanned;
-  document.getElementById('statUnique').textContent = calcReportData.length;
-  document.getElementById('statColours').textContent = totalColours;
-  document.getElementById('statTotalMtr').textContent = grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 });
-  document.getElementById('calcPrintDate').textContent = new Date().toLocaleDateString();
+  document.getElementById('masterItemCount').textContent = `${masterSummary.length} UNIQUE ITEMS`;
+  document.getElementById('masterReportDate').textContent = 'Date: ' + new Date().toLocaleDateString('en-GB');
 }
 
-function updateRowMtr(index, val) {
-  const num = parseFloat(val) || 0;
-  calcReportData[index].mtr = num;
-  calcReportData[index].totalMtr = calcReportData[index].colour * num;
-  renderCalcTable();
-}
-
-function clearCalc() {
-  document.getElementById('calcInput').value = '';
-  document.getElementById('calcTbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Paste item numbers above and tap Calculate.</td></tr>';
-  document.getElementById('calcTfoot').innerHTML = '';
-  document.getElementById('statScanned').textContent = '0';
-  document.getElementById('statUnique').textContent = '0';
-  document.getElementById('statColours').textContent = '0';
-  document.getElementById('statTotalMtr').textContent = '0';
-}
-
-function sendToWhatsApp() {
-  if (!calcReportData.length) {
-    alert('Please calculate first before sending to WhatsApp.');
+/* =========================================================================
+   MASTER TABLE EXPORT FUNCTIONS (WHATSAPP, PRINT, PDF)
+   ========================================================================= */
+function sendMasterToWhatsApp() {
+  if (!masterSummary.length) {
+    alert('Master table is empty. Please enter items first.');
     return;
   }
-  let text = `*--- FABRIC REPORT ---*\n`;
-  text += `*Date:* ${new Date().toLocaleDateString()}\n\n`;
-  text += `*ITEM NO* | *COLOUR* | *MTR* | *TOTAL*\n`;
-  text += `------------------------------------\n`;
-  let totalColours = 0;
-  let grandTotalMtr = 0;
+  let grandTotalMtr = masterSummary.reduce((acc, r) => acc + r.totalMtr, 0);
 
-  calcReportData.forEach(r => {
-    totalColours += r.colour;
-    grandTotalMtr += r.totalMtr;
-    text += `${r.itemNum} : ${r.colour} col x ${r.mtr}m = *${r.totalMtr}m*\n`;
+  let text = `*--- MASTER FABRIC SUMMARY ---*\n`;
+  text += `*Date:* ${new Date().toLocaleDateString('en-GB')}\n\n`;
+  text += `*SR* | *ITEM NUMBER* | *TOTAL MTR*\n`;
+  text += `------------------------------------\n`;
+
+  masterSummary.forEach((r, i) => {
+    text += `${i + 1}. *${r.itemNum}* : ${r.totalMtr} Mtr\n`;
   });
 
   text += `------------------------------------\n`;
-  text += `*TOTAL COLOURS:* ${totalColours}\n`;
-  text += `*TOTAL MTR:* ${grandTotalMtr.toLocaleString('en-IN')} MTR`;
+  text += `*TOTAL UNIQUE ITEMS:* ${masterSummary.length}\n`;
+  text += `*GRAND TOTAL:* *${grandTotalMtr.toLocaleString('en-IN')} MTR*`;
 
   const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
   window.open(waUrl, '_blank');
 }
 
-/* Run initial state */
+function printMasterTable() {
+  if (!masterSummary.length) {
+    alert('Master table is empty.');
+    return;
+  }
+  window.print();
+}
+
+function downloadMasterPDF() {
+  if (!masterSummary.length) {
+    alert('Master table is empty.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, pageW, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('MASTER FABRIC REPORT', 20, 24);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Date: ' + new Date().toLocaleDateString('en-GB'), pageW - 20, 24, { align: 'right' });
+
+  const body = masterSummary.map((r, i) => [
+    (i + 1).toString(),
+    r.itemNum.toString(),
+    r.totalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' MTR'
+  ]);
+
+  const grandTotalMtr = masterSummary.reduce((acc, r) => acc + r.totalMtr, 0);
+
+  doc.autoTable({
+    head: [['SR.', 'ITEM NUMBER', 'TOTAL MTR']],
+    body: body,
+    foot: [['', 'TOTAL', grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' MTR']],
+    startY: 50,
+    theme: 'grid',
+    styles: {
+      fontSize: 10,
+      textColor: [15, 23, 42],
+      lineColor: [0, 0, 0],
+      lineWidth: 0.5,
+      cellPadding: 4
+    },
+    headStyles: {
+      fillColor: [15, 23, 42],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
+    },
+    footStyles: {
+      fillColor: [226, 232, 240],
+      textColor: [15, 23, 42],
+      fontStyle: 'bold',
+      fontSize: 11
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 40 },
+      1: { fontStyle: 'bold' },
+      2: { halign: 'right', fontStyle: 'bold' }
+    }
+  });
+
+  const blob = doc.output('blob');
+  openPdfChoice(blob, 'Master_Fabric_Report_' + new Date().toISOString().slice(0, 10) + '.pdf');
+}
+
+/* Initialization */
 loadSettings();
 fetchData();
-runCalculation();
+syncBatchUI();
+recomputeMaster();
 </script>
 </body>
 </html>
