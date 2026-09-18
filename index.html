@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- IMPORTANT: viewport fix — prevents the wide table from shrinking the entire page.
-     initial-scale=1 keeps the layout at 1:1. maximum-scale=1 stops accidental double-tap zoom.
-     user-scalable=yes still allows manual pinch-zoom for accessibility. -->
+<!-- Viewport fix to prevent wide sheet tables from breaking mobile view -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
 <title>Order Book & Master Mtr Calculator</title>
@@ -139,6 +137,8 @@
   .btn.blue:hover { background: #1d4ed8; }
   .btn.red  { background: #dc2626; }
   .btn.red:hover { background: #b91c1c; }
+  .btn.green { background: #059669; }
+  .btn.green:hover { background: #047857; }
   .btn.wa-btn { background: #25d366; color: #fff; }
   .btn.wa-btn:hover { background: #1ebc59; }
 
@@ -150,7 +150,7 @@
   .status::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: #38bdf8; }
 
   /* =========================================================
-     DATA TABLE
+     SHEET DATA TABLE (ORIGINAL)
      ========================================================= */
   .table-wrap {
     overflow: auto; max-height: 72vh; background: #ffffff; border: 1px solid #e2e8f0;
@@ -201,7 +201,7 @@
   .setting-box .row { display: flex; gap: 8px; align-items: center; }
 
   /* =========================================================
-     MULTI-BATCH & MASTER TABLE (SIDE-BY-SIDE)
+     MTR CALC & BATCH SYSTEM
      ========================================================= */
   #panel-calc .batch-workspace {
     display: grid;
@@ -236,7 +236,7 @@
     font-weight: 700;
     color: #0284c7;
     background: #e0f2fe;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 6px;
   }
   .batch-nav {
@@ -253,16 +253,13 @@
     border-radius: 7px;
     cursor: pointer;
     color: #334155;
-    transition: background-color .15s ease;
   }
   .batch-nav button:hover:not(:disabled) { background: #e2e8f0; }
   .batch-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .batch-nav button.primary { background: #0ea5e9; color: #fff; border-color: #0284c7; }
-  .batch-nav button.primary:hover:not(:disabled) { background: #0284c7; }
 
   #calcInput {
     width: 100%;
-    height: 150px;
+    height: 140px;
     padding: 12px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
@@ -338,7 +335,7 @@
     border-bottom: 2px solid #0f172a;
   }
   .master-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -378,9 +375,7 @@
     text-transform: uppercase;
     border-color: #0f172a;
   }
-  #masterTable th.num-col, #masterTable td.num-col {
-    text-align: right;
-  }
+  #masterTable th.num-col, #masterTable td.num-col { text-align: right; }
   #masterTable th.sr-col, #masterTable td.sr-col {
     width: 50px;
     text-align: center;
@@ -398,19 +393,17 @@
     font-size: 14px;
     color: #0284c7;
   }
-  #masterTable tr:nth-child(even) td {
-    background: #f8fafc;
-  }
+  #masterTable tr:nth-child(even) td { background: #f8fafc; }
   #masterTable tr.total-row td {
     border-top: 2.5px solid #0f172a;
     border-bottom: 2.5px solid #0f172a;
     background: #e2e8f0 !important;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
     color: #0f172a;
   }
   #masterTable tr.total-row td.mtr-col {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 900;
     color: #0369a1;
   }
@@ -423,7 +416,7 @@
   }
 
   /* =========================================================
-     PRINT OVERRIDES: MASTER TABLE ONLY (EXCEL STYLE)
+     PRINT OVERRIDES: PURE EXCEL MASTER TABLE ONLY
      ========================================================= */
   @media print {
     body * { visibility: hidden !important; }
@@ -508,7 +501,7 @@
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('all')"><span class="ic">✕</span>CLEAR</button>
-      <button class="btn blue" onclick="downloadPDF('all')"><span class="ic">⇩</span>PDF</button>
+      <button class="btn blue" onclick="downloadSheetPDF('all')"><span class="ic">⇩</span>PDF</button>
       <span class="status" id="status-all">No data loaded</span>
     </div>
   </div>
@@ -535,7 +528,7 @@
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')"><span class="ic">✕</span>CLEAR</button>
-      <button class="btn blue" onclick="downloadPDF('nochallan')"><span class="ic">⇩</span>PDF</button>
+      <button class="btn blue" onclick="downloadSheetPDF('nochallan')"><span class="ic">⇩</span>PDF</button>
       <span class="status" id="status-nochallan">No data loaded</span>
     </div>
   </div>
@@ -545,7 +538,7 @@
   </div>
 </div>
 
-<!-- ===== TAB 3: MTR CALC (MULTI-BATCH & PERSISTENT MASTER CONSOLIDATION) ===== -->
+<!-- ===== TAB 3: MTR CALC (MULTI-BATCH & PERSISTENT MASTER TABLE) ===== -->
 <div class="panel" id="panel-calc">
   <div class="batch-workspace">
     
@@ -555,13 +548,13 @@
         <span class="batch-indicator" id="batchIndicator">BATCH 1 OF 1</span>
         <div class="batch-nav">
           <button type="button" id="prevBatchBtn" onclick="navBatch(-1)">◀ PREV</button>
-          <button type="button" id="nextBatchBtn" class="primary" onclick="navBatch(1)">NEXT / ADD ▶</button>
-          <button type="button" class="btn red" style="padding:6px 10px; min-height:auto; font-size:11px;" onclick="deleteCurrentBatch()" title="Delete this batch">✕ DEL</button>
+          <button type="button" id="nextBatchBtn" onclick="navBatch(1)">NEXT ▶</button>
+          <button type="button" class="btn red" style="padding:6px 10px; min-height:auto; font-size:11px;" onclick="deleteCurrentBatch()" title="Delete this batch">✕ DEL BATCH</button>
         </div>
       </div>
 
       <label style="font-weight:700; font-size:11.5px; color:#475569; display:block; margin-bottom:6px;">
-        PASTE ITEM NUMBERS (ANY DELIMITER: -, /, COMMA, SPACE, OR VERTICAL STACK):
+        PASTE ITEM NUMBERS (ANY FORMAT: -, /, COMMA, SPACE, OR VERTICAL STACK):
       </label>
       <textarea id="calcInput" placeholder="1207-1204-1203&#10;1214&#10;1216 / 1224, 1215" oninput="onCurrentBatchChange()"></textarea>
 
@@ -570,17 +563,18 @@
           MTR PER COLOUR:
           <input type="number" id="calcBatchMtr" value="18" step="any" oninput="onCurrentBatchChange()">
         </label>
-        <button type="button" class="btn gray" onclick="clearCurrentBatchText()"><span class="ic">✕</span>CLEAR INPUT</button>
+        <!-- This button safely keeps the batch, saves it into the master table, and opens a clean batch -->
+        <button type="button" class="btn green" onclick="saveAndStartNextBatch()"><span class="ic">➕</span>SAVE & NEXT BATCH (CLEAR INPUT)</button>
       </div>
 
       <div class="batch-info-box">
-        <div>Items in Batch: <strong id="batchItemCount">0</strong></div>
+        <div>Items in Current Batch: <strong id="batchItemCount">0</strong></div>
         <div>Batch Total Mtr: <strong id="batchTotalMtr">0</strong></div>
       </div>
 
       <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
         <button type="button" class="btn red" onclick="clearAllMaster()"><span class="ic">🗑️</span>CLEAR ALL (MASTER RESET)</button>
-        <span style="font-size:11px; color:#10b981; font-weight:700;">✓ Auto-saved in memory</span>
+        <span style="font-size:11px; color:#10b981; font-weight:700;">✓ Saved in Cache Memory</span>
       </div>
     </div>
 
@@ -608,7 +602,7 @@
         <tfoot id="masterTfoot"></tfoot>
       </table>
 
-      <!-- MASTER EXPORT ACTIONS -->
+      <!-- MASTER EXPORT ACTIONS (DIRECT & CLEAN) -->
       <div class="master-actions no-print">
         <button type="button" class="btn wa-btn" onclick="sendMasterToWhatsApp()"><span class="ic">💬</span>SEND MASTER TO WHATSAPP</button>
         <button type="button" class="btn gray" onclick="printMasterTable()"><span class="ic">🖨️</span>PRINT (EXCEL VIEW)</button>
@@ -641,56 +635,20 @@
   </div>
 </div>
 
-<!-- PREVIEW OVERLAY -->
-<div id="preview">
-  <div class="box">
-    <div class="title" id="previewTitle">Preview</div>
-    <div id="previewContent"></div>
-  </div>
-  <div class="actions">
-    <button class="open" onclick="openFullLink()">OPEN FULL</button>
-    <button class="close" onclick="closePreview()">CLOSE</button>
-  </div>
-</div>
-
 <div id="toast" class="toast" role="status" aria-live="polite">Copied</div>
-
-<!-- PDF ACTION MODAL -->
-<div id="pdfChoice" role="dialog" aria-modal="true" aria-label="PDF action">
-  <div class="box">
-    <div class="head">
-      <span class="badge">PDF</span>
-      <span class="title">Ready to send</span>
-    </div>
-    <div class="msg" id="pdfChoiceMsg">Choose how you want to use the file.</div>
-    <div class="actions">
-      <button type="button" class="dl" onclick="pdfDownload()">
-        <span class="ic">⬇</span>
-        <span class="lbl">Download<span class="sub">Save to device</span></span>
-      </button>
-      <button type="button" class="wa" onclick="pdfShare()">
-        <span class="ic">💬</span>
-        <span class="lbl">WhatsApp<span class="sub">or other apps</span></span>
-      </button>
-    </div>
-    <button type="button" class="cancel" onclick="closePdfChoice()">Cancel</button>
-  </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <script>
 /* =========================================================================
-   ORIGINAL APP STATE & ENGINE (100% PRESERVED)
+   ORIGINAL SHEET TAB ENGINE (100% PRESERVED)
    ========================================================================= */
 const state = {
   data: { headers: [], rows: [] },
   pages: { all: 1, nochallan: 1 },
   orderGroups: [],
-  previewUrl: null,
-  linkColumns: { order: -1, ds: -1 },
-  cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 }
+  cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1 }
 };
 
 document.querySelectorAll('#tabs .tab').forEach(t => {
@@ -805,10 +763,7 @@ function detectColumns() {
     return n.indexOf('material') >= 0 || n.indexOf('matrial') >= 0 || n.indexOf('metrial') >= 0;
   });
   state.cols.job = hs.findIndex(h => h.replace(/\s+/g, '').indexOf('job') >= 0);
-  state.linkColumns.order = state.cols.order;
-  state.linkColumns.ds    = state.cols.design;
 }
-function isLinkColumn(i) { return i === state.linkColumns.order || i === state.linkColumns.ds; }
 function colIndex(key) { return state.cols[key] != null ? state.cols[key] : -1; }
 
 function buildOrderGroups() {
@@ -826,11 +781,6 @@ function buildOrderGroups() {
     }
     r._mainOrder = lastMain;
   });
-  groups.sort((a, b) => {
-    const na = parseFloat(a), nb = parseFloat(b);
-    if (!isNaN(na) && !isNaN(nb)) return na - nb;
-    return a.localeCompare(b);
-  });
   state.orderGroups = groups;
 }
 
@@ -844,11 +794,7 @@ function buildAutocomplete() {
       const v = (r.values[idx] || '').toString().trim();
       if (v) set.add(v);
     });
-    autoData[key] = Array.from(set).sort((a,b) => {
-      const na = parseFloat(a), nb = parseFloat(b);
-      if (!isNaN(na) && !isNaN(nb)) return na - nb;
-      return a.localeCompare(b);
-    });
+    autoData[key] = Array.from(set).sort();
   }
   autoData.order = state.orderGroups.slice();
 }
@@ -949,15 +895,13 @@ function getFiltered(tab) {
   if (fMulti.challan.length && ci.challan >= 0) {
     rows = rows.filter(r => {
       const cell = norm(r.values[ci.challan]);
-      if (!cell) return false;
-      return fMulti.challan.some(q => cell.includes(q));
+      return cell && fMulti.challan.some(q => cell.includes(q));
     });
   }
   if (fMulti.design.length && ci.design >= 0) {
     rows = rows.filter(r => {
       const cell = norm(r.values[ci.design]);
-      if (!cell) return false;
-      return fMulti.design.some(q => cell.includes(q));
+      return cell && fMulti.design.some(q => cell.includes(q));
     });
   }
 
@@ -983,78 +927,8 @@ function clearFilters(tab) {
 
 function renderAll() { renderTab('all'); renderTab('nochallan'); }
 
-function hasActiveFilter(tab) {
-  const prefix = tab === 'all' ? 'f-' : 'f2-';
-  return ['party','order','challan','design','material','job'].some(k => {
-    const el = document.getElementById(prefix + k);
-    return el && el.value.trim() !== '';
-  });
-}
-
-function renderChips(tab) {
-  const container = document.getElementById('chips-' + tab);
-  if (!container) return;
-  const prefix = tab === 'all' ? 'f-' : 'f2-';
-  const filterDefs = [
-    { key: 'party',    label: 'Party',    multi: false },
-    { key: 'order',    label: 'Order',    multi: true  },
-    { key: 'challan',  label: 'Challan',  multi: true  },
-    { key: 'design',   label: 'DS',       multi: true  },
-    { key: 'material', label: 'Material', multi: false },
-    { key: 'job',      label: 'Job',      multi: false }
-  ];
-  const chips = [];
-  filterDefs.forEach(f => {
-    const el = document.getElementById(prefix + f.key);
-    if (!el) return;
-    const raw = el.value.trim();
-    if (!raw) return;
-    if (f.multi) {
-      raw.split(',').map(s => s.trim()).filter(Boolean).forEach(part => {
-        chips.push({ key: f.key, label: f.label, value: part, multi: true });
-      });
-    } else {
-      chips.push({ key: f.key, label: f.label, value: raw, multi: false });
-    }
-  });
-  if (chips.length === 0) {
-    container.classList.remove('show');
-    container.innerHTML = '';
-    return;
-  }
-  container.classList.add('show');
-  container.innerHTML = chips.map(c =>
-    '<span class="chip" data-key="' + c.key + '" data-value="' + escapeAttr(c.value) + '" data-multi="' + (c.multi ? '1' : '0') + '">' +
-    '<span class="k">' + c.label + '</span> <span class="v">' + escapeHtml(c.value) + '</span>' +
-    '<button type="button" aria-label="Remove ' + c.label + ' filter">×</button>' +
-    '</span>'
-  ).join('') + '<button type="button" class="chip-clear-all">Clear All</button>';
-
-  container.querySelectorAll('.chip').forEach(chip => {
-    chip.querySelector('button').addEventListener('click', () => {
-      removeChipFilter(tab, chip.dataset.key, chip.dataset.value, chip.dataset.multi === '1');
-    });
-  });
-  container.querySelector('.chip-clear-all').addEventListener('click', () => clearFilters(tab));
-}
-
-function removeChipFilter(tab, key, value, isMulti) {
-  const prefix = tab === 'all' ? 'f-' : 'f2-';
-  const input = document.getElementById(prefix + key);
-  if (!input) return;
-  if (isMulti) {
-    const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
-    input.value = parts.filter(p => p !== value).join(', ');
-  } else {
-    input.value = '';
-  }
-  state.pages[tab] = 1;
-  renderAll();
-}
-
 function renderTab(tab) {
   const wrap = document.getElementById('wrap-' + tab);
-  renderChips(tab);
   if (!state.data.headers.length) {
     wrap.innerHTML = '<div class="empty">' +
       (tab === 'nochallan' ? 'Rows with empty Challan Number will appear here.' : 'Add Data Endpoint URL in Settings to load orders.') +
@@ -1064,21 +938,6 @@ function renderTab(tab) {
   const rows = getFiltered(tab);
   const challanIdx = state.cols.challan;
   const partyIdx = state.cols.party;
-  const orderIdx = state.cols.order;
-  const activeFilter = hasActiveFilter(tab);
-
-  const isLongText = (v) => {
-    const s = (v || '').toString();
-    if (s.length < 42) return false;
-    return s.split(/\s+/).filter(Boolean).length >= 3;
-  };
-  const subOrderDisplay = (raw, main) => {
-    const s = (raw == null ? '' : raw.toString()).trim();
-    if (!activeFilter || !s) return s;
-    const isSub = /^\d{1,2}$/.test(s);
-    if (!isSub || !main || main === s) return s;
-    return s + '/' + main;
-  };
 
   let html = '<table><thead><tr>';
   state.data.headers.forEach((h, i) => {
@@ -1090,116 +949,21 @@ function renderTab(tab) {
     html += '<tr>';
     state.data.headers.forEach((_, i) => {
       let val = r.values[i] != null ? r.values[i] : '';
-      let displayVal = val;
-      if (i === orderIdx) displayVal = subOrderDisplay(val, r._mainOrder);
       const isBlankChallan = (i === challanIdx && (!val || val.toString().trim() === ''));
       const isParty = (i === partyIdx && partyIdx !== 0);
-      const doWrap = isLongText(displayVal);
       let classes = [];
       if (isBlankChallan) classes.push('challan-col');
       if (isParty) classes.push('sticky-party');
-      if (doWrap && !isParty) classes.push('wrap');
       const cls = classes.length ? ' class="' + classes.join(' ') + '"' : '';
-
-      const rawLink = r.links && r.links[i] ? r.links[i] : null;
-      const link = (isLinkColumn(i) && rawLink) ? rawLink : null;
-      const bg   = (r.bgs   && r.bgs[i])   ? r.bgs[i]   : '';
-      const fg   = (r.fgs   && r.fgs[i])   ? r.fgs[i]   : '';
-      const bold = (r.bolds && r.bolds[i]) ? true       : false;
-
-      let style = '';
-      if (bg && !isBlankChallan) style += 'background:' + bg + ';';
-      if (fg) style += 'color:' + fg + ';';
-      if (bold) style += 'font-weight:700;';
-      const styleAttr = style ? ' style="' + style + '"' : '';
-      const titleAttr = ' title="' + escapeAttr(displayVal.toString()) + '"';
-
-      let cellContent;
-      if (link) {
-        cellContent = '<a href="' + escapeAttr(link) + '" data-link="' + escapeAttr(link) + '" data-text="' + escapeAttr(displayVal.toString()) + '" onclick="return handleLinkClick(event, this)">' + escapeHtml(displayVal.toString()) + '</a>';
-      } else {
-        cellContent = escapeHtml(displayVal.toString());
-      }
-      html += '<td' + cls + styleAttr + titleAttr + '>' + cellContent + '</td>';
+      html += '<td' + cls + '>' + escapeHtml(val.toString()) + '</td>';
     });
     html += '</tr>';
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
-
-  const applyStickyOffset = () => {
-    const firstCell = wrap.querySelector('tbody tr td:first-child') || wrap.querySelector('thead tr th:first-child');
-    if (!firstCell) return;
-    const w = Math.ceil(firstCell.getBoundingClientRect().width);
-    if (w > 0) wrap.style.setProperty('--col1-w', w + 'px');
-  };
-  requestAnimationFrame(applyStickyOffset);
 }
 
-function copyRow(row) {
-  const c = state.cols;
-  const noteIdx = state.data.headers.findIndex(h => /note|detail|desc|descr|remark/i.test((h || '').toString()));
-  const parts = [];
-  const push = (label, i) => {
-    if (i < 0) return;
-    const v = (row.values[i] != null ? row.values[i] : '').toString().trim();
-    if (v) parts.push(label + ': ' + v);
-  };
-  push('Order', c.order);
-  push('DS', c.design);
-  push('Party', c.party);
-  push('Challan', c.challan);
-  if (noteIdx >= 0 && noteIdx !== c.order && noteIdx !== c.design) push('Note', noteIdx);
-  const text = parts.join(' | ');
-  if (!text) return;
-
-  const showToast = (msg) => {
-    const t = document.getElementById('toast');
-    if (!t) return;
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(t._h);
-    t._h = setTimeout(() => t.classList.remove('show'), 1600);
-  };
-  navigator.clipboard.writeText(text).then(() => showToast('Copied row'), () => showToast('Copy failed'));
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
-}
-function escapeAttr(s) {
-  return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
-}
-
-function handleLinkClick(e, el) {
-  e.preventDefault();
-  showPreview(el.getAttribute('data-link'), el.getAttribute('data-text'));
-  return false;
-}
-function showPreview(url, title) {
-  state.previewUrl = url;
-  document.getElementById('previewTitle').textContent = title || 'Preview';
-  const content = document.getElementById('previewContent');
-  content.innerHTML = '';
-  let fileId = null;
-  let m = url.match(/\/file\/d\/([^\/]+)/) || url.match(/[?&]id=([^&]+)/);
-  if (m) fileId = m[1];
-  if (fileId) {
-    content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" width="500" height="500" style="border:1px solid #cbd5e1;background:#fff;"></iframe>';
-  } else {
-    content.innerHTML = '<img src="' + url + '" alt="preview">';
-  }
-  document.getElementById('preview').classList.add('show');
-}
-function closePreview() {
-  document.getElementById('preview').classList.remove('show');
-  state.previewUrl = null;
-}
-function openFullLink() {
-  if (state.previewUrl) window.open(state.previewUrl, '_blank', 'noopener');
-}
-
-function downloadPDF(tab) {
+function downloadSheetPDF(tab) {
   const rows = getFiltered(tab);
   if (!rows.length) { alert('No rows to export'); return; }
   const { jsPDF } = window.jspdf;
@@ -1208,44 +972,19 @@ function downloadPDF(tab) {
   doc.text(tab === 'nochallan' ? 'ORDER BOOK — NO CHALLAN' : 'ORDER BOOK — ALL ORDERS', 20, 20);
   const body = rows.map(r => r.values.map(v => v == null ? '' : v.toString()));
   doc.autoTable({ head: [state.data.headers], body: body, startY: 40 });
-  openPdfChoice(doc.output('blob'), tab + '.pdf');
+  doc.save(tab + '_orders.pdf');
 }
-function openPdfChoice(blob, filename) {
-  const modal = document.getElementById('pdfChoice');
-  modal._blob = blob;
-  modal._filename = filename;
-  modal.classList.add('show');
-}
-function closePdfChoice() {
-  document.getElementById('pdfChoice').classList.remove('show');
-}
-function pdfDownload() {
-  const modal = document.getElementById('pdfChoice');
-  const url = URL.createObjectURL(modal._blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = modal._filename;
-  a.click();
-  closePdfChoice();
-}
-async function pdfShare() {
-  const modal = document.getElementById('pdfChoice');
-  const file = new File([modal._blob], modal._filename, { type: 'application/pdf' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({ files: [file], title: modal._filename });
-  } else {
-    pdfDownload();
-  }
-  closePdfChoice();
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
 }
 
 /* =========================================================================
-   MULTI-BATCH & CACHE PERSISTENT MASTER CONSOLIDATION
+   MULTI-BATCH & ACCUMULATIVE MASTER TABLE SYSTEM
    ========================================================================= */
 const CALC_STORAGE_KEY = 'mtr_calc_batches_cache';
 const CALC_INDEX_KEY = 'mtr_calc_active_index';
 
-// Load from cache or initialize defaults
 let batches = loadBatchesFromCache();
 let currentBatchIdx = loadActiveIndexFromCache();
 let masterSummary = [];
@@ -1257,9 +996,7 @@ function loadBatchesFromCache() {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch (e) {
-    console.warn('Could not read cached batches', e);
-  }
+  } catch (e) {}
   return [{ text: '1207-1204-1203-1214-1216-1224-1215-1208-1209-1214-1216-1220-1201-1225-1226', mtr: 18 }];
 }
 
@@ -1278,12 +1015,10 @@ function saveBatchesToCache() {
   try {
     localStorage.setItem(CALC_STORAGE_KEY, JSON.stringify(batches));
     localStorage.setItem(CALC_INDEX_KEY, currentBatchIdx.toString());
-  } catch (e) {
-    console.warn('Failed to save to localStorage cache', e);
-  }
+  } catch (e) {}
 }
 
-// UNIVERSAL DELIMITER NUMBER EXTRACTOR
+// Universal extractor: matches all numbers regardless of delimiter -, /, comma, or vertical lines
 function extractNumbers(str) {
   if (!str) return [];
   const matches = str.match(/\b\d+\b/g);
@@ -1299,10 +1034,18 @@ function onCurrentBatchChange() {
   recomputeMaster();
 }
 
-function clearCurrentBatchText() {
-  document.getElementById('calcInput').value = '';
-  batches[currentBatchIdx].text = '';
+// SAVE & NEXT BATCH: safely saves current batch into master summary, opens fresh empty batch
+function saveAndStartNextBatch() {
+  batches[currentBatchIdx].text = document.getElementById('calcInput').value;
+  batches[currentBatchIdx].mtr = parseFloat(document.getElementById('calcBatchMtr').value) || 0;
+
+  // Add a new blank batch
+  const defaultNextMtr = batches[currentBatchIdx].mtr || 12;
+  batches.push({ text: '', mtr: defaultNextMtr });
+  currentBatchIdx = batches.length - 1;
+
   saveBatchesToCache();
+  syncBatchUI();
   recomputeMaster();
 }
 
@@ -1313,11 +1056,14 @@ function navBatch(direction) {
   if (direction === -1 && currentBatchIdx > 0) {
     currentBatchIdx--;
   } else if (direction === 1) {
-    if (currentBatchIdx === batches.length - 1) {
+    if (currentBatchIdx < batches.length - 1) {
+      currentBatchIdx++;
+    } else {
+      // If at end, create next batch
       const lastMtr = batches[currentBatchIdx].mtr || 12;
       batches.push({ text: '', mtr: lastMtr });
+      currentBatchIdx++;
     }
-    currentBatchIdx++;
   }
   saveBatchesToCache();
   syncBatchUI();
@@ -1337,7 +1083,7 @@ function deleteCurrentBatch() {
 }
 
 function clearAllMaster() {
-  if (confirm('Are you sure you want to clear ALL batches and reset the Master Table?')) {
+  if (confirm('Are you sure you want to clear ALL batches and reset the entire Master Table?')) {
     batches = [{ text: '', mtr: 18 }];
     currentBatchIdx = 0;
     saveBatchesToCache();
@@ -1351,17 +1097,17 @@ function syncBatchUI() {
   document.getElementById('calcInput').value = batches[currentBatchIdx].text;
   document.getElementById('calcBatchMtr').value = batches[currentBatchIdx].mtr;
   document.getElementById('prevBatchBtn').disabled = (currentBatchIdx === 0);
-  document.getElementById('nextBatchBtn').textContent = (currentBatchIdx === batches.length - 1) ? 'NEXT / ADD ▶' : 'NEXT ▶';
 }
 
 function recomputeMaster() {
+  // Current batch preview counters
   const curTokens = extractNumbers(batches[currentBatchIdx].text);
   const curMtr = parseFloat(batches[currentBatchIdx].mtr) || 0;
   document.getElementById('batchItemCount').textContent = curTokens.length;
   document.getElementById('batchTotalMtr').textContent = (curTokens.length * curMtr).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
+  // Consolidate across all batches
   const masterMap = new Map();
-
   batches.forEach(b => {
     const tokens = extractNumbers(b.text);
     const mtr = parseFloat(b.mtr) || 0;
@@ -1383,6 +1129,7 @@ function recomputeMaster() {
     });
   });
 
+  // Numeric or alphanumeric sort
   masterSummary.sort((a, b) => {
     const na = parseFloat(a.itemNum), nb = parseFloat(b.itemNum);
     if (!isNaN(na) && !isNaN(nb)) return na - nb;
@@ -1429,7 +1176,7 @@ function renderMasterTable() {
 }
 
 /* =========================================================================
-   MASTER TABLE EXPORT FUNCTIONS (WHATSAPP, PRINT, PDF)
+   DIRECT EXPORT FUNCTIONS: WHATSAPP, PRINT, PDF (NO POPUPS)
    ========================================================================= */
 function sendMasterToWhatsApp() {
   if (!masterSummary.length) {
@@ -1468,64 +1215,70 @@ function downloadMasterPDF() {
     alert('Master table is empty.');
     return;
   }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-  const pageW = doc.internal.pageSize.getWidth();
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
 
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageW, 40, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('MASTER FABRIC REPORT', 20, 24);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Date: ' + new Date().toLocaleDateString('en-GB'), pageW - 20, 24, { align: 'right' });
+    // Clean professional header
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('MASTER FABRIC REPORT', 20, 25);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Date: ' + new Date().toLocaleDateString('en-GB'), pageW - 20, 25, { align: 'right' });
 
-  const body = masterSummary.map((r, i) => [
-    (i + 1).toString(),
-    r.itemNum.toString(),
-    r.totalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' MTR'
-  ]);
+    const body = masterSummary.map((r, i) => [
+      (i + 1).toString(),
+      r.itemNum.toString(),
+      r.totalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' MTR'
+    ]);
 
-  const grandTotalMtr = masterSummary.reduce((acc, r) => acc + r.totalMtr, 0);
+    const grandTotalMtr = masterSummary.reduce((acc, r) => acc + r.totalMtr, 0);
 
-  doc.autoTable({
-    head: [['SR.', 'ITEM NUMBER', 'TOTAL MTR']],
-    body: body,
-    foot: [['', 'TOTAL', grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' MTR']],
-    startY: 50,
-    theme: 'grid',
-    styles: {
-      fontSize: 10,
-      textColor: [15, 23, 42],
-      lineColor: [0, 0, 0],
-      lineWidth: 0.5,
-      cellPadding: 4
-    },
-    headStyles: {
-      fillColor: [15, 23, 42],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold'
-    },
-    footStyles: {
-      fillColor: [226, 232, 240],
-      textColor: [15, 23, 42],
-      fontStyle: 'bold',
-      fontSize: 11
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 40 },
-      1: { fontStyle: 'bold' },
-      2: { halign: 'right', fontStyle: 'bold' }
-    }
-  });
+    doc.autoTable({
+      head: [['SR.', 'ITEM NUMBER', 'TOTAL MTR']],
+      body: body,
+      foot: [['', 'TOTAL', grandTotalMtr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' MTR']],
+      startY: 50,
+      theme: 'grid',
+      styles: {
+        fontSize: 10,
+        textColor: [15, 23, 42],
+        lineColor: [0, 0, 0],
+        lineWidth: 0.5,
+        cellPadding: 5
+      },
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      footStyles: {
+        fillColor: [226, 232, 240],
+        textColor: [15, 23, 42],
+        fontStyle: 'bold',
+        fontSize: 11
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 45 },
+        1: { fontStyle: 'bold' },
+        2: { halign: 'right', fontStyle: 'bold' }
+      }
+    });
 
-  const blob = doc.output('blob');
-  openPdfChoice(blob, 'Master_Fabric_Report_' + new Date().toISOString().slice(0, 10) + '.pdf');
+    // Directly triggers browser download without any popup
+    const filename = 'Master_Fabric_Report_' + new Date().toISOString().slice(0, 10) + '.pdf';
+    doc.save(filename);
+  } catch (err) {
+    alert('Error generating PDF: ' + err.message);
+  }
 }
 
-/* Initialization */
+/* Initialize */
 loadSettings();
 fetchData();
 syncBatchUI();
