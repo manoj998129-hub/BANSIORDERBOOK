@@ -862,6 +862,7 @@ function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s =
 
 function getFiltered(tab) {
   const prefix = tab === 'all' ? 'f-' : 'f2-';
+
   const fMulti = {
     order:   parseMulti(document.getElementById(prefix + 'order').value),
     challan: parseMulti(document.getElementById(prefix + 'challan').value),
@@ -879,6 +880,7 @@ function getFiltered(tab) {
   if (tab === 'nochallan' && ci.challan >= 0) {
     rows = rows.filter(r => !r.values[ci.challan] || r.values[ci.challan].toString().trim() === '');
   }
+
   if (fMulti.order.length && ci.order >= 0) {
     const matched = [];
     let currentMain = '';
@@ -891,16 +893,20 @@ function getFiltered(tab) {
     });
     rows = matched;
   }
+
   if (fMulti.challan.length && ci.challan >= 0) {
     rows = rows.filter(r => {
       const cell = norm(r.values[ci.challan]);
-      return cell && fMulti.challan.some(q => cell.includes(q));
+      if (!cell) return false;
+      return fMulti.challan.some(q => cell.includes(q));
     });
   }
+
   if (fMulti.design.length && ci.design >= 0) {
     rows = rows.filter(r => {
       const cell = norm(r.values[ci.design]);
-      return cell && fMulti.design.some(q => cell.includes(q));
+      if (!cell) return false;
+      return fMulti.design.some(q => cell.includes(q));
     });
   }
 
@@ -908,13 +914,13 @@ function getFiltered(tab) {
     if (idx < 0 || !val) return true;
     return norm(r.values[idx]).includes(val);
   };
+
   return rows.filter(r =>
     match(r, ci.party, fSingle.party) &&
     match(r, ci.material, fSingle.material) &&
     match(r, ci.job, fSingle.job)
   );
 }
-
 function clearFilters(tab) {
   const prefix = tab === 'all' ? 'f-' : 'f2-';
   ['party','order','challan','design','material','job'].forEach(k => {
