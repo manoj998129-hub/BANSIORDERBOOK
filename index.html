@@ -877,10 +877,12 @@ function getFiltered(tab) {
   const ci = state.cols;
   let rows = state.data.rows;
 
+  // NO CHALLAN tab: only blank challan rows
   if (tab === 'nochallan' && ci.challan >= 0) {
     rows = rows.filter(r => !r.values[ci.challan] || r.values[ci.challan].toString().trim() === '');
   }
 
+  // ORDER NO — partial match + sub-row grouping (kept as before)
   if (fMulti.order.length && ci.order >= 0) {
     const matched = [];
     let currentMain = '';
@@ -894,27 +896,29 @@ function getFiltered(tab) {
     rows = matched;
   }
 
+  // CHALLAN NO — EXACT match only
   if (fMulti.challan.length && ci.challan >= 0) {
     rows = rows.filter(r => {
       const cell = norm(r.values[ci.challan]);
       if (!cell) return false;
-      return fMulti.challan.some(q => cell.includes(q));
+      return fMulti.challan.some(q => cell === q);
     });
   }
 
+  // DS NO — EXACT match only
   if (fMulti.design.length && ci.design >= 0) {
     rows = rows.filter(r => {
       const cell = norm(r.values[ci.design]);
       if (!cell) return false;
-      return fMulti.design.some(q => cell.includes(q));
+      return fMulti.design.some(q => cell === q);
     });
   }
 
+  // Party / Material / Job — partial text search
   const match = (r, idx, val) => {
     if (idx < 0 || !val) return true;
     return norm(r.values[idx]).includes(val);
   };
-
   return rows.filter(r =>
     match(r, ci.party, fSingle.party) &&
     match(r, ci.material, fSingle.material) &&
@@ -936,13 +940,35 @@ function renderTab(tab) {
   const wrap = document.getElementById('wrap-' + tab);
   if (!state.data.headers.length) {
     wrap.innerHTML = '<div class="empty">' +
-      (tab === 'nochallan' ? 'Rows with empty Challan Number will appear here.' : 'Add Data Endpoint URL in Settings to load orders.') +
+      (tab === 'nochallan'
+        ? 'Rows with empty Challan Number will appear here.'
+        : 'Add Data Endpoint URL in Settings to load orders.') +
       '</div>';
     return;
   }
   const rows = getFiltered(tab);
   const challanIdx = state.cols.challan;
   const partyIdx = state.cols.party;
+  const orderIdx = state.cols.order;
+
+  // Detect if any filter is currently active on this tab
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  const filterKeys = ['party','order','challan','design','material','job'];
+  const anyFilterActive = filterKeys.some(k => {
+    const el = document.getElementById(prefix + k);
+    return el && el.value.trim() !== '';
+  });
+
+  // Helper: display Order No as sub/main when filter is active AND cell is a sub-number
+  const displayOrderValue = (raw, main) => {
+    const s = (raw == null ? '' : raw.toString().trim());
+    if (!anyFilterActive) return s;
+    if (!s) return s;
+    const isSub = /^\d{1,2}$/.test(s);
+    if (!isSub) return s;
+    if (!main || main === s) return s;
+    return s + '/' + main;
+  };
 
   let html = '<table><thead><tr>';
   state.data.headers.forEach((h, i) => {
@@ -954,20 +980,51 @@ function renderTab(tab) {
     html += '<tr>';
     state.data.headers.forEach((_, i) => {
       let val = r.values[i] != null ? r.values[i] : '';
+
+      // Only override display for the ORDER NO column — never touches r.values
+      let displayVal = val;
+      if (i === orderIdx) {
+        displayVal = displayOrderValue(val, r._mainOrder);
+      }
+
       const isBlankChallan = (i === challanIdx && (!val || val.toString().trim() === ''));
       const isParty = (i === partyIdx && partyIdx !== 0);
       let classes = [];
       if (isBlankChallan) classes.push('challan-col');
       if (isParty) classes.push('sticky-party');
       const cls = classes.length ? ' class="' + classes.join(' ') + '"' : '';
-      html += '<td' + cls + '>' + escapeHtml(val.toString()) + '</td>';
+
+      const rawLink = r.links && r.links[i] ? r.links[i] : null;
+      const link = (isLinkColumn(i) && rawLink) ? rawLink : null;
+
+      const bg   = (r.bgs   && r.bgs[i])   ? r.bgs[i]   : '';
+      const fg   = (r.fgs   && r.fgs[i])   ? r.fgs[i]   : '';
+      const bold = (r.bolds && r.bolds[i]) ? true       : false;
+
+      let style = '';
+      if (bg && !isBlankChallan) style += 'background:' + bg + ';';
+      if (fg) style += 'color:' + fg + ';';
+      if (bold) style += 'font-weight:700;';
+      const styleAttr = style ? ' style="' + style + '"' : '';
+
+      let cellContent;
+      if (link) {
+        cellContent = '<a href="' + escapeAttr(link) + '" ' +
+                      'data-link="' + escapeAttr(link) + '" ' +
+                      'data-text="' + escapeAttr(displayVal.toString()) + '" ' +
+                      'onclick="return handleLinkClick(event, this)"' +
+                      (fg ? ' style="color:' + fg + ';"' : '') + '>' +
+                      escapeHtml(displayVal.toString()) + '</a>';
+      } else {
+        cellContent = escapeHtml(displayVal.toString());
+      }
+      html += '<td' + cls + styleAttr + '>' + cellContent + '</td>';
     });
     html += '</tr>';
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
 }
-
 function downloadSheetPDF(tab) {
   const rows = getFiltered(tab);
   if (!rows.length) { alert('No rows to export'); return; }
