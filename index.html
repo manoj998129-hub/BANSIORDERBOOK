@@ -933,11 +933,16 @@ function renderTab(tab) {
    ========================================== */
 
 let displayVal = val.toString();
-const prefix = tab === 'all' ? 'f-' : 'f2-';
+
 /* Only CHALLAN filter changes order display to Main/Sub */
-const challanFilter = parseMulti(
-  document.getElementById(prefix + 'challan').value
-);
+const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
+
+const challanElement =
+  document.getElementById(challanInputId);
+
+const challanFilter = challanElement
+  ? parseMulti(challanElement.value)
+  : [];
 
 if (challanFilter.length && i === orderIdx) {
 
@@ -946,7 +951,7 @@ if (challanFilter.length && i === orderIdx) {
 
   if (mainOrder && subOrder) {
     displayVal = mainOrder + '/' + subOrder;
-  } 
+  }
   else if (mainOrder) {
     displayVal = mainOrder;
   }
