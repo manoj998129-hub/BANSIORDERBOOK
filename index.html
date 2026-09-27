@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -237,6 +238,273 @@
     flex-wrap: wrap;
   }
   .setting-box .msg { font-size: 10px; color: #16a34a; font-weight: 600; margin-left: 6px; }
+  /* ========= CHALLAN PRINT SETTINGS ========= */
+  .challan-type-select {
+    min-width: 155px;
+    flex: 1 1 155px;
+    max-width: 210px;
+    padding: 7px 9px;
+    font-size: 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #f8fafc;
+    color: #0f172a;
+    outline: none;
+  }
+  .challan-type-select:focus { border-color: #0ea5e9; background: #fff; }
+
+  .print-setting-box {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+  }
+  .print-setting-title {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #0f172a;
+  }
+  .print-field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .print-field-control { position: relative; }
+  .print-field-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 4px;
+  }
+  .multi-select {
+    position: relative;
+    width: 100%;
+  }
+  .multi-select-btn {
+    width: 100%;
+    min-height: 34px;
+    padding: 7px 28px 7px 9px;
+    font-size: 11px;
+    text-align: left;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #f8fafc;
+    color: #334155;
+    cursor: pointer;
+    position: relative;
+  }
+  .multi-select-btn::after {
+    content: '▾';
+    position: absolute;
+    right: 9px;
+    top: 7px;
+    color: #334155;
+    font-size: 12px;
+  }
+  .multi-select.open .multi-select-btn {
+    border-color: #0ea5e9;
+    background: #fff;
+  }
+  .multi-select-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #94a3b8;
+    border-radius: 4px;
+    box-shadow: 0 8px 20px rgba(15,23,42,0.18);
+    z-index: 500;
+    padding: 5px;
+  }
+  .multi-select.open .multi-select-menu { display: block; }
+  .multi-select-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 4px 5px 7px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 3px;
+  }
+  .multi-select-actions button {
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 3px 0;
+  }
+  .multi-select-option {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 5px;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .multi-select-option:hover { background: #f1f5f9; }
+  .multi-select-option input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: #2563eb;
+    flex: 0 0 auto;
+  }
+  .print-save-row {
+    margin-top: 9px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .print-save-row .btn { min-width: 150px; }
+  .print-setting-msg {
+    font-size: 10px;
+    color: #16a34a;
+    font-weight: 600;
+  }
+  @media (max-width: 600px) {
+    .print-field-grid { grid-template-columns: 1fr; }
+    .challan-type-select { max-width: none; flex: 1 1 140px; }
+    .toolbar .btn { padding-left: 10px; padding-right: 10px; }
+  }
+
+  /* ========= CHALLAN GENERATOR STEP 1 PREVIEW ========= */
+  #challanStep1 {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.85);
+    display: none;
+    z-index: 10000;
+    padding: 12px;
+    align-items: center;
+    justify-content: center;
+  }
+  #challanStep1.show { display: flex; }
+  #challanStep1 .challan-step-box {
+    width: 100%;
+    max-width: 760px;
+    max-height: 92vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+  .challan-step-title {
+    font-size: 14px; font-weight: 800; color: #0f172a;
+    margin-bottom: 4px;
+  }
+  .challan-step-subtitle {
+    font-size: 10px; color: #64748b; margin-bottom: 10px;
+  }
+  .challan-summary {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    margin-bottom: 10px;
+  }
+  .challan-summary-card {
+    background: #f8fafc; border: 1px solid #cbd5e1;
+    border-radius: 5px; padding: 7px;
+  }
+  .challan-summary-card b { display:block; font-size:10px; color:#64748b; margin-bottom:2px; }
+  .challan-summary-card span { font-size:11px; font-weight:700; color:#0f172a; word-break:break-word; }
+  .challan-result {
+    border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .challan-result-head {
+    background: #0f172a; color:#fff; padding:7px 9px;
+    font-size:11px; font-weight:700;
+    display:flex; justify-content:space-between; gap:8px;
+  }
+  .challan-result-body { padding: 7px; overflow-x:auto; }
+  .challan-result-table { width:100%; border-collapse:collapse; font-size:10px; }
+  .challan-result-table th, .challan-result-table td {
+    border:1px solid #cbd5e1; padding:5px; white-space:nowrap;
+    font-size:10px; vertical-align:top;
+  }
+  .challan-result-table th { background:#e2e8f0; color:#0f172a; position:static; }
+  .challan-link-ok { color:#16a34a; font-weight:700; }
+  .challan-link-missing { color:#dc2626; font-weight:700; }
+  .challan-step-actions {
+    display:flex; gap:7px; justify-content:flex-end; flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .challan-step-actions .btn { min-width:90px; }
+  .batch-generate-box {
+    margin-top:10px; padding:10px; background:#f8fafc; border:1px solid #cbd5e1;
+    border-radius:6px;
+  }
+  .batch-progress-title { font-size:11px; font-weight:800; color:#0f172a; margin-bottom:6px; }
+  .batch-progress-track { width:100%; height:18px; background:#e2e8f0; border-radius:10px; overflow:hidden; border:1px solid #cbd5e1; }
+  .batch-progress-bar { width:0%; height:100%; background:#16a34a; transition:width .25s ease; display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; font-weight:800; }
+  .batch-progress-status { margin-top:6px; font-size:10px; color:#334155; min-height:16px; }
+  .batch-generated-info { margin-top:8px; padding:8px; background:#ecfdf5; border:1px solid #86efac; border-radius:5px; color:#166534; font-size:11px; font-weight:800; }
+  .batch-generated-list { margin-top:5px; font-size:10px; font-weight:600; color:#334155; line-height:1.6; }
+  .batch-generate-btn { width:100%; margin-top:8px; padding:10px 14px; font-size:12px; font-weight:800; }
+  .batch-preview-wrap {
+    display:none; margin-top:10px; padding:10px; background:#fff; border:1px solid #cbd5e1; border-radius:6px;
+  }
+  .batch-preview-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:7px; }
+  .batch-preview-title { font-size:11px; font-weight:800; color:#0f172a; }
+  .batch-preview-counter { font-size:10px; font-weight:800; color:#475569; }
+  .batch-preview-image-box { display:flex; justify-content:center; align-items:center; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:8px; max-height:58vh; overflow:auto; }
+  .batch-preview-image-box img { max-width:100%; max-height:55vh; object-fit:contain; display:block; }
+  .batch-preview-actions { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+  .batch-preview-actions .btn { min-width:105px; }
+  .batch-preview-nav { display:flex; gap:7px; justify-content:center; margin-top:7px; }
+  .batch-preview-nav .btn { min-width:95px; }
+  .batch-preview-all-actions { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:7px; padding-top:7px; border-top:1px solid #e2e8f0; }
+  .batch-preview-all-actions .btn { min-width:125px; }
+
+  /* ========= CHALLAN GENERATOR STEP 2 ========= */
+  #challanStep2 {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.88);
+    display:none; z-index:10001; padding:12px; align-items:center; justify-content:center;
+  }
+  #challanStep2.show { display:flex; }
+  #challanStep2 .challan-step2-box {
+    width:100%; max-width:820px; max-height:94vh; overflow:auto;
+    background:#fff; border-radius:8px; padding:12px; box-shadow:0 12px 30px rgba(0,0,0,.3);
+  }
+  .challan-photo-wrap {
+    display:flex; justify-content:center; align-items:center;
+    background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px;
+    padding:8px; min-height:180px; overflow:auto;
+  }
+  .challan-photo-wrap img {
+    max-width:100%; max-height:62vh; object-fit:contain; display:block;
+    border-radius:4px; background:#fff;
+  }
+  .challan-step2-info {
+    margin:8px 0; padding:7px 9px; background:#f8fafc; border:1px solid #cbd5e1;
+    border-radius:5px; font-size:10px; color:#334155;
+  }
+  .challan-step2-actions { display:flex; gap:7px; justify-content:flex-end; flex-wrap:wrap; margin-top:9px; }
+  .challan-step2-actions .btn { min-width:110px; }
+  .challan-photo-error { color:#dc2626; font-size:11px; font-weight:700; text-align:center; padding:20px; }
+  .challan-generated-wrap { margin-top:10px; }
+  .challan-generated-title { font-size:11px; font-weight:800; color:#0f172a; margin-bottom:6px; }
+  .challan-generated-image-box { display:flex; justify-content:center; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:8px; max-height:70vh; overflow:auto; }
+  .challan-generated-image-box img { max-width:100%; max-height:68vh; object-fit:contain; display:block; }
+  .challan-generated-actions { display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+  .challan-generated-actions .btn { min-width:120px; }
+  .challan-canvas-note { font-size:10px; color:#64748b; margin-top:5px; text-align:center; }
+
+  .challan-load-btn { padding:5px 8px; border:0; border-radius:4px; background:#16a34a; color:#fff; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; margin-left:4px; }
+  @media (max-width:600px) {
+    .challan-summary { grid-template-columns:1fr 1fr; }
+    .challan-step-title { font-size:13px; }
+  }
+
   .empty {
     padding: 24px;
     text-align: center;
@@ -273,6 +541,11 @@
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('all')">CLEAR</button>
       <button class="btn blue" onclick="downloadPDF('all')">PDF</button>
+      <select id="challanType" class="challan-type-select" aria-label="Challan type">
+        <option value="jobwork">JOBWORK CHALLAN</option>
+        <option value="dispatch">DISPATCH CHALLAN</option>
+      </select>
+      <button class="btn green" onclick="generateChallan()">▣ GENERATE</button>
       <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
       <span class="status" id="status-all">No data loaded</span>
     </div>
@@ -362,6 +635,101 @@
       <button class="btn red" onclick="clearOfflineCache()">CLEAR CACHE</button>
     </div>
   </div>
+
+  <div class="print-setting-box">
+    <span class="print-setting-title">4. CHALLAN PRINT INFORMATION SETTING</span>
+    <div class="print-field-grid">
+      <div class="print-field-control">
+        <span class="print-field-label">JOBWORK CHALLAN FIELDS</span>
+        <div class="multi-select" id="jobworkPrintSelect">
+          <button type="button" class="multi-select-btn" onclick="togglePrintDropdown('jobwork')">Select fields</button>
+          <div class="multi-select-menu" id="jobworkPrintMenu"></div>
+        </div>
+      </div>
+
+      <div class="print-field-control">
+        <span class="print-field-label">DISPATCH CHALLAN FIELDS</span>
+        <div class="multi-select" id="dispatchPrintSelect">
+          <button type="button" class="multi-select-btn" onclick="togglePrintDropdown('dispatch')">Select fields</button>
+          <div class="multi-select-menu" id="dispatchPrintMenu"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="print-save-row">
+      <button class="btn green" onclick="saveChallanPrintSettings()">SAVE CHALLAN SETTINGS</button>
+      <span class="print-setting-msg" id="challanPrintMsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHALLAN GENERATOR STEP 1 ===== -->
+<div id="challanStep1">
+  <div class="challan-step-box">
+    <div class="challan-step-title" id="challanStep1Title">Challan Generator — Step 1</div>
+    <div class="challan-step-subtitle">Verify the exact Sheet rows found for the selected Challan No before we connect the Drive image generator.</div>
+    <div class="challan-summary" id="challanStep1Summary"></div>
+    <div id="challanStep1Results"></div>
+    <div class="batch-generate-box" id="batchGenerateBox">
+      <div class="batch-progress-title">GENERATING CHALLANS</div>
+      <div class="batch-progress-track"><div class="batch-progress-bar" id="batchProgressBar">0%</div></div>
+      <div class="batch-progress-status" id="batchProgressStatus">Ready. Click GENERATE ALL CHALLANS.</div>
+      <div class="batch-generated-info" id="batchGeneratedInfo" style="display:none;"></div>
+
+      <div class="batch-preview-wrap" id="batchPreviewWrap">
+        <div class="batch-preview-head">
+          <span class="batch-preview-title" id="batchPreviewTitle">GENERATED CHALLAN PREVIEW</span>
+          <span class="batch-preview-counter" id="batchPreviewCounter">1 / 1</span>
+        </div>
+        <div class="batch-preview-image-box">
+          <img id="batchPreviewImage" alt="Generated challan preview">
+        </div>
+        <div class="batch-preview-nav">
+          <button class="btn blue" id="batchPrevBtn" onclick="showPreviousBatchChallan()">◀ PREVIOUS</button>
+          <button class="btn blue" id="batchNextBtn" onclick="showNextBatchChallan()">NEXT ▶</button>
+        </div>
+        <div class="batch-preview-actions">
+          <button class="btn green" onclick="downloadCurrentBatchChallan()">⬇ DOWNLOAD</button>
+          <button class="btn blue" onclick="createCurrentBatchPDF()">PDF</button>
+          <button class="btn blue" onclick="shareCurrentBatchPDF()">SHARE PDF</button>
+          <button class="btn" style="background:#25D366;color:#fff;" onclick="shareCurrentBatchChallan()">WHATSAPP / SHARE</button>
+        </div>
+        <div class="batch-preview-all-actions">
+          <button class="btn green" onclick="downloadAllBatchChallans()">⬇ DOWNLOAD ALL</button>
+          <button class="btn blue" onclick="createAllBatchPDF()">PDF ALL</button>
+        </div>
+      </div>
+    </div>
+    <div class="challan-step-actions">
+      <button class="btn green batch-generate-btn" id="generateAllChallansBtn" onclick="generateAllChallans()">GENERATE ALL CHALLANS</button>
+      <button class="btn blue" onclick="closeChallanStep1()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHALLAN GENERATOR STEP 2 ===== -->
+<div id="challanStep2">
+  <div class="challan-step2-box">
+    <div class="challan-step-title" id="challanStep2Title">CHALLAN GENERATOR — STEP 2</div>
+    <div class="challan-step-subtitle">Load the original DS photo from the existing Drive link. The original photo is not changed.</div>
+    <div class="challan-step2-info" id="challanStep2Info">Loading…</div>
+    <div class="challan-photo-wrap" id="challanPhotoWrap"><div style="font-size:11px;color:#64748b;">Loading Drive photo…</div></div>
+    <div id="challanGeneratedWrap" class="challan-generated-wrap" style="display:none;">
+      <div class="challan-generated-title">FINAL CHALLAN IMAGE</div>
+      <div class="challan-generated-image-box">
+        <img id="challanGeneratedImage" alt="Generated challan">
+      </div>
+      <div class="challan-generated-actions">
+        <button class="btn green" onclick="downloadGeneratedChallan()">⬇ DOWNLOAD IMAGE</button>
+        <button class="btn blue" onclick="createGeneratedChallanPDF()">PDF</button>
+        <button class="btn" style="background:#25D366;color:#fff;" onclick="shareGeneratedChallan()">WHATSAPP / SHARE</button>
+      </div>
+    </div>
+    <div class="challan-step2-actions">
+      <button class="btn green" id="createFinalChallanBtn" style="display:none;" onclick="createFinalChallanImage()">CREATE FINAL IMAGE</button>
+      <button class="btn blue" onclick="closeChallanStep2()">CLOSE</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===== PREVIEW OVERLAY ===== -->
@@ -401,7 +769,13 @@ const state = {
   cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 },
   uploadFile: null,
   uploadDataUrl: null,
-  recentUploads: []
+  recentUploads: [],
+  challanPrint: {
+    jobwork: [],
+    dispatch: []
+  },
+  batchChallans: [],
+  batchPreviewIndex: 0
 };
 
 /* ========= TABS ========= */
@@ -468,6 +842,1069 @@ function clearOfflineCache() {
   alert('Cache cleared.');
 }
 
+/* ========= CHALLAN PRINT INFORMATION SETTINGS ========= */
+function getPrintSettingHeaders() {
+  const live = Array.isArray(state.data.headers) ? state.data.headers : [];
+  const clean = live.map(h => (h == null ? '' : h.toString().trim())).filter(Boolean);
+  if (clean.length) return clean;
+
+  /* Fallback only until Sheet data is loaded. These match the current Order Book headings. */
+  return [
+    'ORDER NO','DATE','PARTY','METERIAL SUPPLIER','JOB WORK PARTI',
+    'CHALLAN NO','MATIRAL','DS NO','DETAIL','FABRIC CODE',
+    'TOTAL SET','MTR PER PIS','TOTAL','NOTE 1','NOTE 2'
+  ];
+}
+
+function getSavedPrintFields(type) {
+  const key = type === 'jobwork' ? 'jobworkPrintColumns' : 'dispatchPrintColumns';
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setPrintFieldSelection(type, fields) {
+  state.challanPrint[type] = Array.from(new Set(fields || []));
+  localStorage.setItem(
+    type === 'jobwork' ? 'jobworkPrintColumns' : 'dispatchPrintColumns',
+    JSON.stringify(state.challanPrint[type])
+  );
+}
+
+function renderPrintFieldSettings() {
+  const headers = getPrintSettingHeaders();
+
+  ['jobwork', 'dispatch'].forEach(type => {
+    const menu = document.getElementById(type + 'PrintMenu');
+    const select = document.getElementById(type + 'PrintSelect');
+    if (!menu || !select) return;
+
+    let selected = getSavedPrintFields(type);
+
+    /* First use: select all current Sheet headings. */
+    if (!selected.length) {
+      selected = headers.slice();
+      state.challanPrint[type] = selected.slice();
+    } else {
+      /* Remove old headings and automatically include newly added Sheet headings. */
+      selected = selected.filter(x => headers.includes(x));
+    }
+
+    const selectedSet = new Set(selected);
+    menu.innerHTML =
+      '<div class="multi-select-actions">' +
+        '<button type="button" onclick="selectAllPrintFields(\'' + type + '\')">SELECT ALL (' + headers.length + ')</button>' +
+        '<button type="button" onclick="clearAllPrintFields(\'' + type + '\')">CLEAR ALL</button>' +
+      '</div>' +
+      headers.map((h, i) => {
+        const id = type + '-print-field-' + i;
+        return '<label class="multi-select-option">' +
+          '<input type="checkbox" id="' + escapeAttr(id) + '" ' +
+          (selectedSet.has(h) ? 'checked ' : '') +
+          'onchange="updatePrintFieldSelection(\'' + type + '\')">' +
+          '<span>' + escapeHtml(h) + '</span>' +
+        '</label>';
+      }).join('');
+
+    updatePrintDropdownLabel(type);
+  });
+}
+
+function updatePrintFieldSelection(type) {
+  const menu = document.getElementById(type + 'PrintMenu');
+  if (!menu) return;
+  const fields = Array.from(menu.querySelectorAll('input[type="checkbox"]'))
+    .filter(cb => cb.checked)
+    .map(cb => cb.parentElement.querySelector('span').textContent);
+  state.challanPrint[type] = fields;
+  updatePrintDropdownLabel(type);
+}
+
+function updatePrintDropdownLabel(type) {
+  const select = document.getElementById(type + 'PrintSelect');
+  if (!select) return;
+  const btn = select.querySelector('.multi-select-btn');
+  const count = (state.challanPrint[type] || []).length;
+  btn.textContent = count ? (count + ' fields selected') : 'No fields selected';
+}
+
+function togglePrintDropdown(type) {
+  const target = document.getElementById(type + 'PrintSelect');
+  if (!target) return;
+
+  document.querySelectorAll('.multi-select.open').forEach(el => {
+    if (el !== target) el.classList.remove('open');
+  });
+  target.classList.toggle('open');
+}
+
+function selectAllPrintFields(type) {
+  const menu = document.getElementById(type + 'PrintMenu');
+  if (!menu) return;
+  menu.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+  updatePrintFieldSelection(type);
+}
+
+function clearAllPrintFields(type) {
+  const menu = document.getElementById(type + 'PrintMenu');
+  if (!menu) return;
+  menu.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+  updatePrintFieldSelection(type);
+}
+
+function saveChallanPrintSettings() {
+  ['jobwork', 'dispatch'].forEach(type => updatePrintFieldSelection(type));
+
+  localStorage.setItem('jobworkPrintColumns',
+    JSON.stringify(state.challanPrint.jobwork || []));
+  localStorage.setItem('dispatchPrintColumns',
+    JSON.stringify(state.challanPrint.dispatch || []));
+
+  const msg = document.getElementById('challanPrintMsg');
+  if (msg) {
+    msg.textContent = 'Saved ✓';
+    setTimeout(() => { msg.textContent = ''; }, 2000);
+  }
+
+  document.querySelectorAll('.multi-select.open').forEach(el => el.classList.remove('open'));
+}
+
+function loadChallanPrintSettings() {
+  state.challanPrint.jobwork = getSavedPrintFields('jobwork');
+  state.challanPrint.dispatch = getSavedPrintFields('dispatch');
+  renderPrintFieldSettings();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.multi-select')) {
+    document.querySelectorAll('.multi-select.open').forEach(el => el.classList.remove('open'));
+  }
+});
+
+/* ========= CHALLAN GENERATE ========= */
+function getSelectedChallanNumbers() {
+  const input = document.getElementById('f-challan');
+  return input ? parseMulti(input.value) : [];
+}
+
+function generateChallan() {
+  const selectedChallans = getSelectedChallanNumbers();
+  const typeEl = document.getElementById('challanType');
+  const type = typeEl ? typeEl.value : 'jobwork';
+
+  /* HARD LIMIT: maximum 5 challans per generation */
+  const uniqueChallans = Array.from(new Set(selectedChallans.map(ch => norm(ch))));
+  if (uniqueChallans.length > 5) {
+    alert('⚠️ MAXIMUM 5 CHALLANS ALLOWED\n\nYou can generate not more than 5 challans at a time.\nPlease select 5 or fewer challans.');
+    return;
+  }
+
+  if (selectedChallans.length > 5) {
+    alert('⚠️ MAXIMUM 5 CHALLANS ALLOWED\n\nYou can generate not more than 5 challans at a time.\nPlease select 5 or fewer challans.');
+    return;
+  }
+
+  if (!selectedChallans.length) {
+    alert('Please enter/select Challan No first. Example: 27,35,42');
+    const input = document.getElementById('f-challan');
+    if (input) input.focus();
+    return;
+  }
+
+  const challanIdx = state.cols.challan;
+  if (challanIdx < 0) {
+    alert('CHALLAN NO column was not found in the loaded Sheet data.');
+    return;
+  }
+
+  /* STEP 1 intentionally uses the complete loaded Sheet data.
+     Other front-page filters must not accidentally hide a selected challan. */
+  const matchedByChallan = {};
+  selectedChallans.forEach(ch => { matchedByChallan[norm(ch)] = []; });
+
+  state.data.rows.forEach(r => {
+    const cell = norm(r.values[challanIdx]);
+    if (cell && Object.prototype.hasOwnProperty.call(matchedByChallan, cell)) {
+      matchedByChallan[cell].push(r);
+    }
+  });
+
+  const totalRows = selectedChallans.reduce(
+    (sum, ch) => sum + (matchedByChallan[norm(ch)] || []).length, 0
+  );
+
+  if (!totalRows) {
+    alert('No matching rows found for the selected Challan No.');
+    return;
+  }
+
+  const fields = (state.challanPrint[type] || []).slice();
+  if (!fields.length) {
+    alert('No print fields selected for ' +
+      (type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') +
+      '. Please configure them in SETTINGS.');
+    return;
+  }
+
+  state.generatedChallan = {
+    type: type,
+    challans: selectedChallans.slice(),
+    rows: selectedChallans.flatMap(ch => matchedByChallan[norm(ch)] || []),
+    fields: fields.slice()
+  };
+
+  renderChallanStep1(matchedByChallan, selectedChallans, type, fields);
+}
+
+function getRowFieldValue(row, header) {
+  const idx = state.data.headers.findIndex(h =>
+    (h == null ? '' : h.toString().trim()) === header
+  );
+  if (idx < 0) return '';
+  return row.values[idx] == null ? '' : row.values[idx].toString();
+}
+
+function getRowDriveLink(row) {
+  const dsIdx = state.cols.design;
+  if (dsIdx >= 0 && row.links && row.links[dsIdx]) return row.links[dsIdx];
+
+  /* Fallback: look for a link in the DS column or any cell link. */
+  if (row.links) {
+    if (dsIdx >= 0 && row.links[dsIdx]) return row.links[dsIdx];
+    for (let i = 0; i < row.links.length; i++) {
+      if (row.links[i]) return row.links[i];
+    }
+  }
+  return '';
+}
+
+function renderChallanStep1(groupedRows, selectedChallans, type, fields) {
+  const title = document.getElementById('challanStep1Title');
+  const summary = document.getElementById('challanStep1Summary');
+  const results = document.getElementById('challanStep1Results');
+  if (!title || !summary || !results) return;
+
+  const typeName = type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN';
+  const totalRows = selectedChallans.reduce(
+    (sum, ch) => sum + (groupedRows[norm(ch)] || []).length, 0
+  );
+
+  title.textContent = 'CHALLAN GENERATOR — STEP 1';
+  summary.innerHTML =
+    '<div class="challan-summary-card"><b>TYPE</b><span>' + escapeHtml(typeName) + '</span></div>' +
+    '<div class="challan-summary-card"><b>SELECTED CHALLANS</b><span>' + escapeHtml(selectedChallans.join(', ')) + '</span></div>' +
+    '<div class="challan-summary-card"><b>ROWS FOUND</b><span>' + totalRows + '</span></div>' +
+    '<div class="challan-summary-card"><b>PRINT FIELDS</b><span>' + fields.length + '</span></div>';
+
+  let html = '';
+
+  selectedChallans.forEach(ch => {
+    const rows = groupedRows[norm(ch)] || [];
+    html += '<div class="challan-result">';
+    html += '<div class="challan-result-head">' +
+      '<span>CHALLAN ' + escapeHtml(ch) + '</span>' +
+      '<span>' + rows.length + ' row' + (rows.length === 1 ? '' : 's') + '</span>' +
+      '</div>';
+
+    if (!rows.length) {
+      html += '<div class="challan-result-body" style="color:#dc2626;font-weight:700;">No row found for this exact Challan No.</div>';
+      html += '</div>';
+      return;
+    }
+
+    html += '<div class="challan-result-body"><table class="challan-result-table"><thead><tr>';
+    fields.forEach(f => { html += '<th>' + escapeHtml(f) + '</th>'; });
+    html += '<th>DRIVE DS LINK</th></tr></thead><tbody>';
+
+    rows.forEach(row => {
+      html += '<tr>';
+      fields.forEach(f => {
+        // Step 1 must preview the exact values that will be printed on the final challan.
+        html += '<td>' + escapeHtml(getChallanPrintFieldValue(row, f)) + '</td>';
+      });
+      const link = getRowDriveLink(row);
+      if (link) {
+        const rowIndex = state.data.rows.indexOf(row);
+        html += '<td class="challan-link-ok">✓ LINK FOUND</td>';
+      } else {
+        html += '<td class="challan-link-missing">✗ NO LINK FOUND</td>';
+      }
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+  });
+
+  results.innerHTML = html;
+  resetBatchGenerateUI();
+  document.getElementById('challanStep1').classList.add('show');
+}
+
+function setBatchProgress(percent, status) {
+  const bar = document.getElementById('batchProgressBar');
+  const st = document.getElementById('batchProgressStatus');
+  const p = Math.max(0, Math.min(100, Math.round(percent)));
+  if (bar) { bar.style.width = p + '%'; bar.textContent = p + '%'; }
+  if (st) st.textContent = status || '';
+}
+
+function resetBatchGenerateUI() {
+  state.batchChallans = [];
+  state.batchPreviewIndex = 0;
+  setBatchProgress(0, 'Ready. Click GENERATE ALL CHALLANS.');
+  const info = document.getElementById('batchGeneratedInfo');
+  if (info) { info.style.display = 'none'; info.innerHTML = ''; }
+  const wrap = document.getElementById('batchPreviewWrap');
+  if (wrap) wrap.style.display = 'none';
+  const img = document.getElementById('batchPreviewImage');
+  if (img) img.removeAttribute('src');
+  const btn = document.getElementById('generateAllChallansBtn');
+  if (btn) { btn.disabled = false; btn.textContent = 'GENERATE ALL CHALLANS'; }
+}
+
+function loadDriveImageForBatch(link) {
+  return new Promise((resolve, reject) => {
+    const candidates = getDriveImageCandidates(link);
+    let attempt = 0;
+    function next() {
+      if (attempt >= candidates.length) { reject(new Error('Drive image could not be loaded')); return; }
+      const src = candidates[attempt++];
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve({ image: img, imageUrl: src });
+      img.onerror = next;
+      img.src = src;
+    }
+    next();
+  });
+}
+
+async function generateAllChallans() {
+  if (!state.generatedChallan || !state.generatedChallan.challans || !state.generatedChallan.challans.length) {
+    alert('No challans selected.');
+    return;
+  }
+
+  const btn = document.getElementById('generateAllChallansBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'GENERATING…'; }
+
+  // Keep the progress UI, but clear any previous generated preview.
+  state.batchChallans = [];
+  state.batchPreviewIndex = 0;
+  const info = document.getElementById('batchGeneratedInfo');
+  const previewWrap = document.getElementById('batchPreviewWrap');
+  if (info) { info.style.display = 'none'; info.innerHTML = ''; }
+  if (previewWrap) previewWrap.style.display = 'none';
+
+  const selected = state.generatedChallan.challans.slice();
+  const type = state.generatedChallan.type;
+  const grouped = {};
+  selected.forEach(ch => grouped[norm(ch)] = []);
+
+  (state.generatedChallan.rows || []).forEach(row => {
+    const c = norm(row.values[state.cols.challan]);
+    if (Object.prototype.hasOwnProperty.call(grouped, c)) grouped[c].push(row);
+  });
+
+  const total = selected.length;
+  const generated = [];
+  const skipped = [];
+
+  for (let i = 0; i < selected.length; i++) {
+    const challanNo = selected[i];
+    const rows = grouped[norm(challanNo)] || [];
+    const row = rows.find(r => !!getRowDriveLink(r));
+    setBatchProgress(Math.round((i / total) * 100), 'Working on challan ' + challanNo + ' (' + (i + 1) + ' of ' + total + ')…');
+
+    if (!row) {
+      skipped.push({ challanNo: challanNo, reason: rows.length ? 'DS / Drive link missing' : 'No matching row' });
+      setBatchProgress(Math.round(((i + 1) / total) * 100), 'Challan ' + challanNo + ' skipped — no Drive image link.');
+      continue;
+    }
+
+    const link = getRowDriveLink(row);
+    const dsIdx = state.cols.design;
+    const dsNo = dsIdx >= 0 ? getRowFieldValue(row, state.data.headers[dsIdx] || 'DS NO') : '';
+
+    try {
+      const loaded = await loadDriveImageForBatch(link);
+      state.currentChallanPhoto = {
+        row: row,
+        rowIndex: state.data.rows.indexOf(row),
+        challanNo: challanNo,
+        type: type,
+        link: link,
+        dsNo: dsNo,
+        image: loaded.image,
+        imageUrl: loaded.imageUrl
+      };
+
+      // Create the image silently. Do not open the old Step 2 screen for each challan.
+      createFinalChallanImage(false);
+      const dataUrl = state.currentChallanPhoto.generatedDataUrl;
+      if (!dataUrl) throw new Error('Final image was not created');
+
+      generated.push({
+        challanNo: challanNo,
+        dsNo: dsNo,
+        type: type,
+        dataUrl: dataUrl
+      });
+
+      state.batchChallans = generated.slice();
+      setBatchProgress(Math.round(((i + 1) / total) * 100), '✓ Challan ' + challanNo + ' generated (' + (i + 1) + ' of ' + total + ').');
+    } catch (err) {
+      skipped.push({ challanNo: challanNo, reason: err && err.message ? err.message : 'Generation failed' });
+      setBatchProgress(Math.round(((i + 1) / total) * 100), '⚠ Challan ' + challanNo + ' could not be generated. Continuing…');
+    }
+  }
+
+  state.batchChallans = generated.slice();
+
+  if (info) {
+    let html = '✓ ' + generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED';
+    if (skipped.length) {
+      html += '<div class="batch-generated-list">';
+      html += skipped.length + ' not generated: ';
+      html += skipped.map(x => escapeHtml(String(x.challanNo)) + ' (' + escapeHtml(x.reason) + ')').join(', ');
+      html += '</div>';
+    }
+    if (generated.length) {
+      html += '<div class="batch-generated-list">Generated: ' + generated.map(x => escapeHtml(String(x.challanNo))).join(', ') + '</div>';
+    }
+    info.innerHTML = html;
+    info.style.display = 'block';
+  }
+
+  setBatchProgress(100, 'Completed. ' + generated.length + ' of ' + total + ' challans generated.');
+
+  if (generated.length) {
+    state.batchPreviewIndex = 0;
+    renderBatchChallanPreview();
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED';
+  }
+}
+
+function renderBatchChallanPreview() {
+  const list = state.batchChallans || [];
+  const wrap = document.getElementById('batchPreviewWrap');
+  const img = document.getElementById('batchPreviewImage');
+  const title = document.getElementById('batchPreviewTitle');
+  const counter = document.getElementById('batchPreviewCounter');
+  const prev = document.getElementById('batchPrevBtn');
+  const next = document.getElementById('batchNextBtn');
+
+  if (!list.length || !wrap || !img) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  if (state.batchPreviewIndex < 0) state.batchPreviewIndex = list.length - 1;
+  if (state.batchPreviewIndex >= list.length) state.batchPreviewIndex = 0;
+
+  const item = list[state.batchPreviewIndex];
+  img.src = item.dataUrl;
+  if (title) title.textContent = (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') + ' — ' + item.challanNo;
+  if (counter) counter.textContent = (state.batchPreviewIndex + 1) + ' / ' + list.length;
+  if (prev) prev.disabled = list.length <= 1;
+  if (next) next.disabled = list.length <= 1;
+  wrap.style.display = 'block';
+}
+
+function showPreviousBatchChallan() {
+  if (!state.batchChallans.length) return;
+  state.batchPreviewIndex = (state.batchPreviewIndex - 1 + state.batchChallans.length) % state.batchChallans.length;
+  renderBatchChallanPreview();
+}
+
+function showNextBatchChallan() {
+  if (!state.batchChallans.length) return;
+  state.batchPreviewIndex = (state.batchPreviewIndex + 1) % state.batchChallans.length;
+  renderBatchChallanPreview();
+}
+
+function getCurrentBatchChallan() {
+  return state.batchChallans && state.batchChallans[state.batchPreviewIndex]
+    ? state.batchChallans[state.batchPreviewIndex]
+    : null;
+}
+
+function downloadCurrentBatchChallan() {
+  const item = getCurrentBatchChallan();
+  if (!item) { alert('No generated challan preview available.'); return; }
+  const a = document.createElement('a');
+  a.href = item.dataUrl;
+  a.download = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function createCurrentBatchPDF() {
+  const item = getCurrentBatchChallan();
+  if (!item) { alert('No generated challan preview available.'); return; }
+  const { jsPDF } = window.jspdf;
+  const img = new Image();
+  img.onload = function() {
+    const orientation = img.width >= img.height ? 'landscape' : 'portrait';
+    const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
+    const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+    const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+    doc.save((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
+  };
+  img.src = item.dataUrl;
+}
+
+function createAllBatchPDF() {
+  const list = state.batchChallans || [];
+  if (!list.length) { alert('No generated challans available.'); return; }
+  const { jsPDF } = window.jspdf;
+  const first = new Image();
+  first.onload = function() {
+    const orientation = first.width >= first.height ? 'landscape' : 'portrait';
+    const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
+    const addImage = (dataUrl, isFirst) => {
+      const img = new Image();
+      img.onload = function() {
+        if (!isFirst) doc.addPage('a4', orientation);
+        const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+        const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
+        const w = img.width * scale, h = img.height * scale;
+        doc.addImage(dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+        addNext();
+      };
+      img.src = dataUrl;
+    };
+    let index = 0;
+    const addNext = () => {
+      if (index >= list.length) {
+        const prefix = list[0].type === 'jobwork' ? 'jobwork' : 'dispatch';
+        doc.save(prefix + '_challans_' + list.map(x => x.challanNo).join('_') + '.pdf');
+        return;
+      }
+      const item = list[index++];
+      addImage(item.dataUrl, index === 1);
+    };
+    addNext();
+  };
+  first.src = list[0].dataUrl;
+}
+
+async function shareCurrentBatchPDF() {
+  const item = getCurrentBatchChallan();
+  if (!item) { alert('No generated challan preview available.'); return; }
+  const { jsPDF } = window.jspdf;
+  const img = new Image();
+  img.onload = async function() {
+    const orientation = img.width >= img.height ? 'landscape' : 'portrait';
+    const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
+    const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+    const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+    const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf';
+
+    try {
+      const blob = doc.output('blob');
+      const file = new File([blob], filename, { type:'application/pdf' });
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
+        await navigator.share({
+          title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
+          text: 'Challan No: ' + item.challanNo,
+          files:[file]
+        });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+
+    doc.save(filename);
+  };
+  img.src = item.dataUrl;
+}
+
+function downloadAllBatchChallans() {
+  const list = state.batchChallans || [];
+  if (!list.length) { alert('No generated challans available.'); return; }
+  list.forEach((item, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = item.dataUrl;
+      a.download = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 250);
+  });
+}
+
+async function shareCurrentBatchChallan() {
+  const item = getCurrentBatchChallan();
+  if (!item) { alert('No generated challan preview available.'); return; }
+  const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+
+  try {
+    const response = await fetch(item.dataUrl);
+    const blob = await response.blob();
+    const file = new File([blob], filename, { type:'image/jpeg' });
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
+      await navigator.share({
+        title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
+        text: 'Challan No: ' + item.challanNo,
+        files:[file]
+      });
+      return;
+    }
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+  }
+
+  downloadCurrentBatchChallan();
+  const message = encodeURIComponent(
+    (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') +
+    ' - Challan No ' + item.challanNo +
+    (item.dsNo ? ' - DS No ' + item.dsNo : '') +
+    '\n\nThe challan image has been downloaded. Please attach it in WhatsApp.'
+  );
+  window.open('https://wa.me/?text=' + message, '_blank', 'noopener');
+}
+
+function closeChallanStep1() {
+  const el = document.getElementById('challanStep1');
+  if (el) el.classList.remove('show');
+  resetBatchGenerateUI();
+}
+
+document.getElementById('challanStep1').addEventListener('click', function(e) {
+  if (e.target === this) closeChallanStep1();
+});
+
+/* ========= CHALLAN GENERATOR STEP 2 + STEP 3 ========= */
+function extractDriveFileId(url) {
+  if (!url) return '';
+  let m = url.match(/\/file\/d\/([^\/]+)/);
+  if (m) return m[1];
+  m = url.match(/[?&]id=([^&]+)/);
+  if (m) return m[1];
+  return '';
+}
+
+function getDriveImageCandidates(url) {
+  const id = extractDriveFileId(url);
+  if (!id) return [url];
+  return [
+    'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w2400',
+    'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w2400',
+    'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(id)
+  ];
+}
+
+function getDriveImageUrl(url) {
+  const candidates = getDriveImageCandidates(url);
+  return candidates[0] || url;
+}
+
+function resetGeneratedChallanUI() {
+  const g = document.getElementById('challanGeneratedWrap');
+  const b = document.getElementById('createFinalChallanBtn');
+  if (g) g.style.display = 'none';
+  if (b) b.style.display = 'none';
+  const gi = document.getElementById('challanGeneratedImage');
+  if (gi) gi.removeAttribute('src');
+}
+
+function loadChallanPhoto(rowIndex, challanNo, type) {
+  const row = state.data.rows[rowIndex];
+  if (!row) { alert('Selected challan row is no longer available.'); return; }
+  const link = getRowDriveLink(row);
+  if (!link) { alert('No Drive link found for this row.'); return; }
+
+  const dsIdx = state.cols.design;
+  const dsNo = dsIdx >= 0 ? getRowFieldValue(row, state.data.headers[dsIdx] || 'DS NO') : '';
+  const photoWrap = document.getElementById('challanPhotoWrap');
+  const info = document.getElementById('challanStep2Info');
+  const title = document.getElementById('challanStep2Title');
+  if (!photoWrap || !info || !title) return;
+
+  const typeName = type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN';
+  title.textContent = 'CHALLAN GENERATOR — STEP 2 & 3';
+  info.innerHTML = '<b>TYPE:</b> ' + escapeHtml(typeName) +
+    ' &nbsp; | &nbsp; <b>CHALLAN:</b> ' + escapeHtml(challanNo) +
+    ' &nbsp; | &nbsp; <b>DS NO:</b> ' + escapeHtml(dsNo || 'Not available');
+  photoWrap.innerHTML = '<div style="font-size:11px;color:#64748b;">Loading original Drive photo…</div>';
+  resetGeneratedChallanUI();
+  document.getElementById('challanStep2').classList.add('show');
+
+  state.currentChallanPhoto = {
+    row: row,
+    rowIndex: rowIndex,
+    challanNo: challanNo,
+    type: type,
+    link: link,
+    dsNo: dsNo,
+    image: null,
+    imageUrl: ''
+  };
+
+  const candidates = getDriveImageCandidates(link);
+  let attempt = 0;
+
+  function tryNext() {
+    if (attempt >= candidates.length) {
+      photoWrap.innerHTML = '<div class="challan-photo-error">Could not load the Drive image directly for canvas use.<br><br>' +
+        '<button class="btn blue" onclick="window.open(\'' + escapeAttr(link) + '\',\'_blank\',\'noopener\')">OPEN DRIVE IMAGE</button>' +
+        '<div class="challan-canvas-note">The Drive photo itself is available, but the browser may block canvas access.</div></div>';
+      return;
+    }
+
+    const src = candidates[attempt++];
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      state.currentChallanPhoto.image = img;
+      state.currentChallanPhoto.imageUrl = src;
+      photoWrap.innerHTML = '';
+      const shown = new Image();
+      shown.src = src;
+      shown.alt = 'Original DS photo ' + (dsNo || '');
+      photoWrap.appendChild(shown);
+      const b = document.getElementById('createFinalChallanBtn');
+      if (b) b.style.display = 'inline-block';
+    };
+    img.onerror = function() { tryNext(); };
+    img.src = src;
+  }
+  tryNext();
+}
+
+function closeChallanStep2() {
+  const el = document.getElementById('challanStep2');
+  if (el) el.classList.remove('show');
+  const wrap = document.getElementById('challanPhotoWrap');
+  if (wrap) wrap.innerHTML = '';
+  state.currentChallanPhoto = null;
+  resetGeneratedChallanUI();
+}
+
+document.getElementById('challanStep2').addEventListener('click', function(e) {
+  if (e.target === this) closeChallanStep2();
+});
+
+function canvasRoundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
+  let size = startSize;
+  while (size > minSize) {
+    ctx.font = (weight || '700') + ' ' + size + 'px Arial';
+    if (ctx.measureText(text).width <= maxWidth) return size;
+    size -= 1;
+  }
+  ctx.font = (weight || '700') + ' ' + minSize + 'px Arial';
+  return minSize;
+}
+
+function wrapCanvasText(ctx, text, maxWidth, maxLines) {
+  const words = String(text == null ? '' : text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  words.forEach(word => {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width <= maxWidth || !line) line = test;
+    else { lines.push(line); line = word; }
+  });
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    const out = lines.slice(0, maxLines);
+    let last = out[maxLines - 1];
+    while (ctx.measureText(last + '…').width > maxWidth && last.length > 1) last = last.slice(0, -1);
+    out[maxLines - 1] = last + '…';
+    return out;
+  }
+  return lines;
+}
+
+function drawFieldCard(ctx, x, y, w, h, label, value, theme) {
+  const headerH = Math.max(52, Math.round(h * 0.34));
+  const key = String(label || '').trim().toUpperCase();
+  const isParty = key === 'PARTY';
+  const isJobworkHighlight = theme === 'jobwork' && (key === 'CHALLAN NO' || key === 'JOB WORK PARTI');
+  const isHighlight = isParty || isJobworkHighlight;
+  const colors = theme === 'dispatch'
+    ? ['#0b4f91','#0f6d77','#2d9b50','#6d35b7','#8b5208','#9e1234']
+    : ['#0b4f91','#2d9b50','#0f6d77','#8b5208'];
+  const color = isHighlight ? '#0b4f91' : colors[Math.abs(label.length + value.length) % colors.length];
+
+  ctx.save();
+  canvasRoundRect(ctx, x, y, w, h, 18);
+  ctx.fillStyle = isHighlight ? '#fff3b0' : '#fff';
+  ctx.fill();
+  ctx.lineWidth = isHighlight ? 5 : 3;
+  ctx.strokeStyle = isHighlight ? '#d9a51b' : '#d9a51b';
+  ctx.stroke();
+
+  ctx.save();
+  canvasRoundRect(ctx, x + 1.5, y + 1.5, w - 3, headerH, 16);
+  ctx.clip();
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, headerH + 5);
+  ctx.restore();
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  const labelSize = fitCanvasText(ctx, String(label), w - 24, 24, 13, '800');
+  ctx.font = '800 ' + labelSize + 'px Arial';
+  ctx.fillText(String(label), x + w / 2, y + headerH * 0.67);
+
+  const valueText = String(value == null ? '' : value).trim() || '—';
+  const valueSize = fitCanvasText(ctx, valueText, w - 28, 30, 14, '800');
+  ctx.font = '800 ' + valueSize + 'px Arial';
+  ctx.fillStyle = '#111827';
+  const lines = wrapCanvasText(ctx, valueText, w - 28, 3);
+  const lineH = valueSize * 1.15;
+  const startY = y + headerH + ((h - headerH) - lines.length * lineH) / 2 + valueSize * 0.82;
+  lines.forEach((line, i) => ctx.fillText(line, x + w / 2, startY + i * lineH));
+  ctx.restore();
+}
+
+function getChallanMainOrder(row) {
+  if (!row) return '';
+
+  // Prefer the order-group value already calculated by buildOrderGroups().
+  if (row._mainOrder) return String(row._mainOrder).trim();
+
+  // Robust fallback: if this row was loaded before order groups were rebuilt,
+  // walk upward through the loaded Sheet rows and find the nearest main order.
+  const rowIndex = state.data.rows.indexOf(row);
+  const oi = colIndex('order');
+  if (rowIndex < 0 || oi < 0) return '';
+
+  for (let i = rowIndex; i >= 0; i--) {
+    const v = (state.data.rows[i].values[oi] || '').toString().trim();
+    if (!v) continue;
+    if (!/^\d{1,2}$/.test(v)) return v;
+  }
+  return '';
+}
+
+function getChallanPrintFieldValue(row, field) {
+  const f = String(field || '').trim().toUpperCase();
+
+  // Challan image must use the MAIN order number, not the sub-order (1, 2, 3...).
+  if (f === 'ORDER NO') {
+    return getChallanMainOrder(row) || getRowFieldValue(row, field);
+  }
+
+  // Challan DATE is always today's date, in DD/MM/YY format.
+  if (f === 'DATE') {
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return dd + '/' + mm + '/' + yy;
+  }
+
+  return getRowFieldValue(row, field);
+}
+
+function drawJobworkChallanPhotoLabel(ctx, x, y, w, h, title, value) {
+  ctx.save();
+  canvasRoundRect(ctx, x, y, w, h, 24);
+  ctx.fillStyle = '#d90429';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#a50020';
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 ' + Math.max(25, Math.round(h * .27)) + 'px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, x + w / 2, y + h * .38);
+
+  const fs = fitCanvasText(ctx, String(value || ''), w - 30, Math.max(48, Math.round(h * .53)), 24, '900');
+  ctx.font = '900 ' + fs + 'px Arial';
+  ctx.fillText(String(value || ''), x + w / 2, y + h * .80);
+  ctx.restore();
+}
+
+function drawPhotoLabel(ctx, x, y, w, h, title, value, accent) {
+  ctx.save();
+  canvasRoundRect(ctx, x, y, w, h, 22);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = accent; ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.font = '800 ' + Math.max(22, Math.round(h * .28)) + 'px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, x + w / 2, y + h * .42);
+  ctx.fillStyle = '#111827';
+  const fs = fitCanvasText(ctx, String(value || ''), w - 30, Math.max(34, Math.round(h * .48)), 18, '800');
+  ctx.font = '800 ' + fs + 'px Arial';
+  ctx.fillText(String(value || '—'), x + w / 2, y + h * .82);
+  ctx.restore();
+}
+
+function createFinalChallanImage(showUI = true) {
+  const item = state.currentChallanPhoto;
+  if (!item || !item.image) { alert('Please load the Drive photo first.'); return; }
+
+  const row = item.row;
+  const type = item.type;
+  const fields = (state.challanPrint[type] || []).slice();
+  if (!fields.length) { alert('No print fields selected. Please configure SETTINGS first.'); return; }
+
+  const src = item.image;
+  const naturalW = src.naturalWidth || src.width;
+  const naturalH = src.naturalHeight || src.height;
+  if (!naturalW || !naturalH) { alert('Drive photo has not finished loading.'); return; }
+
+  /* A clean tall challan layout: original photo first, selected information below. */
+  const W = 1400;
+  const photoH = Math.round(W * naturalH / naturalW);
+  const cols = fields.length <= 5 ? 3 : (fields.length <= 8 ? 3 : 4);
+  const gap = 18;
+  const side = 34;
+  const cardW = Math.floor((W - side * 2 - gap * (cols - 1)) / cols);
+  const cardH = fields.length <= 5 ? 145 : 132;
+  const rowsCount = Math.ceil(fields.length / cols);
+  const panelPad = 34;
+  const topInfoH = type === 'dispatch' ? 0 : 0;
+  const panelH = panelPad + rowsCount * cardH + Math.max(0, rowsCount - 1) * gap + 40;
+  const H = photoH + panelH;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#f8f6ef'; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(src, 0, 0, W, photoH);
+
+  /* Jobwork sample: top-right identifier is CHALLAN NO, not DS NO.
+     DS NO remains available in the information cards below the photo. */
+  const dsValue = item.dsNo || getRowFieldValue(row, state.data.headers[state.cols.design] || 'DS NO');
+  if (type === 'jobwork') {
+    drawJobworkChallanPhotoLabel(ctx, W - 380, 96, 350, 125, 'CHALLAN NO', item.challanNo);
+  } else {
+    drawPhotoLabel(ctx, 35, 35, 285, 115, 'CHALLAN NO', item.challanNo, '#0b4f91');
+    if (dsValue) drawPhotoLabel(ctx, Math.round(W/2 - 155), Math.round(photoH * .72), 310, 105, 'DS NO', dsValue, '#0b4f91');
+  }
+
+  /* White information panel below the photo. */
+  ctx.fillStyle = '#f8f6ef';
+  ctx.fillRect(0, photoH, W, panelH);
+  ctx.fillStyle = '#0b315b';
+  ctx.fillRect(0, photoH, W, 9);
+
+  fields.forEach((field, i) => {
+    const col = i % cols;
+    const rr = Math.floor(i / cols);
+    const x = side + col * (cardW + gap);
+    const y = photoH + panelPad + rr * (cardH + gap);
+    drawFieldCard(ctx, x, y, cardW, cardH, field, getChallanPrintFieldValue(row, field), type);
+  });
+
+  /* Bottom decorative line similar to the supplied samples. */
+  ctx.fillStyle = '#0b315b';
+  ctx.fillRect(0, H - 18, W, 18);
+  ctx.strokeStyle = '#d9a51b'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(0, H - 24); ctx.lineTo(W, H - 24); ctx.stroke();
+
+  let dataUrl;
+  try {
+    dataUrl = canvas.toDataURL('image/jpeg', 0.94);
+  } catch (err) {
+    alert('The Drive image is visible, but the browser is blocking canvas access to it. We need the Drive image proxy step before the final image can be downloaded.');
+    return;
+  }
+
+  state.currentChallanPhoto.generatedDataUrl = dataUrl;
+
+  // Batch generation runs silently. The generated images are shown in the
+  // batch preview (Previous / Next) instead of opening Step 2 for every challan.
+  if (showUI) {
+    const out = document.getElementById('challanGeneratedImage');
+    const wrap = document.getElementById('challanGeneratedWrap');
+    if (out) out.src = dataUrl;
+    if (wrap) wrap.style.display = 'block';
+    if (wrap) wrap.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
+
+function downloadGeneratedChallan() {
+  const item = state.currentChallanPhoto;
+  if (!item || !item.generatedDataUrl) { alert('Create the final image first.'); return; }
+  const a = document.createElement('a');
+  a.href = item.generatedDataUrl;
+  a.download = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function createGeneratedChallanPDF() {
+  const item = state.currentChallanPhoto;
+  if (!item || !item.generatedDataUrl) { alert('Create the final image first.'); return; }
+  const { jsPDF } = window.jspdf;
+  const img = new Image();
+  img.onload = function() {
+    const orientation = img.width >= img.height ? 'landscape' : 'portrait';
+    const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
+    const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+    const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    doc.addImage(item.generatedDataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+    doc.save((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
+  };
+  img.src = item.generatedDataUrl;
+}
+
+async function shareGeneratedChallan() {
+  const item = state.currentChallanPhoto;
+  if (!item || !item.generatedDataUrl) { alert('Create the final image first.'); return; }
+
+  const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') +
+    item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+
+  try {
+    const response = await fetch(item.generatedDataUrl);
+    const blob = await response.blob();
+    const file = new File([blob], filename, { type: 'image/jpeg' });
+
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share({
+        title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
+        text: 'Challan No: ' + item.challanNo,
+        files: [file]
+      });
+      return;
+    }
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+    console.warn('Native image sharing unavailable:', err);
+  }
+
+  // Desktop/fallback: download the image and open WhatsApp with a ready message.
+  downloadGeneratedChallan();
+  const message = encodeURIComponent(
+    (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') +
+    ' - Challan No ' + item.challanNo +
+    (item.dsNo ? ' - DS No ' + item.dsNo : '') +
+    '\n\nThe challan image has been downloaded. Please attach it in WhatsApp.'
+  );
+  window.open('https://wa.me/?text=' + message, '_blank', 'noopener');
+}
+
 /* ========= FETCH (offline-aware) ========= */
 async function fetchData() {
   const url = getDataUrl();
@@ -513,6 +1950,7 @@ async function fetchData() {
     buildOrderGroups();
     buildAutocomplete();
     renderAll();
+    renderPrintFieldSettings();
   } catch (e) {
     const cached = localStorage.getItem('offlineData');
     if (cached) {
@@ -524,6 +1962,7 @@ async function fetchData() {
         buildOrderGroups();
         buildAutocomplete();
         renderAll();
+        renderPrintFieldSettings();
         const when = new Date(c.savedAt).toLocaleString();
         setStatus('all',       '⚠️ OFFLINE — data from ' + when);
         setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
@@ -1242,6 +2681,7 @@ function renderRecentUploads() {
 
 /* ========= INIT ========= */
 loadSettings();
+loadChallanPrintSettings();
 renderRecentUploads();
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -1256,6 +2696,7 @@ window.addEventListener('DOMContentLoaded', () => {
         buildOrderGroups();
         buildAutocomplete();
         renderAll();
+        renderPrintFieldSettings();
         const when = new Date(c.savedAt).toLocaleString();
         setStatus('all',       '⚠️ OFFLINE — data from ' + when);
         setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
