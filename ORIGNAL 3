@@ -384,7 +384,7 @@
    DEFAULTS — hardcoded so the app works with zero setup
    ============================================================ */
 const DEFAULT_DATA_URL   = 'https://script.google.com/macros/s/AKfycbwCKbbbncdTeINdP0NkRlG8r0MrRyRy7WgJJdPW1N_Y6dkUvkKnyE2IbNtnBOOGUrTNMA/exec';
-const DEFAULT_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbwCKbbbncdTeINdP0NkRlG8r0MrRyRy7WgJJdPW1N_Y6dkUvkKnyE2IbNtnBOOGUrTNMA/exec';
+const DEFAULT_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxGylcZWCJQaE1YcBUi8vW4JgrCYrrB7JzyIxQG_El5r5vAExjDs1QK8hJ9lj_I63YOQQ/exec';
 
 function getDataUrl() {
   return (localStorage.getItem('dataUrl') || '').trim() || DEFAULT_DATA_URL;
@@ -581,27 +581,64 @@ function isLinkColumn(i) {
 function colIndex(key) { return state.cols[key] != null ? state.cols[key] : -1; }
 
 /* ========= ORDER GROUPS ========= */
+/* ========= ORDER GROUPS ========= */
+/* ========= ORDER GROUPS ========= */
 function buildOrderGroups() {
   const oi = colIndex('order');
-  if (oi < 0) { state.orderGroups = []; return; }
+
+  if (oi < 0) {
+    state.orderGroups = [];
+    return;
+  }
+
   const groups = [];
   let lastMain = '';
+
   state.data.rows.forEach(r => {
     const v = (r.values[oi] || '').toString().trim();
-    if (!v) return;
+
+    // Empty order cell belongs to previous main order
+    if (!v) {
+      r._mainOrder = lastMain;
+      r._subOrder = '';
+      return;
+    }
+
+    // A 1- or 2-digit number is treated as a sub-order
+    // when a main order already exists.
     const isSub = /^\d{1,2}$/.test(v) && lastMain !== '';
-    if (!isSub) {
+
+    if (isSub) {
+      r._mainOrder = lastMain;
+      r._subOrder = v;
+    } else {
       lastMain = v;
-      if (!groups.includes(v)) groups.push(v);
+      r._mainOrder = lastMain;
+      r._subOrder = '';
+
+      if (!groups.includes(v)) {
+        groups.push(v);
+      }
     }
   });
+
   groups.sort((a, b) => {
-    const na = parseFloat(a), nb = parseFloat(b);
-    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    const na = parseFloat(a);
+    const nb = parseFloat(b);
+
+    if (!isNaN(na) && !isNaN(nb)) {
+      return na - nb;
+    }
+
     return a.localeCompare(b);
   });
+
   state.orderGroups = groups;
 }
+
+   
+      
+   
 
 /* ========= AUTOCOMPLETE ========= */
 const autoData = { party: [], order: [], challan: [], design: [], material: [], job: [] };
@@ -684,51 +721,125 @@ function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s =
 
 function getFiltered(tab) {
   const prefix = tab === 'all' ? 'f-' : 'f2-';
+
   const fMulti = {
     order:   parseMulti(document.getElementById(prefix + 'order').value),
     challan: parseMulti(document.getElementById(prefix + 'challan').value),
     design:  parseMulti(document.getElementById(prefix + 'design').value)
   };
+
   const fSingle = {
     party:    norm(document.getElementById(prefix + 'party').value),
     material: norm(document.getElementById(prefix + 'material').value),
     job:      norm(document.getElementById(prefix + 'job').value)
   };
+
   const ci = state.cols;
   let rows = state.data.rows;
 
+  /* ===== NO CHALLAN ===== */
   if (tab === 'nochallan' && ci.challan >= 0) {
-    rows = rows.filter(r => !r.values[ci.challan] || r.values[ci.challan].toString().trim() === '');
+    rows = rows.filter(r =>
+      !r.values[ci.challan] ||
+      r.values[ci.challan].toString().trim() === ''
+    );
   }
+
+  /* ===== ORDER FILTER ===== */
   if (fMulti.order.length && ci.order >= 0) {
-    const matched = [];
-    let currentMain = '';
-    state.data.rows.forEach(r => {
-      const raw = (r.values[ci.order] || '').toString().trim();
-      const isSubNumber = /^\d{1,2}$/.test(raw);
-      if (raw && (!currentMain || !isSubNumber)) currentMain = raw.toLowerCase();
-      if (fMulti.order.some(q => currentMain.includes(q))) matched.push(r);
-    });
-    rows = matched;
-  }
+
+  const selectedOrders = new Set(
+    fMulti.order.map(q => norm(q))
+  );
+
+  const matched = [];
+  let currentMain = '';
+  const mainAlreadyShown = new Set();
+
+  state.data.rows.forEach(r => {
+
+    const raw = (r.values[ci.order] || '')
+      .toString()
+      .trim();
+
+    const isSubNumber =
+      /^\d{1,2}$/.test(raw);
+
+    /* New main order */
+    if (raw && (!currentMain || !isSubNumber)) {
+      currentMain = norm(raw);
+    }
+
+    /* This row belongs to a selected main order */
+    if (currentMain && selectedOrders.has(currentMain)) {
+
+      /* Main order row */
+      if (raw && !isSubNumber) {
+
+        /*
+         * Show the main order only once.
+         * This prevents the repeated 104 after 104/1, 104/2, 104/3.
+         */
+        if (!mainAlreadyShown.has(currentMain)) {
+          matched.push(r);
+          mainAlreadyShown.add(currentMain);
+        }
+
+      } else {
+
+        /* Sub-order rows: 1, 2, 3, etc. */
+        matched.push(r);
+      }
+    }
+  });
+
+  rows = matched;
+}
+
+  /* ===== CHALLAN FILTER ===== */
   if (fMulti.challan.length && ci.challan >= 0) {
+
+    const selectedChallans = new Set(
+      fMulti.challan.map(q => norm(q))
+    );
+
     rows = rows.filter(r => {
+
       const cell = norm(r.values[ci.challan]);
+
       if (!cell) return false;
-      return fMulti.challan.some(q => cell.includes(q));
+
+      // EXACT MATCH
+      return selectedChallans.has(cell);
     });
   }
+
+  /* ===== DESIGN / DS FILTER ===== */
   if (fMulti.design.length && ci.design >= 0) {
+
+    const selectedDesigns = new Set(
+      fMulti.design.map(q => norm(q))
+    );
+
     rows = rows.filter(r => {
+
       const cell = norm(r.values[ci.design]);
+
       if (!cell) return false;
-      return fMulti.design.some(q => cell.includes(q));
+
+      // EXACT MATCH
+      return selectedDesigns.has(cell);
     });
   }
+
+  /* ===== OTHER FILTERS ===== */
   const match = (r, idx, val) => {
+
     if (idx < 0 || !val) return true;
+
     return norm(r.values[idx]).includes(val);
   };
+
   return rows.filter(r =>
     match(r, ci.party, fSingle.party) &&
     match(r, ci.material, fSingle.material) &&
@@ -749,6 +860,7 @@ function renderAll() { renderTab('all'); renderTab('nochallan'); }
 
 function renderTab(tab) {
   const wrap = document.getElementById('wrap-' + tab);
+
   if (!state.data.headers.length) {
     wrap.innerHTML = '<div class="empty">' +
       (tab === 'nochallan'
@@ -757,46 +869,125 @@ function renderTab(tab) {
       '</div>';
     return;
   }
+
   const rows = getFiltered(tab);
   const challanIdx = state.cols.challan;
+  const orderIdx = state.cols.order;
 
   let html = '<table><thead><tr>';
-  state.data.headers.forEach(h => html += '<th>' + escapeHtml(h || '') + '</th>');
+
+  state.data.headers.forEach(h => {
+    html += '<th>' + escapeHtml(h || '') + '</th>';
+  });
+
   html += '</tr></thead><tbody>';
+
   rows.forEach(r => {
+
     html += '<tr>';
+
     state.data.headers.forEach((_, i) => {
+
       const val = r.values[i] != null ? r.values[i] : '';
-      const isBlankChallan = (i === challanIdx && (!val || val.toString().trim() === ''));
-      const cls = isBlankChallan ? ' class="challan-col"' : '';
-      const rawLink = r.links && r.links[i] ? r.links[i] : null;
-      const link = (isLinkColumn(i) && rawLink) ? rawLink : null;
-      const bg   = (r.bgs   && r.bgs[i])   ? r.bgs[i]   : '';
-      const fg   = (r.fgs   && r.fgs[i])   ? r.fgs[i]   : '';
-      const bold = (r.bolds && r.bolds[i]) ? true       : false;
+
+      const isBlankChallan =
+        (i === challanIdx &&
+        (!val || val.toString().trim() === ''));
+
+      const cls =
+        isBlankChallan ? ' class="challan-col"' : '';
+
+      const rawLink =
+        r.links && r.links[i] ? r.links[i] : null;
+
+      const link =
+        (isLinkColumn(i) && rawLink) ? rawLink : null;
+
+      const bg =
+        (r.bgs && r.bgs[i]) ? r.bgs[i] : '';
+
+      const fg =
+        (r.fgs && r.fgs[i]) ? r.fgs[i] : '';
+
+      const bold =
+        (r.bolds && r.bolds[i]) ? true : false;
 
       let style = '';
-      if (bg && !isBlankChallan) style += 'background:' + bg + ';';
-      if (fg) style += 'color:' + fg + ';';
-      if (bold) style += 'font-weight:700;';
-      const styleAttr = style ? ' style="' + style + '"' : '';
+
+      if (bg && !isBlankChallan)
+        style += 'background:' + bg + ';';
+
+      if (fg)
+        style += 'color:' + fg + ';';
+
+      if (bold)
+        style += 'font-weight:700;';
+
+      const styleAttr =
+        style ? ' style="' + style + '"' : '';
+
+      /* ==========================================
+   ORDER NUMBER DISPLAY
+   NO FILTER = ORIGINAL SHEET VALUE
+   FILTER = MAIN ORDER / SUB-ORDER
+   ========================================== */
+
+let displayVal = val.toString();
+
+/* Only CHALLAN filter changes order display to Main/Sub */
+const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
+
+const challanElement =
+  document.getElementById(challanInputId);
+
+const challanFilter = challanElement
+  ? parseMulti(challanElement.value)
+  : [];
+
+if (challanFilter.length && i === orderIdx) {
+
+  const mainOrder = r._mainOrder || '';
+  const subOrder = r._subOrder || '';
+
+  if (mainOrder && subOrder) {
+    displayVal = mainOrder + '/' + subOrder;
+  }
+  else if (mainOrder) {
+    displayVal = mainOrder;
+  }
+}
 
       let cellContent;
+
       if (link) {
-        cellContent = '<a href="' + escapeAttr(link) + '" ' +
-                      'data-link="' + escapeAttr(link) + '" ' +
-                      'data-text="' + escapeAttr(val.toString()) + '" ' +
-                      'onclick="return handleLinkClick(event, this)"' +
-                      (fg ? ' style="color:' + fg + ';"' : '') + '>' +
-                      escapeHtml(val.toString()) + '</a>';
+
+        cellContent =
+          '<a href="' + escapeAttr(link) + '" ' +
+          'data-link="' + escapeAttr(link) + '" ' +
+          'data-text="' + escapeAttr(displayVal) + '" ' +
+          'onclick="return handleLinkClick(event, this)"' +
+          (fg ? ' style="color:' + fg + ';"' : '') +
+          '>' +
+          escapeHtml(displayVal) +
+          '</a>';
+
       } else {
-        cellContent = escapeHtml(val.toString());
+
+        cellContent =
+          escapeHtml(displayVal);
       }
-      html += '<td' + cls + styleAttr + '>' + cellContent + '</td>';
+
+      html +=
+        '<td' + cls + styleAttr + '>' +
+        cellContent +
+        '</td>';
     });
+
     html += '</tr>';
   });
+
   html += '</tbody></table>';
+
   wrap.innerHTML = html;
 }
 
