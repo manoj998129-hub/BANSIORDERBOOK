@@ -748,37 +748,53 @@ function getFiltered(tab) {
   /* ===== ORDER FILTER ===== */
   if (fMulti.order.length && ci.order >= 0) {
 
-    const selectedOrders = new Set(
-      fMulti.order.map(q => norm(q))
-    );
+  const selectedOrders = new Set(
+    fMulti.order.map(q => norm(q))
+  );
 
-    const matched = [];
-    let currentMain = '';
+  const matched = [];
+  let currentMain = '';
+  const mainAlreadyShown = new Set();
 
-    state.data.rows.forEach(r => {
+  state.data.rows.forEach(r => {
 
-      const raw = (r.values[ci.order] || '')
-        .toString()
-        .trim();
+    const raw = (r.values[ci.order] || '')
+      .toString()
+      .trim();
 
-      const isSubNumber = /^\d{1,2}$/.test(raw);
+    const isSubNumber =
+      /^\d{1,2}$/.test(raw);
 
-      // New main order
-      if (raw && (!currentMain || !isSubNumber)) {
-        currentMain = norm(raw);
-      }
+    /* New main order */
+    if (raw && (!currentMain || !isSubNumber)) {
+      currentMain = norm(raw);
+    }
 
-      // Exact main-order match
-      if (
-        currentMain &&
-        selectedOrders.has(currentMain)
-      ) {
+    /* This row belongs to a selected main order */
+    if (currentMain && selectedOrders.has(currentMain)) {
+
+      /* Main order row */
+      if (raw && !isSubNumber) {
+
+        /*
+         * Show the main order only once.
+         * This prevents the repeated 104 after 104/1, 104/2, 104/3.
+         */
+        if (!mainAlreadyShown.has(currentMain)) {
+          matched.push(r);
+          mainAlreadyShown.add(currentMain);
+        }
+
+      } else {
+
+        /* Sub-order rows: 1, 2, 3, etc. */
         matched.push(r);
       }
-    });
+    }
+  });
 
-    rows = matched;
-  }
+  rows = matched;
+}
 
   /* ===== CHALLAN FILTER ===== */
   if (fMulti.challan.length && ci.challan >= 0) {
