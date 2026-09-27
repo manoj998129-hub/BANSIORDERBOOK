@@ -933,7 +933,7 @@ function renderTab(tab) {
    ========================================== */
 
 let displayVal = val.toString();
-
+const prefix = tab === 'all' ? 'f-' : 'f2-';
 /* Only CHALLAN filter changes order display to Main/Sub */
 const challanFilter = parseMulti(
   document.getElementById(prefix + 'challan').value
