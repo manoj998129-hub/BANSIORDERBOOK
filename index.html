@@ -911,24 +911,36 @@ function renderTab(tab) {
         style ? ' style="' + style + '"' : '';
 
       /* ==========================================
-         ORDER NUMBER DISPLAY
-         Main order + sub-order = 301/2
-         ========================================== */
+   ORDER NUMBER DISPLAY
+   NO FILTER = ORIGINAL SHEET VALUE
+   FILTER = MAIN ORDER / SUB-ORDER
+   ========================================== */
 
-      let displayVal = val.toString();
+let displayVal = val.toString();
 
-      if (i === orderIdx) {
+/* Check whether ANY filter is currently active */
+const prefix = tab === 'all' ? 'f-' : 'f2-';
 
-        const mainOrder = r._mainOrder || '';
-        const subOrder = r._subOrder || '';
+const hasFilter =
+  parseMulti(document.getElementById(prefix + 'order').value).length > 0 ||
+  parseMulti(document.getElementById(prefix + 'challan').value).length > 0 ||
+  parseMulti(document.getElementById(prefix + 'design').value).length > 0 ||
+  norm(document.getElementById(prefix + 'party').value) !== '' ||
+  norm(document.getElementById(prefix + 'material').value) !== '' ||
+  norm(document.getElementById(prefix + 'job').value) !== '';
 
-        if (mainOrder && subOrder) {
-          displayVal = mainOrder + '/' + subOrder;
-        }
-        else if (mainOrder) {
-          displayVal = mainOrder;
-        }
-      }
+if (hasFilter && i === orderIdx) {
+
+  const mainOrder = r._mainOrder || '';
+  const subOrder = r._subOrder || '';
+
+  if (mainOrder && subOrder) {
+    displayVal = mainOrder + '/' + subOrder;
+  }
+  else if (mainOrder) {
+    displayVal = mainOrder;
+  }
+}
 
       let cellContent;
 
