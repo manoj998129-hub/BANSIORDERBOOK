@@ -934,25 +934,19 @@ function renderTab(tab) {
 
 let displayVal = val.toString();
 
-/* Check whether ANY filter is currently active */
-const prefix = tab === 'all' ? 'f-' : 'f2-';
+/* Only CHALLAN filter changes order display to Main/Sub */
+const challanFilter = parseMulti(
+  document.getElementById(prefix + 'challan').value
+);
 
-const hasFilter =
-  parseMulti(document.getElementById(prefix + 'order').value).length > 0 ||
-  parseMulti(document.getElementById(prefix + 'challan').value).length > 0 ||
-  parseMulti(document.getElementById(prefix + 'design').value).length > 0 ||
-  norm(document.getElementById(prefix + 'party').value) !== '' ||
-  norm(document.getElementById(prefix + 'material').value) !== '' ||
-  norm(document.getElementById(prefix + 'job').value) !== '';
-
-if (hasFilter && i === orderIdx) {
+if (challanFilter.length && i === orderIdx) {
 
   const mainOrder = r._mainOrder || '';
   const subOrder = r._subOrder || '';
 
   if (mainOrder && subOrder) {
     displayVal = mainOrder + '/' + subOrder;
-  }
+  } 
   else if (mainOrder) {
     displayVal = mainOrder;
   }
