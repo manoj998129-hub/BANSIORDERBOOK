@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Book Viewer</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    font-size: 11px;
+    background: #eef1f5;
+    color: #1a1a1a;
+  }
+  #offline-banner {
+    display: none;
+    background: #f59e0b;
+    color: #fff;
+    text-align: center;
+    padding: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  #offline-banner.show { display: block; }
+
+  #tabs {
+    display: flex;
+    background: #1e293b;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+  #tabs .tab {
+    flex: 1;
+    padding: 11px 4px;
+    text-align: center;
+    color: #cbd5e1;
+    background: #334155;
+    border-right: 1px solid #1e293b;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    user-select: none;
+  }
+  #tabs .tab.active { background: #0ea5e9; color: #fff; }
+
+  .panel { display: none; padding: 8px; }
+  .panel.active { display: block; }
+
+  .filters-box {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .ac-wrap { position: relative; }
+  .ac-wrap input {
+    width: 100%;
+    padding: 7px 9px;
+    font-size: 11px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 4px;
+    outline: none;
+  }
+  .ac-wrap input:focus { border-color: #0ea5e9; background: #fff; }
+  .ac-list {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: #fff;
+    border: 1px solid #94a3b8;
+    border-top: none;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 50;
+    display: none;
+    border-radius: 0 0 4px 4px;
+  }
+  .ac-list.show { display: block; }
+  .ac-list div {
+    padding: 7px 9px;
+    font-size: 11px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .ac-list div:hover { background: #e0f2fe; }
+
+  .toolbar {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn {
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #fff;
+    background: #0ea5e9;
+  }
+  .btn.gray { background: #64748b; }
+  .btn.blue { background: #2563eb; }
+  .btn.red  { background: #dc2626; }
+  .btn.green { background: #16a34a; }
+
+  .status {
+    font-size: 10px;
+    padding: 5px 9px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    color: #334155;
+    margin-left: auto;
+  }
+
+  .table-wrap {
+    overflow: auto;
+    max-height: 74vh;
+    border: 2px solid #0f172a;
+    background: #fff;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 4px;
+  }
+  table { border-collapse: collapse; font-size: 10px; }
+  th, td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 10px;
+    line-height: 1.25;
+    vertical-align: middle;
+  }
+  th {
+    background: #0f172a;
+    color: #fff;
+    position: sticky; top: 0;
+    z-index: 5;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  tbody tr td:first-child {
+    position: sticky; left: 0;
+    z-index: 4;
+    border-right: 2px solid #000;
+  }
+  thead tr th:first-child { background: #0f172a; z-index: 6; }
+  tr.blank-challan td.challan-col { background: #fecaca !important; }
+  td a { text-decoration: underline; font-weight: 700; cursor: pointer; }
+
+  #preview {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.85);
+    display: none;
+    z-index: 9999;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #preview.show { display: flex; }
+  #preview .box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    max-width: 95%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    overflow: auto;
+  }
+  #preview .box img,
+  #preview .box iframe {
+    max-width: 100%;
+    max-height: 65vh;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #fff;
+  }
+  #preview .box .title { font-size: 12px; font-weight: 700; color: #0f172a; }
+  #preview .actions { display: flex; gap: 8px; }
+  #preview .actions button {
+    padding: 8px 16px; font-size: 12px; font-weight: 600;
+    border: none; border-radius: 4px; cursor: pointer; color: #fff;
+  }
+  #preview .actions .open  { background: #2563eb; }
+  #preview .actions .close { background: #dc2626; }
+
+  .setting-box {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+  }
+  .setting-box label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: #0f172a;
+  }
+  .setting-box input[type=text],
+  .setting-box select {
+    width: 100%;
+    padding: 7px;
+    font-size: 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    margin-bottom: 7px;
+    background: #f8fafc;
+    outline: none;
+  }
+  .setting-box input[type=file] {
+    width: 100%;
+    font-size: 11px;
+    padding: 5px;
+  }
+  .setting-box .row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .setting-box .msg { font-size: 10px; color: #16a34a; font-weight: 600; margin-left: 6px; }
+  .empty {
+    padding: 24px;
+    text-align: center;
+    background: #fff;
+    border: 1px dashed #94a3b8;
+    font-size: 12px;
+    color: #64748b;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="offline-banner">⚠️ OFFLINE — showing cached data. Will sync when internet returns.</div>
+
+<div id="tabs">
+  <div class="tab active" data-tab="all">ALL ORDERS</div>
+  <div class="tab" data-tab="nochallan">NO CHALLAN</div>
+  <div class="tab" data-tab="upload">UPLOAD</div>
+  <div class="tab" data-tab="settings">SETTINGS</div>
+</div>
+
+<!-- ===== TAB 1: ALL ORDERS ===== -->
+<div class="panel active" id="panel-all">
+  <div class="filters-box">
+    <div class="filters">
+      <div class="ac-wrap"><input id="f-party"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f-material" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f-job"      placeholder="Job Work"      data-col="job"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn gray" onclick="clearFilters('all')">CLEAR</button>
+      <button class="btn blue" onclick="downloadPDF('all')">PDF</button>
+      <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
+      <span class="status" id="status-all">No data loaded</span>
+    </div>
+  </div>
+  <div class="table-wrap" id="wrap-all">
+    <div class="empty">Loading…</div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: NO CHALLAN ===== -->
+<div class="panel" id="panel-nochallan">
+  <div class="filters-box">
+    <div class="filters">
+      <div class="ac-wrap"><input id="f2-party"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f2-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f2-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f2-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f2-material" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f2-job"      placeholder="Job Work"      data-col="job"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
+      <button class="btn blue" onclick="downloadPDF('nochallan')">PDF</button>
+      <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
+      <span class="status" id="status-nochallan">No data loaded</span>
+    </div>
+  </div>
+  <div class="table-wrap" id="wrap-nochallan">
+    <div class="empty">Rows with empty Challan Number will appear here.</div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: UPLOAD ===== -->
+<div class="panel" id="panel-upload">
+  <div class="setting-box">
+    <label>SELECT FOLDER</label>
+    <select id="uploadFolder">
+      <option value="">-- Choose --</option>
+      <option value="design">Design Number</option>
+      <option value="order">Order Form</option>
+    </select>
+  </div>
+  <div class="setting-box">
+    <label>CHOOSE PHOTO FROM GALLERY</label>
+    <input type="file" id="uploadFileInput" accept="image/*" onchange="onUploadFileChange(event)">
+    <div style="font-size:10px;color:#64748b;margin-top:4px;" id="uploadFileName"></div>
+    <div id="uploadPreview" style="display:none;margin-top:8px;"></div>
+  </div>
+  <div class="setting-box">
+    <label>RENAME</label>
+    <input type="text" id="uploadRename" placeholder="Type new name (extension auto-added)">
+  </div>
+  <div class="setting-box">
+    <button class="btn" id="uploadBtn" onclick="doUpload()" style="width:100%;padding:12px;font-size:13px;">⬆ UPLOAD</button>
+    <div id="uploadStatus" style="font-size:11px;margin-top:8px;text-align:center;font-weight:600;"></div>
+  </div>
+  <div class="setting-box">
+    <label>RECENT UPLOADS</label>
+    <div id="recentUploads"></div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: SETTINGS ===== -->
+<div class="panel" id="panel-settings">
+  <div class="setting-box">
+    <label>1. DATA ENDPOINT URL (leave blank to use default)</label>
+    <input type="text" id="dataUrl" placeholder="Default URL is used automatically">
+    <div class="row">
+      <button class="btn" onclick="saveDataUrl()">SAVE</button>
+      <button class="btn red" onclick="clearDataUrl()">RESET TO DEFAULT</button>
+      <span class="msg" id="dataMsg"></span>
+    </div>
+  </div>
+  <div class="setting-box">
+    <label>2. UPLOAD ENDPOINT URL (leave blank to use default)</label>
+    <input type="text" id="uploadUrl" placeholder="Default URL is used automatically">
+    <div class="row">
+      <button class="btn" onclick="saveUploadUrl()">SAVE</button>
+      <button class="btn red" onclick="clearUploadUrl()">RESET TO DEFAULT</button>
+      <span class="msg" id="uploadMsg"></span>
+    </div>
+  </div>
+  <div class="setting-box">
+    <label>OFFLINE CACHE STATUS</label>
+    <div id="cacheInfo" style="font-size:10px; line-height:1.6; color:#334155;">Loading…</div>
+    <div class="row" style="margin-top:6px;">
+      <button class="btn red" onclick="clearOfflineCache()">CLEAR CACHE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PREVIEW OVERLAY ===== -->
+<div id="preview">
+  <div class="box">
+    <div class="title" id="previewTitle">Preview</div>
+    <div id="previewContent"></div>
+  </div>
+  <div class="actions">
+    <button class="open"  onclick="openFullLink()">OPEN FULL</button>
+    <button class="close" onclick="closePreview()">CLOSE</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+/* ============================================================
+   DEFAULTS — hardcoded so the app works with zero setup
+   ============================================================ */
+const DEFAULT_DATA_URL   = 'https://script.google.com/macros/s/AKfycbwCKbbbncdTeINdP0NkRlG8r0MrRyRy7WgJJdPW1N_Y6dkUvkKnyE2IbNtnBOOGUrTNMA/exec';
+const DEFAULT_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbwCKbbbncdTeINdP0NkRlG8r0MrRyRy7WgJJdPW1N_Y6dkUvkKnyE2IbNtnBOOGUrTNMA/exec';
+
+function getDataUrl() {
+  return (localStorage.getItem('dataUrl') || '').trim() || DEFAULT_DATA_URL;
+}
+function getUploadUrl() {
+  return (localStorage.getItem('uploadUrl') || '').trim() || DEFAULT_UPLOAD_URL;
+}
+
+/* ========= STATE ========= */
+const state = {
+  data: { headers: [], rows: [] },
+  previewUrl: null,
+  linkColumns: { order: -1, ds: -1 },
+  cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 },
+  uploadFile: null,
+  uploadDataUrl: null,
+  recentUploads: []
+};
+
+/* ========= TABS ========= */
+document.querySelectorAll('#tabs .tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('#tabs .tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+     /* ========= SETTINGS ========= */
+function loadSettings() {
+  const dataStored   = localStorage.getItem('dataUrl');
+  const uploadStored = localStorage.getItem('uploadUrl');
+  document.getElementById('dataUrl').value   = dataStored   != null ? dataStored   : '';
+  document.getElementById('uploadUrl').value = uploadStored != null ? uploadStored : '';
+  updateCacheInfo();
+}
+function saveDataUrl() {
+  const v = document.getElementById('dataUrl').value.trim();
+  if (v) localStorage.setItem('dataUrl', v);
+  else   localStorage.removeItem('dataUrl');
+  document.getElementById('dataMsg').textContent = 'Saved ✓';
+  setTimeout(()=>document.getElementById('dataMsg').textContent='', 2000);
+  fetchData();
+}
+function clearDataUrl() {
+  localStorage.removeItem('dataUrl');
+  document.getElementById('dataUrl').value = '';
+  document.getElementById('dataMsg').textContent = 'Reset to default ✓';
+  setTimeout(()=>document.getElementById('dataMsg').textContent='', 2000);
+  fetchData();
+}
+function saveUploadUrl() {
+  const v = document.getElementById('uploadUrl').value.trim();
+  if (v) localStorage.setItem('uploadUrl', v);
+  else   localStorage.removeItem('uploadUrl');
+  document.getElementById('uploadMsg').textContent = 'Saved ✓';
+  setTimeout(()=>document.getElementById('uploadMsg').textContent='', 2000);
+}
+function clearUploadUrl() {
+  localStorage.removeItem('uploadUrl');
+  document.getElementById('uploadUrl').value = '';
+  document.getElementById('uploadMsg').textContent = 'Reset to default ✓';
+  setTimeout(()=>document.getElementById('uploadMsg').textContent='', 2000);
+}
+function updateCacheInfo() {
+  const el = document.getElementById('cacheInfo');
+  if (!el) return;
+  const cached = localStorage.getItem('offlineData');
+  if (!cached) { el.innerHTML = 'No offline cache yet. Load data once with internet to enable offline.'; return; }
+  try {
+    const c = JSON.parse(cached);
+    const when = new Date(c.savedAt).toLocaleString();
+    const rows = (c.rows || []).length;
+    el.innerHTML = '✓ Cached: <b>' + rows + '</b> rows<br>Last sync: <b>' + when + '</b>';
+  } catch (e) { el.innerHTML = 'Cache found but unreadable.'; }
+}
+function clearOfflineCache() {
+  if (!confirm('Clear offline cache? You will need internet to reload.')) return;
+  localStorage.removeItem('offlineData');
+  updateCacheInfo();
+  alert('Cache cleared.');
+}
+
+/* ========= FETCH (offline-aware) ========= */
+async function fetchData() {
+  const url = getDataUrl();
+  if (!url) { renderAll(); return; }
+  setStatus('all', 'Loading…');
+  setStatus('nochallan', 'Loading…');
+  hideOfflineBanner();
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
+      throw new Error('Not JSON');
+    }
+    const json = JSON.parse(text);
+    if (Array.isArray(json)) {
+      state.data.headers = json[0] || [];
+      state.data.rows = json.slice(1).map(r => ({
+        values: r, links: [], bgs: [], fgs: [], bolds: []
+      }));
+    } else {
+      state.data.headers = json.headers || [];
+      state.data.rows = (json.rows || []).map(r => ({
+        values: r.values || r,
+        links:  r.links  || [],
+        bgs:    r.bgs    || [],
+        fgs:    r.fgs    || [],
+        bolds:  r.bolds  || []
+      }));
+    }
+    try {
+      localStorage.setItem('offlineData', JSON.stringify({
+        headers: state.data.headers,
+        rows:    state.data.rows,
+        savedAt: Date.now()
+      }));
+      updateCacheInfo();
+    } catch (e) { console.log('Offline save failed:', e); }
+
+    const when = new Date().toLocaleString();
+    setStatus('all',       'Loaded ' + state.data.rows.length + ' rows — ' + when);
+    setStatus('nochallan', 'Loaded ' + state.data.rows.length + ' rows — ' + when);
+    detectColumns();
+    buildOrderGroups();
+    buildAutocomplete();
+    renderAll();
+  } catch (e) {
+    const cached = localStorage.getItem('offlineData');
+    if (cached) {
+      try {
+        const c = JSON.parse(cached);
+        state.data.headers = c.headers || [];
+        state.data.rows    = c.rows    || [];
+        detectColumns();
+        buildOrderGroups();
+        buildAutocomplete();
+        renderAll();
+        const when = new Date(c.savedAt).toLocaleString();
+        setStatus('all',       '⚠️ OFFLINE — data from ' + when);
+        setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
+        showOfflineBanner('⚠️ OFFLINE — showing data from ' + when);
+      } catch (err) {
+        setStatus('all',       'Error: ' + e.message);
+        setStatus('nochallan', 'Error: ' + e.message);
+      }
+    } else {
+      setStatus('all',       'Error: ' + e.message + ' (no offline copy)');
+      setStatus('nochallan', 'Error: ' + e.message);
+    }
+  }
+}
+function setStatus(tab, txt) {
+  const el = document.getElementById('status-' + tab);
+  if (el) el.textContent = txt;
+}
+function showOfflineBanner(msg) {
+  const b = document.getElementById('offline-banner');
+  if (b) { b.textContent = msg; b.classList.add('show'); }
+}
+function hideOfflineBanner() {
+  const b = document.getElementById('offline-banner');
+  if (b) b.classList.remove('show');
+}
+
+/* ========= COLUMN DETECTION ========= */
+function detectColumns() {
+  const hs = state.data.headers.map(h => (h || '').toString().toLowerCase().trim());
+  state.cols.party = hs.findIndex(h => h.indexOf('party') >= 0);
+  state.cols.order = hs.findIndex(h => h.indexOf('order') === 0 || h.indexOf('order no') >= 0);
+  state.cols.challan = hs.findIndex(h => {
+    const n = h.replace(/\s+/g, '');
+    return n.indexOf('challan') >= 0 || n.indexOf('chall') >= 0;
+  });
+  state.cols.design = hs.findIndex(h => {
+    const n = h.replace(/\s+/g, '');
+    return n === 'ds' || n === 'dsno' || n.indexOf('dsno') === 0 ||
+           n.indexOf('designno') >= 0 || n.indexOf('design') === 0;
+  });
+  state.cols.material = hs.findIndex(h => {
+    const n = h.replace(/\s+/g, '').toLowerCase();
+    return n.indexOf('material') >= 0 || n.indexOf('matrial')  >= 0 ||
+           n.indexOf('metrial')  >= 0 || n.indexOf('meterial') >= 0 ||
+           n.indexOf('matirial') >= 0;
+  });
+  state.cols.job = hs.findIndex(h => h.replace(/\s+/g, '').indexOf('job') >= 0);
+  state.linkColumns.order = state.cols.order;
+  state.linkColumns.ds    = state.cols.design;
+}
+function isLinkColumn(i) {
+  return i === state.linkColumns.order || i === state.linkColumns.ds;
+}
+function colIndex(key) { return state.cols[key] != null ? state.cols[key] : -1; }
+
+/* ========= ORDER GROUPS ========= */
+function buildOrderGroups() {
+  const oi = colIndex('order');
+  if (oi < 0) { state.orderGroups = []; return; }
+  const groups = [];
+  let lastMain = '';
+  state.data.rows.forEach(r => {
+    const v = (r.values[oi] || '').toString().trim();
+    if (!v) return;
+    const isSub = /^\d{1,2}$/.test(v) && lastMain !== '';
+    if (!isSub) {
+      lastMain = v;
+      if (!groups.includes(v)) groups.push(v);
+    }
+  });
+  groups.sort((a, b) => {
+    const na = parseFloat(a), nb = parseFloat(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+  state.orderGroups = groups;
+}
+
+/* ========= AUTOCOMPLETE ========= */
+const autoData = { party: [], order: [], challan: [], design: [], material: [], job: [] };
+
+function buildAutocomplete() {
+  for (const key in autoData) {
+    const idx = colIndex(key);
+    if (idx < 0) { autoData[key] = []; continue; }
+    const set = new Set();
+    state.data.rows.forEach(r => {
+      const v = (r.values[idx] || '').toString().trim();
+      if (v) set.add(v);
+    });
+    autoData[key] = Array.from(set).sort((a,b) => {
+      const na = parseFloat(a), nb = parseFloat(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+  }
+  autoData.order = state.orderGroups.slice();
+}
+
+function attachAutocomplete(input) {
+  const wrap = input.parentElement;
+  const list = document.createElement('div');
+  list.className = 'ac-list';
+  wrap.appendChild(list);
+
+  function close() { list.classList.remove('show'); list.innerHTML = ''; }
+  function lastFragment() {
+    const parts = input.value.split(',');
+    return parts[parts.length - 1].trim().toLowerCase();
+  }
+  function prefixBeforeLastComma() {
+    const idx = input.value.lastIndexOf(',');
+    if (idx < 0) return '';
+    return input.value.slice(0, idx + 1).trim() + ' ';
+  }
+  function open(matches) {
+    if (!matches.length) { close(); return; }
+    list.innerHTML = matches.slice(0, 80).map(m => '<div>' + escapeHtml(m) + '</div>').join('');
+    list.classList.add('show');
+    list.querySelectorAll('div').forEach(d => {
+      d.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const chosen = d.textContent;
+        const key = input.dataset.col;
+        if (key === 'order' || key === 'challan' || key === 'design') {
+          input.value = prefixBeforeLastComma() + chosen;
+        } else {
+          input.value = chosen;
+        }
+        close();
+        renderAll();
+      });
+    });
+  }
+  input.addEventListener('input', () => {
+    const key = input.dataset.col;
+    const q = lastFragment();
+    renderAll();
+    if (!q) { open(autoData[key] || []); return; }
+    open((autoData[key] || []).filter(v => v.toLowerCase().includes(q)));
+  });
+  input.addEventListener('focus', () => {
+    const key = input.dataset.col;
+    const q = lastFragment();
+    const pool = autoData[key] || [];
+    if (!q) open(pool);
+    else open(pool.filter(v => v.toLowerCase().includes(q)));
+  });
+  input.addEventListener('blur', () => setTimeout(close, 150));
+}
+
+document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
+
+/* ========= FILTER ========= */
+function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
+function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
+
+function getFiltered(tab) {
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  const fMulti = {
+    order:   parseMulti(document.getElementById(prefix + 'order').value),
+    challan: parseMulti(document.getElementById(prefix + 'challan').value),
+    design:  parseMulti(document.getElementById(prefix + 'design').value)
+  };
+  const fSingle = {
+    party:    norm(document.getElementById(prefix + 'party').value),
+    material: norm(document.getElementById(prefix + 'material').value),
+    job:      norm(document.getElementById(prefix + 'job').value)
+  };
+  const ci = state.cols;
+  let rows = state.data.rows;
+
+  if (tab === 'nochallan' && ci.challan >= 0) {
+    rows = rows.filter(r => !r.values[ci.challan] || r.values[ci.challan].toString().trim() === '');
+  }
+  if (fMulti.order.length && ci.order >= 0) {
+    const matched = [];
+    let currentMain = '';
+    state.data.rows.forEach(r => {
+      const raw = (r.values[ci.order] || '').toString().trim();
+      const isSubNumber = /^\d{1,2}$/.test(raw);
+      if (raw && (!currentMain || !isSubNumber)) currentMain = raw.toLowerCase();
+      if (fMulti.order.some(q => currentMain.includes(q))) matched.push(r);
+    });
+    rows = matched;
+  }
+  if (fMulti.challan.length && ci.challan >= 0) {
+    rows = rows.filter(r => {
+      const cell = norm(r.values[ci.challan]);
+      if (!cell) return false;
+      return fMulti.challan.some(q => cell.includes(q));
+    });
+  }
+  if (fMulti.design.length && ci.design >= 0) {
+    rows = rows.filter(r => {
+      const cell = norm(r.values[ci.design]);
+      if (!cell) return false;
+      return fMulti.design.some(q => cell.includes(q));
+    });
+  }
+  const match = (r, idx, val) => {
+    if (idx < 0 || !val) return true;
+    return norm(r.values[idx]).includes(val);
+  };
+  return rows.filter(r =>
+    match(r, ci.party, fSingle.party) &&
+    match(r, ci.material, fSingle.material) &&
+    match(r, ci.job, fSingle.job)
+  );
+}
+
+function clearFilters(tab) {
+  const prefix = tab === 'all' ? 'f-' : 'f2-';
+  ['party','order','challan','design','material','job'].forEach(k => {
+    document.getElementById(prefix + k).value = '';
+  });
+  renderAll();
+}
+
+/* ========= RENDER ========= */
+function renderAll() { renderTab('all'); renderTab('nochallan'); }
+
+function renderTab(tab) {
+  const wrap = document.getElementById('wrap-' + tab);
+  if (!state.data.headers.length) {
+    wrap.innerHTML = '<div class="empty">' +
+      (tab === 'nochallan'
+        ? 'Rows with empty Challan Number will appear here.'
+        : 'Loading data…') +
+      '</div>';
+    return;
+  }
+  const rows = getFiltered(tab);
+  const challanIdx = state.cols.challan;
+
+  let html = '<table><thead><tr>';
+  state.data.headers.forEach(h => html += '<th>' + escapeHtml(h || '') + '</th>');
+  html += '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>';
+    state.data.headers.forEach((_, i) => {
+      const val = r.values[i] != null ? r.values[i] : '';
+      const isBlankChallan = (i === challanIdx && (!val || val.toString().trim() === ''));
+      const cls = isBlankChallan ? ' class="challan-col"' : '';
+      const rawLink = r.links && r.links[i] ? r.links[i] : null;
+      const link = (isLinkColumn(i) && rawLink) ? rawLink : null;
+      const bg   = (r.bgs   && r.bgs[i])   ? r.bgs[i]   : '';
+      const fg   = (r.fgs   && r.fgs[i])   ? r.fgs[i]   : '';
+      const bold = (r.bolds && r.bolds[i]) ? true       : false;
+
+      let style = '';
+      if (bg && !isBlankChallan) style += 'background:' + bg + ';';
+      if (fg) style += 'color:' + fg + ';';
+      if (bold) style += 'font-weight:700;';
+      const styleAttr = style ? ' style="' + style + '"' : '';
+
+      let cellContent;
+      if (link) {
+        cellContent = '<a href="' + escapeAttr(link) + '" ' +
+                      'data-link="' + escapeAttr(link) + '" ' +
+                      'data-text="' + escapeAttr(val.toString()) + '" ' +
+                      'onclick="return handleLinkClick(event, this)"' +
+                      (fg ? ' style="color:' + fg + ';"' : '') + '>' +
+                      escapeHtml(val.toString()) + '</a>';
+      } else {
+        cellContent = escapeHtml(val.toString());
+      }
+      html += '<td' + cls + styleAttr + '>' + cellContent + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/* ========= LINK PREVIEW ========= */
+function handleLinkClick(e, el) {
+  e.preventDefault();
+  showPreview(el.getAttribute('data-link'), el.getAttribute('data-text'));
+  return false;
+}
+function showPreview(url, title) {
+  state.previewUrl = url;
+  document.getElementById('previewTitle').textContent = title || 'Preview';
+  const content = document.getElementById('previewContent');
+  content.innerHTML = '';
+  let fileId = null;
+  let m = url.match(/\/file\/d\/([^\/]+)/);
+  if (m) fileId = m[1];
+  if (!fileId) { m = url.match(/[?&]id=([^&]+)/); if (m) fileId = m[1]; }
+  if (fileId) {
+    content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" ' +
+                        'width="500" height="500" allow="autoplay" ' +
+                        'style="border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
+  } else {
+    content.innerHTML = '<img src="' + url + '" alt="preview" ' +
+                        'onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
+  }
+  document.getElementById('preview').classList.add('show');
+}
+function closePreview() {
+  document.getElementById('preview').classList.remove('show');
+  document.getElementById('previewContent').innerHTML = '';
+  state.previewUrl = null;
+}
+function openFullLink() {
+  if (state.previewUrl) window.open(state.previewUrl, '_blank', 'noopener');
+}
+document.getElementById('preview').addEventListener('click', (e) => {
+  if (e.target.id === 'preview') closePreview();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePreview(); });
+
+/* ========= PDF ========= */
+function downloadPDF(tab) {
+  if (!state.data.headers.length) { alert('No data'); return; }
+  const rows = getFiltered(tab);
+  if (!rows.length) { alert('No rows to export'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, pageW, 42, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text(tab === 'nochallan' ? 'ORDER BOOK — NO CHALLAN' : 'ORDER BOOK — ALL ORDERS', 20, 20);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Generated: ' + new Date().toLocaleString(), 20, 34);
+  doc.text('Total Rows: ' + rows.length, pageW - 20, 34, { align: 'right' });
+
+  const body = rows.map(r => r.values.map(v => v == null ? '' : v.toString()));
+  const colCount = state.data.headers.length;
+  let fontSize = 8;
+  if (colCount > 8)  fontSize = 7;
+  if (colCount > 12) fontSize = 6;
+  if (colCount > 16) fontSize = 5.5;
+  if (colCount > 20) fontSize = 5;
+  const marginL = 12, marginR = 12;
+  const printableW = pageW - marginL - marginR;
+
+  doc.autoTable({
+    head: [state.data.headers],
+    body: body,
+    startY: 50,
+    theme: 'grid',
+    tableWidth: printableW,
+    styles: {
+      fontSize: fontSize, cellPadding: 1.8, overflow: 'linebreak',
+      textColor: [15, 23, 42], lineColor: [0, 0, 0], lineWidth: 0.35,
+      valign: 'middle', minCellHeight: 12
+    },
+    headStyles: {
+      fillColor: [15, 23, 42], textColor: [255, 255, 255],
+      fontSize: fontSize, fontStyle: 'bold', halign: 'center',
+      valign: 'middle', cellPadding: 2.5,
+      lineColor: [0, 0, 0], lineWidth: 0.35
+    },
+    didParseCell: function (data) {
+      if (data.section !== 'body') return;
+      const r = rows[data.row.index];
+      const i = data.column.index;
+      const bg = (r.bgs && r.bgs[i]) ? r.bgs[i] : '';
+      const fg = (r.fgs && r.fgs[i]) ? r.fgs[i] : '';
+      const bold = (r.bolds && r.bolds[i]) ? true : false;
+      if (bg) { const rgb = hexToRgb(bg); if (rgb) data.cell.styles.fillColor = rgb; }
+      if (fg) { const rgb = hexToRgb(fg); if (rgb) data.cell.styles.textColor = rgb; }
+      if (bold) data.cell.styles.fontStyle = 'bold';
+    },
+    columnStyles: (function() {
+      const weights = [];
+      state.data.headers.forEach((h, i) => {
+        let maxLen = (h || '').toString().length;
+        body.slice(0, 300).forEach(row => {
+          const l = (row[i] || '').toString().length;
+          if (l > maxLen) maxLen = l;
+        });
+        weights.push(Math.max(3, Math.min(30, maxLen)));
+      });
+      const total = weights.reduce((a,b)=>a+b, 0);
+      const cs = {};
+      weights.forEach((w, i) => { cs[i] = { cellWidth: (w / total) * printableW }; });
+      return cs;
+    })(),
+    margin: { left: marginL, right: marginR, top: 48, bottom: 22 },
+    didDrawPage: function () {
+      const pageNum = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.text('Page ' + pageNum, pageW - 20, pageH - 8, { align: 'right' });
+      doc.text('Order Book Viewer', 12, pageH - 8);
+    }
+  });
+  const name = tab === 'nochallan' ? 'no_challan' : 'all_orders';
+  doc.save(name + '_' + new Date().toISOString().slice(0,10) + '.pdf');
+}
+
+function hexToRgb(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return null;
+  return [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)];
+}
+
+/* ========= UPLOAD TAB ========= */
+function onUploadFileChange(ev) {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) { state.uploadFile = null; state.uploadDataUrl = null; updateUploadPreview(); return; }
+  state.uploadFile = f;
+
+  const orig = f.name.replace(/\.[^.]+$/, '');
+  const renameEl = document.getElementById('uploadRename');
+  if (!renameEl.value) renameEl.value = orig;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.uploadDataUrl = e.target.result;
+    updateUploadPreview();
+  };
+  reader.readAsDataURL(f);
+}
+
+function updateUploadPreview() {
+  const box = document.getElementById('uploadPreview');
+  const name = document.getElementById('uploadFileName');
+  if (!state.uploadDataUrl) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    name.textContent = '';
+    return;
+  }
+  box.innerHTML = '<img src="' + state.uploadDataUrl + '" style="max-width:100%;max-height:200px;border-radius:4px;">';
+  box.style.display = 'block';
+  name.textContent = state.uploadFile ? state.uploadFile.name : '';
+}
+
+function doUpload() {
+  const folder = document.getElementById('uploadFolder').value;
+  const nameInput = document.getElementById('uploadRename').value.trim();
+  const status = document.getElementById('uploadStatus');
+  const btn = document.getElementById('uploadBtn');
+
+  if (!folder) { status.textContent = 'Please select folder.'; status.style.color = '#dc2626'; return; }
+  if (!state.uploadDataUrl) { status.textContent = 'Please choose a photo.'; status.style.color = '#dc2626'; return; }
+  if (!nameInput) { status.textContent = 'Please enter a new name.'; status.style.color = '#dc2626'; return; }
+
+  const extMatch = state.uploadFile.name.match(/\.[^.]+$/);
+  const ext = extMatch ? extMatch[0].toLowerCase() : '.jpg';
+  const finalName = nameInput + ext;
+  const mimeType = state.uploadFile.type || 'image/jpeg';
+  const uploadUrl = getUploadUrl();
+  if (!uploadUrl) { status.textContent = 'No upload URL configured.'; status.style.color = '#dc2626'; return; }
+
+  status.textContent = 'Uploading…';
+  status.style.color = '#2563eb';
+  btn.disabled = true;
+
+  const form = new URLSearchParams();
+  form.append('folder', folder);
+  form.append('name', finalName);
+  form.append('mimeType', mimeType);
+  form.append('file', state.uploadDataUrl);
+
+  fetch(uploadUrl, {
+    method: 'POST',
+    body: form,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
+  })
+  .then(r => r.text())
+  .then(txt => {
+    let json = null;
+    try { json = JSON.parse(txt); } catch (e) {}
+    if (json && json.ok) {
+      status.textContent = '✓ Uploaded: ' + (json.fileName || finalName);
+      status.style.color = '#16a34a';
+      state.recentUploads.unshift({
+        name: json.fileName || finalName,
+        folder: folder === 'design' ? 'Design Number' : 'Order Form',
+        when: new Date().toLocaleString(),
+        url: json.url || ''
+      });
+      state.recentUploads = state.recentUploads.slice(0, 10);
+      renderRecentUploads();
+      document.getElementById('uploadRename').value = '';
+      document.getElementById('uploadFileInput').value = '';
+      state.uploadFile = null;
+      state.uploadDataUrl = null;
+      updateUploadPreview();
+    } else {
+      status.textContent = '✗ Error: ' + (json && json.error ? json.error : 'unknown');
+      status.style.color = '#dc2626';
+    }
+  })
+  .catch(err => {
+    status.textContent = '✗ Network error: ' + err.message;
+    status.style.color = '#dc2626';
+  })
+  .finally(() => {
+    btn.disabled = false;
+  });
+}
+function renderRecentUploads() {
+  const box = document.getElementById('recentUploads');
+  if (!state.recentUploads.length) { box.innerHTML = '<div class="empty" style="padding:12px;">No uploads yet.</div>'; return; }
+  let html = '<div style="font-size:10px;">';
+  state.recentUploads.forEach(u => {
+    html += '<div style="padding:5px;border-bottom:1px solid #e5e7eb;">' +
+            '<b>' + escapeHtml(u.name) + '</b> → ' + escapeHtml(u.folder) +
+            '<br><span style="color:#64748b;">' + escapeHtml(u.when) + '</span></div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+/* ========= INIT ========= */
+loadSettings();
+renderRecentUploads();
+
+window.addEventListener('DOMContentLoaded', () => {
+  const cached = localStorage.getItem('offlineData');
+  if (cached && !navigator.onLine) {
+    try {
+      const c = JSON.parse(cached);
+      if (c.headers && c.rows && c.rows.length) {
+        state.data.headers = c.headers;
+        state.data.rows    = c.rows;
+        detectColumns();
+        buildOrderGroups();
+        buildAutocomplete();
+        renderAll();
+        const when = new Date(c.savedAt).toLocaleString();
+        setStatus('all',       '⚠️ OFFLINE — data from ' + when);
+        setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
+        showOfflineBanner('⚠️ OFFLINE — showing data from ' + when);
+      }
+    } catch (e) {}
+  } else {
+    fetchData();
+  }
+});
+
+window.addEventListener('online', () => { hideOfflineBanner(); fetchData(); });
+window.addEventListener('offline', () => {
+  showOfflineBanner('⚠️ OFFLINE — showing cached data');
+});
+</script>
+</body>
+</html>
