@@ -582,6 +582,7 @@ function colIndex(key) { return state.cols[key] != null ? state.cols[key] : -1; 
 
 /* ========= ORDER GROUPS ========= */
 /* ========= ORDER GROUPS ========= */
+/* ========= ORDER GROUPS ========= */
 function buildOrderGroups() {
   const oi = colIndex('order');
 
@@ -634,6 +635,10 @@ function buildOrderGroups() {
 
   state.orderGroups = groups;
 }
+
+   
+      
+   
 
 /* ========= AUTOCOMPLETE ========= */
 const autoData = { party: [], order: [], challan: [], design: [], material: [], job: [] };
