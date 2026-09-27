@@ -581,25 +581,57 @@ function isLinkColumn(i) {
 function colIndex(key) { return state.cols[key] != null ? state.cols[key] : -1; }
 
 /* ========= ORDER GROUPS ========= */
+/* ========= ORDER GROUPS ========= */
 function buildOrderGroups() {
   const oi = colIndex('order');
-  if (oi < 0) { state.orderGroups = []; return; }
+
+  if (oi < 0) {
+    state.orderGroups = [];
+    return;
+  }
+
   const groups = [];
   let lastMain = '';
+
   state.data.rows.forEach(r => {
     const v = (r.values[oi] || '').toString().trim();
-    if (!v) return;
+
+    // Empty order cell belongs to previous main order
+    if (!v) {
+      r._mainOrder = lastMain;
+      r._subOrder = '';
+      return;
+    }
+
+    // A 1- or 2-digit number is treated as a sub-order
+    // when a main order already exists.
     const isSub = /^\d{1,2}$/.test(v) && lastMain !== '';
-    if (!isSub) {
+
+    if (isSub) {
+      r._mainOrder = lastMain;
+      r._subOrder = v;
+    } else {
       lastMain = v;
-      if (!groups.includes(v)) groups.push(v);
+      r._mainOrder = lastMain;
+      r._subOrder = '';
+
+      if (!groups.includes(v)) {
+        groups.push(v);
+      }
     }
   });
+
   groups.sort((a, b) => {
-    const na = parseFloat(a), nb = parseFloat(b);
-    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    const na = parseFloat(a);
+    const nb = parseFloat(b);
+
+    if (!isNaN(na) && !isNaN(nb)) {
+      return na - nb;
+    }
+
     return a.localeCompare(b);
   });
+
   state.orderGroups = groups;
 }
 
