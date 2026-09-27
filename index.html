@@ -1638,46 +1638,114 @@ function wrapCanvasText(ctx, text, maxWidth, maxLines) {
 }
 
 function drawFieldCard(ctx, x, y, w, h, label, value, theme) {
-  const headerH = Math.max(52, Math.round(h * 0.34));
+  const headerH = Math.max(54, Math.round(h * 0.38));
   const key = String(label || '').trim().toUpperCase();
   const isParty = key === 'PARTY';
-  const isJobworkHighlight = theme === 'jobwork' && (key === 'CHALLAN NO' || key === 'JOB WORK PARTI');
-  const isHighlight = isParty || isJobworkHighlight;
+  const isJobworkParty = theme === 'jobwork' && key === 'JOB WORK PARTI';
+  const isHighlight = isParty || isJobworkParty;
+
+  /* Attractive rotating header palette. Party / Job Work Parti gets a
+     dedicated green treatment so the important name is immediately visible. */
   const colors = theme === 'dispatch'
-    ? ['#0b4f91','#0f6d77','#2d9b50','#6d35b7','#8b5208','#9e1234']
-    : ['#0b4f91','#2d9b50','#0f6d77','#8b5208'];
-  const color = isHighlight ? '#0b4f91' : colors[Math.abs(label.length + value.length) % colors.length];
+    ? ['#173b75','#0f766e','#7c3aed','#b45309','#be123c','#0369a1']
+    : ['#173b75','#0f766e','#7c3aed','#b45309','#be123c','#0369a1'];
+  const color = isHighlight ? '#148447' : colors[Math.abs(label.length + value.length) % colors.length];
 
   ctx.save();
-  canvasRoundRect(ctx, x, y, w, h, 18);
-  ctx.fillStyle = isHighlight ? '#fff3b0' : '#fff';
+  canvasRoundRect(ctx, x, y, w, h, 20);
+  ctx.fillStyle = isHighlight ? '#e9f9ef' : '#fffdf8';
   ctx.fill();
-  ctx.lineWidth = isHighlight ? 5 : 3;
-  ctx.strokeStyle = isHighlight ? '#d9a51b' : '#d9a51b';
+  ctx.lineWidth = isHighlight ? 4 : 3;
+  ctx.strokeStyle = isHighlight ? '#148447' : '#d3a52a';
   ctx.stroke();
 
   ctx.save();
-  canvasRoundRect(ctx, x + 1.5, y + 1.5, w - 3, headerH, 16);
+  canvasRoundRect(ctx, x + 1.5, y + 1.5, w - 3, headerH, 18);
   ctx.clip();
   ctx.fillStyle = color;
-  ctx.fillRect(x, y, w, headerH + 5);
+  ctx.fillRect(x, y, w, headerH + 8);
   ctx.restore();
 
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
-  const labelSize = fitCanvasText(ctx, String(label), w - 24, 24, 13, '800');
+  const labelSize = fitCanvasText(ctx, String(label), w - 28, 25, 13, '800');
   ctx.font = '800 ' + labelSize + 'px Arial';
-  ctx.fillText(String(label), x + w / 2, y + headerH * 0.67);
+  ctx.fillText(String(label), x + w / 2, y + headerH * 0.68);
 
   const valueText = String(value == null ? '' : value).trim() || '—';
-  const valueSize = fitCanvasText(ctx, valueText, w - 28, 30, 14, '800');
+  const valueSize = fitCanvasText(ctx, valueText, w - 30, isHighlight ? 40 : 31, 14, '800');
   ctx.font = '800 ' + valueSize + 'px Arial';
-  ctx.fillStyle = '#111827';
-  const lines = wrapCanvasText(ctx, valueText, w - 28, 3);
+  ctx.fillStyle = isHighlight ? '#075c31' : '#172033';
+  const lines = wrapCanvasText(ctx, valueText, w - 30, 3);
   const lineH = valueSize * 1.15;
   const startY = y + headerH + ((h - headerH) - lines.length * lineH) / 2 + valueSize * 0.82;
   lines.forEach((line, i) => ctx.fillText(line, x + w / 2, startY + i * lineH));
   ctx.restore();
+}
+
+function drawChallanHeader(ctx, W, y, h, type) {
+  const isJob = type === 'jobwork';
+  ctx.save();
+  ctx.fillStyle = '#0b2344';
+  ctx.fillRect(0, y, W, h);
+
+  /* Gold decorative sweep */
+  ctx.beginPath();
+  ctx.moveTo(0, y);
+  ctx.lineTo(Math.min(430, W * .31), y);
+  ctx.quadraticCurveTo(W * .24, y + h * .48, Math.min(500, W * .36), y + h);
+  ctx.lineTo(0, y + h);
+  ctx.closePath();
+  ctx.fillStyle = '#d9a52a';
+  ctx.fill();
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'left';
+  ctx.font = '900 58px Arial';
+  ctx.fillText(isJob ? 'JOB WORK' : 'DISPATCH', 54, y + 64);
+  ctx.font = '900 42px Arial';
+  ctx.fillText('CHALLAN', 58, y + 111);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#f8e7a8';
+  ctx.font = '700 22px Arial';
+  ctx.fillText(isJob ? 'WORK PROCESS / JOB WORK' : 'DISPATCH / DELIVERY', W - 42, y + 48);
+  ctx.fillStyle = '#fff';
+  ctx.font = '800 24px Arial';
+  ctx.fillText('BANSI FAB', W - 42, y + 82);
+
+  ctx.strokeStyle = '#d9a52a';
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(28, y + h - 8); ctx.lineTo(W - 28, y + h - 8); ctx.stroke();
+  ctx.restore();
+}
+
+function drawLargeChallanNo(ctx, W, y, h, challanNo) {
+  ctx.save();
+  const x = 55, w = W - 110;
+  canvasRoundRect(ctx, x, y, w, h, 34);
+  ctx.fillStyle = '#e30620';
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#d5a521';
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.font = '900 30px Arial';
+  ctx.fillText('CHALLAN NO', W / 2, y + 43);
+
+  const fs = fitCanvasText(ctx, String(challanNo || ''), w - 90, 92, 54, '900');
+  ctx.font = '900 ' + fs + 'px Arial';
+  ctx.fillText(String(challanNo || ''), W / 2, y + h - 27);
+  ctx.restore();
+}
+
+function getChallanFieldLabel(field, type) {
+  const key = String(field || '').trim().toUpperCase();
+  if (type === 'jobwork' && key === 'JOB WORK PARTI') return 'JOB WORK PARTI';
+  if (type === 'dispatch' && key === 'PARTY') return 'PARTY';
+  return field;
 }
 
 function getChallanMainOrder(row) {
@@ -1770,55 +1838,71 @@ function createFinalChallanImage(showUI = true) {
   const naturalH = src.naturalHeight || src.height;
   if (!naturalW || !naturalH) { alert('Drive photo has not finished loading.'); return; }
 
-  /* A clean tall challan layout: original photo first, selected information below. */
+  /* IMPORTANT: the original Drive photo is kept at its full aspect ratio and
+     full rendered size. Nothing is cropped or placed over the photo. */
   const W = 1400;
   const photoH = Math.round(W * naturalH / naturalW);
+
+  const headerH = 150;
+  const challanH = 190;
+  const gap = 16;
+  const side = 28;
   const cols = fields.length <= 5 ? 3 : (fields.length <= 8 ? 3 : 4);
-  const gap = 18;
-  const side = 34;
   const cardW = Math.floor((W - side * 2 - gap * (cols - 1)) / cols);
-  const cardH = fields.length <= 5 ? 145 : 132;
+  const cardH = fields.length <= 5 ? 158 : 144;
   const rowsCount = Math.ceil(fields.length / cols);
-  const panelPad = 34;
-  const topInfoH = type === 'dispatch' ? 0 : 0;
-  const panelH = panelPad + rowsCount * cardH + Math.max(0, rowsCount - 1) * gap + 40;
-  const H = photoH + panelH;
+  const panelPad = 26;
+  const cardsH = panelPad + rowsCount * cardH + Math.max(0, rowsCount - 1) * gap + 34;
+  const H = headerH + photoH + challanH + cardsH;
 
   const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#f8f6ef'; ctx.fillRect(0, 0, W, H);
-  ctx.drawImage(src, 0, 0, W, photoH);
+  /* Warm premium background */
+  ctx.fillStyle = '#fbf4df';
+  ctx.fillRect(0, 0, W, H);
 
-  /* Jobwork sample: top-right identifier is CHALLAN NO, not DS NO.
-     DS NO remains available in the information cards below the photo. */
-  const dsValue = item.dsNo || getRowFieldValue(row, state.data.headers[state.cols.design] || 'DS NO');
-  if (type === 'jobwork') {
-    drawJobworkChallanPhotoLabel(ctx, W - 380, 96, 350, 125, 'CHALLAN NO', item.challanNo);
-  } else {
-    drawPhotoLabel(ctx, 35, 35, 285, 115, 'CHALLAN NO', item.challanNo, '#0b4f91');
-    if (dsValue) drawPhotoLabel(ctx, Math.round(W/2 - 155), Math.round(photoH * .72), 310, 105, 'DS NO', dsValue, '#0b4f91');
-  }
+  /* Header is OUTSIDE the photo, so the original photo remains completely visible. */
+  drawChallanHeader(ctx, W, 0, headerH, type);
 
-  /* White information panel below the photo. */
-  ctx.fillStyle = '#f8f6ef';
-  ctx.fillRect(0, photoH, W, panelH);
-  ctx.fillStyle = '#0b315b';
-  ctx.fillRect(0, photoH, W, 9);
+  /* Original photo — exact aspect ratio, no crop, no overlay. */
+  ctx.drawImage(src, 0, headerH, W, photoH);
+
+  /* Gold separator below photo */
+  ctx.fillStyle = '#d9a52a';
+  ctx.fillRect(0, headerH + photoH, W, 8);
+
+  /* Large red challan number panel */
+  drawLargeChallanNo(ctx, W, headerH + photoH + 18, challanH - 30, item.challanNo);
+
+  const cardsTop = headerH + photoH + challanH;
+  ctx.fillStyle = '#fbf4df';
+  ctx.fillRect(0, cardsTop, W, cardsH);
 
   fields.forEach((field, i) => {
     const col = i % cols;
     const rr = Math.floor(i / cols);
     const x = side + col * (cardW + gap);
-    const y = photoH + panelPad + rr * (cardH + gap);
-    drawFieldCard(ctx, x, y, cardW, cardH, field, getChallanPrintFieldValue(row, field), type);
+    const y = cardsTop + panelPad + rr * (cardH + gap);
+    drawFieldCard(
+      ctx,
+      x,
+      y,
+      cardW,
+      cardH,
+      getChallanFieldLabel(field, type),
+      getChallanPrintFieldValue(row, field),
+      type
+    );
   });
 
-  /* Bottom decorative line similar to the supplied samples. */
-  ctx.fillStyle = '#0b315b';
+  /* Premium bottom border */
+  ctx.fillStyle = '#0b2344';
   ctx.fillRect(0, H - 18, W, 18);
-  ctx.strokeStyle = '#d9a51b'; ctx.lineWidth = 5;
+  ctx.strokeStyle = '#d9a52a';
+  ctx.lineWidth = 5;
   ctx.beginPath(); ctx.moveTo(0, H - 24); ctx.lineTo(W, H - 24); ctx.stroke();
 
   let dataUrl;
@@ -1831,8 +1915,6 @@ function createFinalChallanImage(showUI = true) {
 
   state.currentChallanPhoto.generatedDataUrl = dataUrl;
 
-  // Batch generation runs silently. The generated images are shown in the
-  // batch preview (Previous / Next) instead of opening Step 2 for every challan.
   if (showUI) {
     const out = document.getElementById('challanGeneratedImage');
     const wrap = document.getElementById('challanGeneratedWrap');
