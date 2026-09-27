@@ -844,6 +844,7 @@ function renderAll() { renderTab('all'); renderTab('nochallan'); }
 
 function renderTab(tab) {
   const wrap = document.getElementById('wrap-' + tab);
+
   if (!state.data.headers.length) {
     wrap.innerHTML = '<div class="empty">' +
       (tab === 'nochallan'
@@ -852,46 +853,114 @@ function renderTab(tab) {
       '</div>';
     return;
   }
+
   const rows = getFiltered(tab);
   const challanIdx = state.cols.challan;
+  const orderIdx = state.cols.order;
 
   let html = '<table><thead><tr>';
-  state.data.headers.forEach(h => html += '<th>' + escapeHtml(h || '') + '</th>');
+
+  state.data.headers.forEach(h => {
+    html += '<th>' + escapeHtml(h || '') + '</th>';
+  });
+
   html += '</tr></thead><tbody>';
+
   rows.forEach(r => {
+
     html += '<tr>';
+
     state.data.headers.forEach((_, i) => {
+
       const val = r.values[i] != null ? r.values[i] : '';
-      const isBlankChallan = (i === challanIdx && (!val || val.toString().trim() === ''));
-      const cls = isBlankChallan ? ' class="challan-col"' : '';
-      const rawLink = r.links && r.links[i] ? r.links[i] : null;
-      const link = (isLinkColumn(i) && rawLink) ? rawLink : null;
-      const bg   = (r.bgs   && r.bgs[i])   ? r.bgs[i]   : '';
-      const fg   = (r.fgs   && r.fgs[i])   ? r.fgs[i]   : '';
-      const bold = (r.bolds && r.bolds[i]) ? true       : false;
+
+      const isBlankChallan =
+        (i === challanIdx &&
+        (!val || val.toString().trim() === ''));
+
+      const cls =
+        isBlankChallan ? ' class="challan-col"' : '';
+
+      const rawLink =
+        r.links && r.links[i] ? r.links[i] : null;
+
+      const link =
+        (isLinkColumn(i) && rawLink) ? rawLink : null;
+
+      const bg =
+        (r.bgs && r.bgs[i]) ? r.bgs[i] : '';
+
+      const fg =
+        (r.fgs && r.fgs[i]) ? r.fgs[i] : '';
+
+      const bold =
+        (r.bolds && r.bolds[i]) ? true : false;
 
       let style = '';
-      if (bg && !isBlankChallan) style += 'background:' + bg + ';';
-      if (fg) style += 'color:' + fg + ';';
-      if (bold) style += 'font-weight:700;';
-      const styleAttr = style ? ' style="' + style + '"' : '';
+
+      if (bg && !isBlankChallan)
+        style += 'background:' + bg + ';';
+
+      if (fg)
+        style += 'color:' + fg + ';';
+
+      if (bold)
+        style += 'font-weight:700;';
+
+      const styleAttr =
+        style ? ' style="' + style + '"' : '';
+
+      /* ==========================================
+         ORDER NUMBER DISPLAY
+         Main order + sub-order = 301/2
+         ========================================== */
+
+      let displayVal = val.toString();
+
+      if (i === orderIdx) {
+
+        const mainOrder = r._mainOrder || '';
+        const subOrder = r._subOrder || '';
+
+        if (mainOrder && subOrder) {
+          displayVal = mainOrder + '/' + subOrder;
+        }
+        else if (mainOrder) {
+          displayVal = mainOrder;
+        }
+      }
 
       let cellContent;
+
       if (link) {
-        cellContent = '<a href="' + escapeAttr(link) + '" ' +
-                      'data-link="' + escapeAttr(link) + '" ' +
-                      'data-text="' + escapeAttr(val.toString()) + '" ' +
-                      'onclick="return handleLinkClick(event, this)"' +
-                      (fg ? ' style="color:' + fg + ';"' : '') + '>' +
-                      escapeHtml(val.toString()) + '</a>';
+
+        cellContent =
+          '<a href="' + escapeAttr(link) + '" ' +
+          'data-link="' + escapeAttr(link) + '" ' +
+          'data-text="' + escapeAttr(displayVal) + '" ' +
+          'onclick="return handleLinkClick(event, this)"' +
+          (fg ? ' style="color:' + fg + ';"' : '') +
+          '>' +
+          escapeHtml(displayVal) +
+          '</a>';
+
       } else {
-        cellContent = escapeHtml(val.toString());
+
+        cellContent =
+          escapeHtml(displayVal);
       }
-      html += '<td' + cls + styleAttr + '>' + cellContent + '</td>';
+
+      html +=
+        '<td' + cls + styleAttr + '>' +
+        cellContent +
+        '</td>';
     });
+
     html += '</tr>';
   });
+
   html += '</tbody></table>';
+
   wrap.innerHTML = html;
 }
 
