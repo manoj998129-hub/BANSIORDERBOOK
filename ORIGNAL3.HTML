@@ -521,7 +521,7 @@
 
 <div id="tabs">
   <div class="tab active" data-tab="all">ALL ORDERS</div>
-  <div class="tab" data-tab="nochallan">NO CHALLAN</div>
+  <div class="tab" data-tab="nochallan">REPORT</div>
   <div class="tab" data-tab="upload">UPLOAD</div>
   <div class="tab" data-tab="settings">SETTINGS</div>
 </div>
@@ -557,6 +557,17 @@
 <!-- ===== TAB 2: NO CHALLAN ===== -->
 <div class="panel" id="panel-nochallan">
   <div class="filters-box">
+    <div style="margin-bottom:7px;">
+      <label for="reportType" style="font-weight:700;color:#0f172a;">REPORT</label>
+      <select id="reportType" aria-label="Select report" style="width:100%;padding:7px;margin-top:4px;border:1px solid #cbd5e1;border-radius:4px;background:#f8fafc;font-size:11px;">
+        <option value="no-challan">No Challan</option>
+        <option value="fabric-ordered">Fabric Ordered</option>
+        <option value="fabric-cutwork">Fabric Cutwork Done</option>
+        <option value="fabric-jobwork">Fabric Given and Program Given to Jobwork</option>
+        <option value="fabric-received">Fabric Received from Jobwork</option>
+        <option value="dispatch-done">Dispatch Done</option>
+      </select>
+    </div>
     <div class="filters">
       <div class="ac-wrap"><input id="f2-party"    placeholder="Party Name"    data-col="party"></div>
       <div class="ac-wrap"><input id="f2-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
@@ -788,6 +799,7 @@ document.querySelectorAll('#tabs .tab').forEach(t => {
     document.getElementById('panel-' + t.dataset.tab).classList.add('active');
   });
 });
+document.getElementById('reportType').addEventListener('change', () => renderTab('nochallan'));
      /* ========= SETTINGS ========= */
 function loadSettings() {
   const dataStored   = localStorage.getItem('dataUrl');
@@ -1990,6 +2002,7 @@ async function shareGeneratedChallan() {
 
 /* ========= FETCH / LOCAL-FIRST INCREMENTAL SYNC ========= */
 let syncTimer = null;
+const AUTO_SYNC_INTERVAL_MS = 30000;
 let syncInProgress = false;
 
 function normalizeRowPayload(r) {
@@ -2416,12 +2429,12 @@ function getFiltered(tab) {
   const ci = state.cols;
   let rows = state.data.rows;
 
-  /* ===== NO CHALLAN ===== */
-  if (tab === 'nochallan' && ci.challan >= 0) {
-    rows = rows.filter(r =>
-      !r.values[ci.challan] ||
-      r.values[ci.challan].toString().trim() === ''
-    );
+  /* ===== REPORT TYPE ===== */
+  if (tab === 'nochallan') {
+    const reportType = document.getElementById('reportType').value;
+    if (reportType !== 'no-challan') return [];
+    if (ci.challan < 0) return [];
+    rows = rows.filter(r => norm(r.values[ci.challan]) === '');
   }
 
   /* ===== ORDER FILTER ===== */
@@ -2546,6 +2559,12 @@ function renderTab(tab) {
         ? 'Rows with empty Challan Number will appear here.'
         : 'Loading data…') +
       '</div>';
+    return;
+  }
+
+  if (tab === 'nochallan' && document.getElementById('reportType').value !== 'no-challan') {
+    const reportName = document.getElementById('reportType').selectedOptions[0].text;
+    wrap.innerHTML = '<div class="empty">Filtering rules for “' + escapeHtml(reportName) + '” have not been defined yet.</div>';
     return;
   }
 
@@ -2934,6 +2953,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (navigator.onLine) syncIncremental();
     else if (hadCache) showOfflineBanner('⚠️ OFFLINE — showing last saved data');
   }, 2000);
+
+  // Keep the order book current while this page stays open.
+  window.setInterval(() => {
+    if (navigator.onLine && document.visibilityState === 'visible') syncIncremental();
+  }, AUTO_SYNC_INTERVAL_MS);
 });
 
 window.addEventListener('online', () => {
