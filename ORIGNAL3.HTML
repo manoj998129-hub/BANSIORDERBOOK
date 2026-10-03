@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>BANSI FAB | Order Book</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -32,15 +32,15 @@
   }
   #tabs .tab {
     flex: 1;
-    padding: 11px 4px;
+    padding: 7px 4px;
     text-align: center;
     color: #cbd5e1;
     background: #334155;
     border-right: 1px solid #1e293b;
     cursor: pointer;
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
     user-select: none;
   }
   #tabs .tab.active { background: #0ea5e9; color: #fff; }
@@ -123,6 +123,7 @@
     color: #334155;
     margin-left: auto;
   }
+  .compact-refresh { padding: 5px 9px; font-size: 10px; }
 
   .table-wrap {
     overflow: auto;
@@ -156,6 +157,46 @@
     border-right: 2px solid #000;
   }
   thead tr th:first-child { background: #0f172a; z-index: 6; }
+
+  /* Mobile table: first two columns stay frozen while the remaining columns scroll.
+     JS keeps --sticky-order-width synchronized with the actual rendered Order No width. */
+  #wrap-all, #wrap-nochallan {
+    --sticky-order-width: 0px;
+    --sticky-party-width: 0px;
+  }
+  #wrap-all th.sticky-order, #wrap-all td.sticky-order,
+  #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
+    position: sticky;
+    left: 0;
+    z-index: 7;
+    background: var(--surface, #fff);
+  }
+  #wrap-all th.sticky-party, #wrap-all td.sticky-party,
+  #wrap-nochallan th.sticky-party, #wrap-nochallan td.sticky-party {
+    position: sticky;
+    left: var(--sticky-order-width);
+    z-index: 7;
+    background: var(--surface, #fff);
+    box-shadow: 2px 0 0 rgba(15,23,42,.16);
+  }
+  #wrap-all thead th.sticky-order, #wrap-all thead th.sticky-party,
+  #wrap-nochallan thead th.sticky-order, #wrap-nochallan thead th.sticky-party {
+    z-index: 9;
+    background: #0f172a;
+    color: #fff;
+  }
+  #wrap-all tbody tr:nth-child(even) td.sticky-order,
+  #wrap-all tbody tr:nth-child(even) td.sticky-party,
+  #wrap-nochallan tbody tr:nth-child(even) td.sticky-order,
+  #wrap-nochallan tbody tr:nth-child(even) td.sticky-party {
+    background: var(--surface-alt, #f8fafc);
+  }
+  #wrap-all td.sticky-order, #wrap-all td.sticky-party,
+  #wrap-nochallan td.sticky-order, #wrap-nochallan td.sticky-party {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   tr.blank-challan td.challan-col { background: #fecaca !important; }
   td a { text-decoration: underline; font-weight: 700; cursor: pointer; }
 
@@ -174,9 +215,10 @@
   #preview .box {
     background: #fff;
     border-radius: 8px;
-    padding: 10px;
-    max-width: 95%;
-    max-height: 80vh;
+    padding: 8px;
+    width: min(94vw, 1000px);
+    max-width: 94vw;
+    max-height: 88vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -185,8 +227,10 @@
   }
   #preview .box img,
   #preview .box iframe {
+    width: auto;
     max-width: 100%;
-    max-height: 65vh;
+    max-height: 72vh;
+    min-height: 42vh;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background: #fff;
@@ -788,6 +832,40 @@
   .security-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 11px; }
   .security-message { min-height: 16px; margin-top: 7px; color: var(--danger); font-size: 11px; }
   @media (max-width: 650px) {
+    /* iPhone Safari zooms the page when small form controls receive focus.
+       Keep controls compact visually but use a 16px text size to prevent that. */
+    .ac-wrap input, .filters input, select, textarea { font-size: 16px !important; }
+    .filters-box { padding: 6px; margin-bottom: 6px; }
+    .toolbar { gap: 4px; margin-top: 6px; }
+    .toolbar .btn { padding: 5px 8px; font-size: 10px; min-height: 30px; }
+    .toolbar .status { margin-left: 0; flex: 1 1 150px; font-size: 9px; padding: 4px 6px; }
+    #wrap-all th, #wrap-all td, #wrap-nochallan th, #wrap-nochallan td {
+      min-width: 58px;
+      max-width: 135px;
+      font-size: 9px;
+      line-height: 1.15;
+      padding: 3px 4px;
+    }
+    #wrap-all th.sticky-order, #wrap-all td.sticky-order,
+    #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
+      width: max-content;
+      min-width: 72px;
+      max-width: 110px;
+    }
+    #wrap-all th.sticky-party, #wrap-all td.sticky-party,
+    #wrap-nochallan th.sticky-party, #wrap-nochallan td.sticky-party {
+      min-width: 150px;
+      max-width: 220px;
+    }
+    .batch-preview-actions .btn, .batch-preview-nav .btn,
+    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
+    .challan-step-actions .btn, .challan-step2-actions .btn {
+      min-height: 38px;
+      height: 38px;
+      padding: 5px 6px;
+      font-size: 9px;
+    }
+  }
     #tabs .tab { min-width: 0; padding: 8px 3px; font-size: 9px; }
     .settings-grid { grid-template-columns: minmax(0, 1fr); }
     .settings-card-wide { grid-column: auto; }
@@ -1041,7 +1119,7 @@
         <option value="dispatch">DISPATCH CHALLAN</option>
       </select>
       <button class="btn green" onclick="generateChallan()">▣ GENERATE</button>
-      <button class="btn green" onclick="fetchData(true)">↻ REFRESH</button>
+      <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-all">No data loaded</span>
     </div>
   </div>
@@ -1076,7 +1154,7 @@
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
       <button class="btn blue" onclick="downloadPDF('nochallan')">PDF</button>
-      <button class="btn green" onclick="fetchData(true)">↻ REFRESH</button>
+      <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-nochallan">No data loaded</span>
     </div>
   </div>
@@ -3381,8 +3459,9 @@ function renderTab(tab) {
 
   let html = '<table><thead><tr>';
 
-  state.data.headers.forEach(h => {
-    html += '<th>' + escapeHtml(h || '') + '</th>';
+  state.data.headers.forEach((h, i) => {
+    const stickyClass = i === orderIdx ? ' class="sticky-order"' : (i === state.cols.party ? ' class="sticky-party"' : '');
+    html += '<th' + stickyClass + '>' + escapeHtml(h || '') + '</th>';
   });
 
   html += '</tr></thead><tbody>';
@@ -3399,8 +3478,9 @@ function renderTab(tab) {
         (i === challanIdx &&
         (!val || val.toString().trim() === ''));
 
-      const cls =
-        isBlankChallan ? ' class="challan-col"' : '';
+      const stickyClass = i === orderIdx ? 'sticky-order' : (i === state.cols.party ? 'sticky-party' : '');
+      const classNames = [stickyClass, isBlankChallan ? 'challan-col' : ''].filter(Boolean);
+      const cls = classNames.length ? ' class="' + classNames.join(' ') + '"' : '';
 
       const rawLink =
         r.links && r.links[i] ? r.links[i] : null;
@@ -3498,7 +3578,22 @@ if (challanFilter.length && i === orderIdx) {
   html += '</tbody></table>';
 
   wrap.innerHTML = html;
+  requestAnimationFrame(() => syncStickyColumns(wrap));
 }
+
+function syncStickyColumns(wrap) {
+  if (!wrap) return;
+  const orderCell = wrap.querySelector('thead .sticky-order, tbody .sticky-order');
+  const orderWidth = orderCell ? orderCell.getBoundingClientRect().width : 0;
+  wrap.style.setProperty('--sticky-order-width', Math.ceil(orderWidth) + 'px');
+}
+
+function syncAllStickyColumns() {
+  ['wrap-all','wrap-nochallan'].forEach(id => syncStickyColumns(document.getElementById(id)));
+}
+
+window.addEventListener('resize', syncAllStickyColumns);
+window.addEventListener('orientationchange', () => setTimeout(syncAllStickyColumns, 150));
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
@@ -3526,8 +3621,8 @@ function showPreview(url, title) {
   if (!fileId) { m = url.match(/[?&]id=([^&]+)/); if (m) fileId = m[1]; }
   if (fileId) {
     content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" ' +
-                        'width="500" height="500" allow="autoplay" ' +
-                        'style="border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
+                        'allow="autoplay" ' +
+                        'style="width:min(88vw,900px);height:min(72vh,760px);border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
   } else {
     content.innerHTML = '<img src="' + url + '" alt="preview" ' +
                         'onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
