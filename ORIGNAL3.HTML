@@ -2434,7 +2434,9 @@ function getFiltered(tab) {
     const reportType = document.getElementById('reportType').value;
     if (reportType !== 'no-challan') return [];
     if (ci.challan < 0) return [];
-    rows = rows.filter(r => norm(r.values[ci.challan]) === '');
+    // This report is for pending sub-orders only; main order header rows are
+    // not challan-pending entries on their own.
+    rows = rows.filter(r => r._subOrder && norm(r.values[ci.challan]) === '');
   }
 
   /* ===== ORDER FILTER ===== */
@@ -2631,6 +2633,10 @@ function renderTab(tab) {
    ========================================== */
 
 let displayVal = val.toString();
+
+if (tab === 'nochallan' && i === orderIdx && r._subOrder) {
+  displayVal = r._mainOrder + '/' + r._subOrder;
+}
 
 /* Only CHALLAN filter changes order display to Main/Sub */
 const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
