@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BANSI FAB | Order Book</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -789,7 +789,7 @@
   .security-message { min-height: 16px; margin-top: 7px; color: var(--danger); font-size: 11px; }
   @media (max-width: 650px) {
     #tabs .tab { min-width: 0; padding: 8px 3px; font-size: 9px; }
-    .settings-grid { grid-template-columns: 1fr; }
+    .settings-grid { grid-template-columns: minmax(0, 1fr); }
     .settings-card-wide { grid-column: auto; }
     .settings-card { padding: 8px; }
     .credential-row { grid-template-columns: 1fr; }
@@ -797,6 +797,191 @@
     .toolbar { gap: 5px; }
     .status { flex-basis: 100%; margin-left: 0; }
     .login-card { padding: 20px; }
+  }
+
+  /* ========= IPHONE / NARROW VIEWPORT CONTAINMENT =========
+     Keep wide data inside its own scroll region; never let its intrinsic width
+     enlarge the document and trigger Safari's automatic page scaling. */
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  #appShell, #tabs, .panel, .filters-box, .filters, .toolbar, .settings-grid,
+  .table-wrap, .setting-box, .print-setting-box, .settings-card,
+  #challanStep1, #challanStep2, #preview, .challan-step-box, .challan-step2-box,
+  .challan-summary, #challanStep1Results, .challan-result, .challan-result-body,
+  .batch-generate-box, .batch-preview-wrap, .batch-preview-head,
+  .batch-preview-image-box, .challan-photo-wrap, .challan-generated-wrap,
+  .challan-generated-image-box, #preview .box, #previewContent {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+  #appShell, .panel, .filters-box, .settings-grid, .table-wrap {
+    width: 100%;
+  }
+  .table-wrap, .challan-result-body, .batch-preview-image-box,
+  .challan-photo-wrap, .challan-generated-image-box {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  #wrap-all table, #wrap-nochallan table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    table-layout: auto;
+  }
+  #wrap-all th, #wrap-all td, #wrap-nochallan th, #wrap-nochallan td {
+    min-width: 72px;
+    max-width: 176px;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .challan-result-head > * { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+  .challan-result-body { width: 100%; }
+  .challan-result-table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    table-layout: auto;
+  }
+  .challan-result-table th, .challan-result-table td {
+    min-width: 72px;
+    max-width: 160px;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .challan-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .challan-summary-card, .challan-summary-card span,
+  .challan-step-title, .challan-step-subtitle,
+  .challan-step2-info, .batch-progress-status, .batch-generated-info,
+  .batch-generated-list, .batch-preview-title, .challan-photo-error,
+  .challan-canvas-note {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .challan-step-box, .challan-step2-box {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: hidden;
+  }
+  #challanStep1 .challan-step-box > *, #challanStep2 .challan-step2-box > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .batch-preview-nav, .batch-preview-actions, .batch-preview-all-actions,
+  .challan-generated-actions, .challan-step-actions, .challan-step2-actions {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .batch-preview-image-box img, .challan-photo-wrap img,
+  .challan-generated-image-box img, #preview .box img, #preview .box iframe {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+  }
+  #preview { width: 100%; max-width: 100%; }
+  #preview .box { width: min(100%, 760px); }
+  #previewContent { width: 100%; min-width: 0; }
+  #preview .actions { max-width: 100%; flex-wrap: wrap; justify-content: center; }
+  .brand-bar, .brand-copy, .brand-tagline { min-width: 0; max-width: 100%; }
+  .brand-tagline { overflow-wrap: anywhere; }
+  .toolbar > *, .setting-box .row > *, .print-save-row > * { min-width: 0; }
+  .challan-type-select { min-width: 0; }
+  .print-save-row .btn { min-width: 0; }
+
+  @media (max-width: 650px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+    .challan-type-select { min-width: 0; flex-basis: 130px; }
+    #challanStep1 { padding: 12px; }
+    #challanStep2 { padding: 12px; }
+    #challanStep1 .challan-step-box {
+      width: calc(100vw - 24px);
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      padding: 10px;
+    }
+    #challanStep2 .challan-step2-box {
+      width: calc(100vw - 24px);
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      padding: 10px;
+    }
+    .challan-result { width: 100%; max-width: 100%; }
+    .challan-result-body { padding: 5px; }
+    .challan-summary { gap: 5px; }
+    .challan-summary-card { padding: 6px; }
+    .challan-step-subtitle { margin-bottom: 7px; }
+    .batch-generate-box, .batch-preview-wrap { margin-top: 7px; padding: 8px; }
+    .batch-preview-head { gap: 5px; margin-bottom: 5px; }
+    .batch-preview-nav, .batch-preview-actions, .batch-preview-all-actions,
+    .challan-generated-actions, .challan-step-actions, .challan-step2-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      justify-content: stretch;
+      margin-top: 7px;
+    }
+    .batch-preview-actions .btn, .batch-preview-nav .btn,
+    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
+    .challan-step-actions .btn, .challan-step2-actions .btn {
+      width: 100%;
+      min-width: 0 !important;
+      max-width: 100%;
+      min-height: 50px;
+      height: 50px;
+      padding: 6px 5px;
+      font-size: 10px;
+      line-height: 1.15;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .batch-preview-actions .btn, .batch-preview-all-actions .btn { letter-spacing: 0; }
+    .batch-preview-all-actions { padding-top: 6px; }
+    .batch-preview-image-box, .challan-photo-wrap, .challan-generated-image-box {
+      max-height: 58vh;
+      padding: 6px;
+    }
+    .batch-preview-image-box img, .challan-photo-wrap img,
+    .challan-generated-image-box img {
+      max-width: 100%;
+      max-height: none;
+      height: auto;
+      object-fit: contain;
+    }
+    .challan-step-actions, .challan-step2-actions { margin-top: 8px; }
+    .challan-load-btn { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+    #preview { padding: 12px; }
+    #preview .box { width: 100%; max-width: 100%; max-height: 82dvh; }
+    #preview .actions button { min-height: 44px; }
+  }
+  @media (max-width: 360px) {
+    .batch-preview-nav, .batch-preview-actions, .batch-preview-all-actions,
+    .challan-generated-actions, .challan-step-actions, .challan-step2-actions {
+      gap: 5px;
+    }
+    .batch-preview-actions .btn, .batch-preview-nav .btn,
+    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
+    .challan-step-actions .btn, .challan-step2-actions .btn {
+      padding-left: 3px;
+      padding-right: 3px;
+      font-size: 9px;
+    }
   }
 </style>
 </head>
