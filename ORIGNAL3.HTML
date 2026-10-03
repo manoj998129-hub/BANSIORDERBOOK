@@ -545,7 +545,7 @@
         <option value="dispatch">DISPATCH CHALLAN</option>
       </select>
       <button class="btn green" onclick="generateChallan()">▣ GENERATE</button>
-      <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
+      <button class="btn green" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-all">No data loaded</span>
     </div>
   </div>
@@ -568,7 +568,7 @@
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
       <button class="btn blue" onclick="downloadPDF('nochallan')">PDF</button>
-      <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
+      <button class="btn green" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-nochallan">No data loaded</span>
     </div>
   </div>
@@ -763,6 +763,8 @@ function getUploadUrl() {
 /* ========= STATE ========= */
 const state = {
   data: { headers: [], rows: [] },
+  syncVersion: '',
+  cacheNeedsFull: false,
   previewUrl: null,
   linkColumns: { order: -1, ds: -1 },
   cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 },
@@ -1986,79 +1988,236 @@ async function shareGeneratedChallan() {
   window.open('https://wa.me/?text=' + message, '_blank', 'noopener');
 }
 
-/* ========= FETCH (offline-aware) ========= */
-async function fetchData() {
-  const url = getDataUrl();
-  if (!url) { renderAll(); return; }
-  setStatus('all', 'Loading…');
-  setStatus('nochallan', 'Loading…');
-  hideOfflineBanner();
-  try {
-    const res = await fetch(url);
-    const text = await res.text();
-    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
-      throw new Error('Not JSON');
-    }
-    const json = JSON.parse(text);
-    if (Array.isArray(json)) {
-      state.data.headers = json[0] || [];
-      state.data.rows = json.slice(1).map(r => ({
-        values: r, links: [], bgs: [], fgs: [], bolds: []
-      }));
-    } else {
-      state.data.headers = json.headers || [];
-      state.data.rows = (json.rows || []).map(r => ({
-        values: r.values || r,
-        links:  r.links  || [],
-        bgs:    r.bgs    || [],
-        fgs:    r.fgs    || [],
-        bolds:  r.bolds  || []
-      }));
-    }
-    try {
-      localStorage.setItem('offlineData', JSON.stringify({
-        headers: state.data.headers,
-        rows:    state.data.rows,
-        savedAt: Date.now()
-      }));
-      updateCacheInfo();
-    } catch (e) { console.log('Offline save failed:', e); }
+/* ========= FETCH / LOCAL-FIRST INCREMENTAL SYNC ========= */
+let syncTimer = null;
+let syncInProgress = false;
 
-    const when = new Date().toLocaleString();
-    setStatus('all',       'Loaded ' + state.data.rows.length + ' rows — ' + when);
-    setStatus('nochallan', 'Loaded ' + state.data.rows.length + ' rows — ' + when);
+function normalizeRowPayload(r) {
+  return {
+    values: r && r.values ? r.values : (Array.isArray(r) ? r : []),
+    links:  r && r.links  ? r.links  : [],
+    bgs:    r && r.bgs    ? r.bgs    : [],
+    fgs:    r && r.fgs    ? r.fgs    : [],
+    bolds:  r && r.bolds  ? r.bolds  : [],
+    sheetRow: r && Number(r.sheetRow) > 1 ? Number(r.sheetRow) : undefined
+  };
+}
+
+function saveOfflineData(version) {
+  try {
+    localStorage.setItem('offlineData', JSON.stringify({
+      headers: state.data.headers,
+      rows: state.data.rows,
+      version: version || state.syncVersion || '',
+      formatVersion: 2,
+      savedAt: Date.now()
+    }));
+    updateCacheInfo();
+  } catch (e) {
+    console.log('Offline save failed:', e);
+  }
+}
+
+function loadCachedData(showStatus = true) {
+  const cached = localStorage.getItem('offlineData');
+  if (!cached) return false;
+  try {
+    const c = JSON.parse(cached);
+    if (!Array.isArray(c.headers) || !Array.isArray(c.rows)) return false;
+
+    // Old cache versions do not contain sheetRow. Keep them usable, but
+    // force the first online sync to do a safe FULL fetch.
+    const hasRowKeys = c.rows.length === 0 || c.rows.every(r => Number(r && r.sheetRow) > 1);
+    state.data.headers = c.headers || [];
+    state.data.rows = c.rows.map(normalizeRowPayload);
+    state.syncVersion = hasRowKeys ? (c.version || '') : '';
+    state.cacheNeedsFull = !hasRowKeys;
+
     detectColumns();
     buildOrderGroups();
     buildAutocomplete();
     renderAll();
     renderPrintFieldSettings();
-  } catch (e) {
-    const cached = localStorage.getItem('offlineData');
-    if (cached) {
-      try {
-        const c = JSON.parse(cached);
-        state.data.headers = c.headers || [];
-        state.data.rows    = c.rows    || [];
-        detectColumns();
-        buildOrderGroups();
-        buildAutocomplete();
-        renderAll();
-        renderPrintFieldSettings();
-        const when = new Date(c.savedAt).toLocaleString();
-        setStatus('all',       '⚠️ OFFLINE — data from ' + when);
-        setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
-        showOfflineBanner('⚠️ OFFLINE — showing data from ' + when);
-      } catch (err) {
-        setStatus('all',       'Error: ' + e.message);
-        setStatus('nochallan', 'Error: ' + e.message);
-      }
-    } else {
-      setStatus('all',       'Error: ' + e.message + ' (no offline copy)');
-      setStatus('nochallan', 'Error: ' + e.message);
+
+    if (showStatus) {
+      const when = c.savedAt ? new Date(c.savedAt).toLocaleString() : 'unknown time';
+      setStatus('all', '✓ Cached ' + state.data.rows.length + ' rows — ' + when);
+      setStatus('nochallan', '✓ Cached ' + state.data.rows.length + ' rows — ' + when);
     }
+    return true;
+  } catch (e) {
+    console.warn('Cached data unreadable:', e);
+    return false;
   }
 }
+
+function applyFullPayload(json) {
+  if (Array.isArray(json)) {
+    state.data.headers = json[0] || [];
+    state.data.rows = json.slice(1).map((r, i) => normalizeRowPayload({ values:r, sheetRow:i+2 }));
+    state.syncVersion = '';
+  } else {
+    state.data.headers = json.headers || [];
+    state.data.rows = (json.rows || []).map((r, i) => {
+      const row = normalizeRowPayload(r);
+      if (!(Number(row.sheetRow) > 1)) row.sheetRow = i + 2;
+      return row;
+    });
+    state.syncVersion = json.version || '';
+  }
+  state.cacheNeedsFull = false;
+}
+
+function applyDeltaPayload(json) {
+  if (json.headersChanged && Array.isArray(json.headers)) {
+    state.data.headers = json.headers;
+  }
+
+  const bySheetRow = new Map();
+  state.data.rows.forEach(r => {
+    const n = Number(r && r.sheetRow);
+    if (n > 1) bySheetRow.set(n, r);
+  });
+
+  (json.changedRows || []).forEach(item => {
+    const n = Number(item && item.sheetRow);
+    if (n > 1 && item.row) {
+      const row = normalizeRowPayload(item.row);
+      row.sheetRow = n;
+      bySheetRow.set(n, row);
+    }
+  });
+
+  (json.deletedRows || []).forEach(n0 => {
+    const n = Number(n0);
+    if (n > 1) bySheetRow.delete(n);
+  });
+
+  // Sheet row numbers are the stable sync keys. Rebuild the client array in
+  // exact sheet order after applying changes/deletions.
+  state.data.rows = Array.from(bySheetRow.keys()).sort((a,b) => a-b).map(n => bySheetRow.get(n));
+  state.syncVersion = json.version || state.syncVersion || '';
+  state.cacheNeedsFull = false;
+}
+
+async function syncIncremental() {
+  if (syncInProgress || !navigator.onLine) return;
+  syncInProgress = true;
+  hideOfflineBanner();
+
+  try {
+    const url = getDataUrl();
+    if (!url) return;
+
+    // If there is no compatible cache/version, the first sync is a safe FULL fetch.
+    const cached = localStorage.getItem('offlineData');
+    let cacheObj = null;
+    try { cacheObj = cached ? JSON.parse(cached) : null; } catch (e) {}
+    const hasCompatibleCache = cacheObj && cacheObj.formatVersion === 2 &&
+      Array.isArray(cacheObj.headers) && Array.isArray(cacheObj.rows) &&
+      (cacheObj.rows.length === 0 || cacheObj.rows.every(r => Number(r && r.sheetRow) > 1)) &&
+      (cacheObj.rows.length === 0 || cacheObj.rows.every(r =>
+        r && Array.isArray(r.values) && Array.isArray(r.bgs) &&
+        Array.isArray(r.fgs) && Array.isArray(r.bolds) && Array.isArray(r.links)
+      )) && !!cacheObj.version;
+
+    let requestUrl;
+    if (hasCompatibleCache) {
+      requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') +
+        'mode=delta&since=' + encodeURIComponent(cacheObj.version);
+    } else {
+      requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'mode=full';
+    }
+
+    const res = await fetch(requestUrl, { cache: 'no-store' });
+    const text = await res.text();
+    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) throw new Error('Not JSON');
+    const json = JSON.parse(text);
+
+    if (json.syncMode === 'delta' && hasCompatibleCache) {
+      applyDeltaPayload(json);
+    } else {
+      applyFullPayload(json);
+    }
+
+    saveOfflineData(state.syncVersion);
+    detectColumns();
+    buildOrderGroups();
+    buildAutocomplete();
+    renderAll();
+    renderPrintFieldSettings();
+
+    const when = new Date().toLocaleString();
+    const changed = json.syncMode === 'delta'
+      ? ((json.changedRows || []).length + (json.deletedRows || []).length)
+      : state.data.rows.length;
+    const msg = json.syncMode === 'delta'
+      ? (changed ? '✓ Synced ' + changed + ' changed row(s) — ' + when : '✓ Up to date — ' + when)
+      : '✓ Loaded ' + state.data.rows.length + ' rows — ' + when;
+    setStatus('all', msg);
+    setStatus('nochallan', msg);
+  } catch (e) {
+    // Cached data remains on screen. Do not replace it with an error page.
+    if (state.data.rows.length) {
+      const cached = localStorage.getItem('offlineData');
+      let when = '';
+      try { when = new Date(JSON.parse(cached).savedAt).toLocaleString(); } catch (x) {}
+      setStatus('all', '⚠️ Sync failed — showing cached data' + (when ? ' from ' + when : ''));
+      setStatus('nochallan', '⚠️ Sync failed — showing cached data');
+      showOfflineBanner('⚠️ Could not sync now — showing last saved data');
+    } else {
+      setStatus('all', 'Error: ' + e.message);
+      setStatus('nochallan', 'Error: ' + e.message);
+    }
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+async function fetchData(forceFull = false) {
+  // Refresh buttons use a direct full fetch. Normal/background calls use delta.
+  if (!forceFull) return syncIncremental();
+  if (syncInProgress) return;
+
+  const url = getDataUrl();
+  if (!url) { renderAll(); return; }
+  syncInProgress = true;
+  setStatus('all', 'Refreshing…');
+  setStatus('nochallan', 'Refreshing…');
+  hideOfflineBanner();
+
+  try {
+    const requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'mode=full';
+    const res = await fetch(requestUrl, { cache: 'no-store' });
+    const text = await res.text();
+    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) throw new Error('Not JSON');
+    const json = JSON.parse(text);
+    applyFullPayload(json);
+    saveOfflineData(state.syncVersion);
+
+    detectColumns();
+    buildOrderGroups();
+    buildAutocomplete();
+    renderAll();
+    renderPrintFieldSettings();
+
+    const when = new Date().toLocaleString();
+    setStatus('all', '✓ Refreshed ' + state.data.rows.length + ' rows — ' + when);
+    setStatus('nochallan', '✓ Refreshed ' + state.data.rows.length + ' rows — ' + when);
+  } catch (e) {
+    if (!loadCachedData(false)) {
+      setStatus('all', 'Error: ' + e.message + ' (no offline copy)');
+      setStatus('nochallan', 'Error: ' + e.message);
+    } else {
+      showOfflineBanner('⚠️ Refresh failed — showing last saved data');
+    }
+  } finally {
+    syncInProgress = false;
+  }
+}
+
 function setStatus(tab, txt) {
+
   const el = document.getElementById('status-' + tab);
   if (el) el.textContent = txt;
 }
@@ -2766,32 +2925,24 @@ loadChallanPrintSettings();
 renderRecentUploads();
 
 window.addEventListener('DOMContentLoaded', () => {
-  const cached = localStorage.getItem('offlineData');
-  if (cached && !navigator.onLine) {
-    try {
-      const c = JSON.parse(cached);
-      if (c.headers && c.rows && c.rows.length) {
-        state.data.headers = c.headers;
-        state.data.rows    = c.rows;
-        detectColumns();
-        buildOrderGroups();
-        buildAutocomplete();
-        renderAll();
-        renderPrintFieldSettings();
-        const when = new Date(c.savedAt).toLocaleString();
-        setStatus('all',       '⚠️ OFFLINE — data from ' + when);
-        setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
-        showOfflineBanner('⚠️ OFFLINE — showing data from ' + when);
-      }
-    } catch (e) {}
-  } else {
-    fetchData();
-  }
+  // LOCAL FIRST: paint the last saved data immediately, whether online or offline.
+  const hadCache = loadCachedData(true);
+
+  // Give the UI time to become usable before contacting Apps Script.
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (navigator.onLine) syncIncremental();
+    else if (hadCache) showOfflineBanner('⚠️ OFFLINE — showing last saved data');
+  }, 2000);
 });
 
-window.addEventListener('online', () => { hideOfflineBanner(); fetchData(); });
+window.addEventListener('online', () => {
+  hideOfflineBanner();
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncIncremental(), 500);
+});
 window.addEventListener('offline', () => {
-  showOfflineBanner('⚠️ OFFLINE — showing cached data');
+  if (state.data.rows.length) showOfflineBanner('⚠️ OFFLINE — showing cached data');
 });
 </script>
 </body>
