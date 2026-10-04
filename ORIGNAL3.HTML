@@ -1185,23 +1185,11 @@
 <div class="panel" id="panel-upload">
   <div class="setting-box">
     <label>SELECT FOLDER</label>
-    <div style="display:grid;grid-template-columns:1fr 1.35fr;gap:6px;align-items:end;">
-      <select id="uploadFolder" onchange="onUploadFolderChange()">
-        <option value="">-- Choose --</option>
-        <option value="design">Design Number</option>
-        <option value="order">Order Form</option>
-      </select>
-      <div>
-        <label style="margin:0 0 3px;font-size:9px;">EXISTING FILES</label>
-        <select id="uploadExistingFile" onchange="onExistingUploadFileChange()">
-          <option value="">Select folder first…</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:6px;">
-      <span id="uploadFileIndexStatus" style="font-size:9px;color:#64748b;">Drive list not loaded</span>
-      <button type="button" class="btn gray" onclick="refreshUploadFileIndex()" style="min-height:26px;padding:4px 8px;font-size:9px;">↻ REFRESH LIST</button>
-    </div>
+    <select id="uploadFolder">
+      <option value="">-- Choose --</option>
+      <option value="design">Design Number</option>
+      <option value="order">Order Form</option>
+    </select>
   </div>
   <div class="setting-box">
     <label>CHOOSE PHOTO FROM GALLERY</label>
@@ -1210,8 +1198,8 @@
     <div id="uploadPreview" style="display:none;margin-top:8px;"></div>
   </div>
   <div class="setting-box">
-    <label>RENAME <span style="font-weight:400;color:#64748b;">· leave blank until you choose the new name</span></label>
-    <input type="text" id="uploadRename" placeholder="Type new name (extension auto-added)" autocomplete="off">
+    <label>RENAME</label>
+    <input type="text" id="uploadRename" placeholder="Type new name (extension auto-added)">
   </div>
   <div class="setting-box">
     <button class="btn" id="uploadBtn" onclick="doUpload()" style="width:100%;padding:12px;font-size:13px;">⬆ UPLOAD</button>
@@ -1448,8 +1436,6 @@ const state = {
   uploadFile: null,
   uploadDataUrl: null,
   recentUploads: [],
-  uploadFileIndex: { design: null, order: null },
-  uploadFileIndexLoadedAt: { design: 0, order: 0 },
   challanPrint: {
     jobwork: [],
     dispatch: []
@@ -1728,20 +1714,6 @@ function loadSettings() {
   const uploadStored = localStorage.getItem('uploadUrl');
   document.getElementById('dataUrl').value   = dataStored   != null ? dataStored   : '';
   document.getElementById('uploadUrl').value = uploadStored != null ? uploadStored : '';
-  try {
-    const savedRecent = JSON.parse(localStorage.getItem('bansiRecentUploads.v1') || '[]');
-    state.recentUploads = Array.isArray(savedRecent) ? savedRecent.slice(0,10) : [];
-  } catch (e) { state.recentUploads = []; }
-  try {
-    ['design','order'].forEach(folder => {
-      const raw = localStorage.getItem('bansiDriveFileIndex.' + folder + '.v1');
-      const obj = raw ? JSON.parse(raw) : null;
-      if (obj && Array.isArray(obj.files)) {
-        state.uploadFileIndex[folder] = obj.files;
-        state.uploadFileIndexLoadedAt[folder] = Number(obj.loadedAt || 0);
-      }
-    });
-  } catch (e) {}
   updateCacheInfo();
 }
 function saveDataUrl() {
@@ -3949,97 +3921,15 @@ function hexToRgb(hex) {
 }
 
 /* ========= UPLOAD TAB ========= */
-const UPLOAD_INDEX_MAX_AGE = 30 * 60 * 1000;
-
-function uploadFolderLabel(folder) {
-  return folder === 'design' ? 'Design Number' : 'Order Form';
-}
-function normalizeUploadFileName(name) {
-  return String(name || '').trim().toLowerCase();
-}
-function getUploadFolderFiles(folder) {
-  return Array.isArray(state.uploadFileIndex[folder]) ? state.uploadFileIndex[folder] : [];
-}
-function saveUploadFolderFiles(folder, files) {
-  const clean = Array.from(new Set((files || []).map(String).map(s => s.trim()).filter(Boolean)))
-    .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
-  state.uploadFileIndex[folder] = clean;
-  state.uploadFileIndexLoadedAt[folder] = Date.now();
-  try {
-    localStorage.setItem('bansiDriveFileIndex.' + folder + '.v1', JSON.stringify({loadedAt: Date.now(), files: clean}));
-  } catch (e) {}
-  return clean;
-}
-function populateUploadExistingFiles(folder) {
-  const el = document.getElementById('uploadExistingFile');
-  const files = getUploadFolderFiles(folder);
-  if (!folder) {
-    el.innerHTML = '<option value="">Select folder first…</option>';
-    return;
-  }
-  let html = '<option value="">Existing files (' + files.length + ') — choose to view</option>';
-  files.forEach(name => {
-    html += '<option value="' + escapeHtml(name).replace(/"/g,'&quot;') + '">' + escapeHtml(name) + '</option>';
-  });
-  el.innerHTML = html;
-}
-function setUploadFileIndexStatus(folder, text) {
-  const el = document.getElementById('uploadFileIndexStatus');
-  if (el) el.textContent = text || (folder ? ('Existing files: ' + getUploadFolderFiles(folder).length) : 'Drive list not loaded');
-}
-async function loadUploadFileIndex(folder, force = false) {
-  if (!folder) return [];
-  const age = Date.now() - Number(state.uploadFileIndexLoadedAt[folder] || 0);
-  if (!force && getUploadFolderFiles(folder).length && age < UPLOAD_INDEX_MAX_AGE) {
-    populateUploadExistingFiles(folder);
-    setUploadFileIndexStatus(folder, 'Cached • ' + getUploadFolderFiles(folder).length + ' files');
-    return getUploadFolderFiles(folder);
-  }
-  const uploadUrl = getUploadUrl();
-  if (!uploadUrl) throw new Error('No upload URL configured.');
-  setUploadFileIndexStatus(folder, 'Loading Drive list…');
-  const sep = uploadUrl.indexOf('?') >= 0 ? '&' : '?';
-  const res = await fetch(uploadUrl + sep + 'action=listFiles&folder=' + encodeURIComponent(folder), {cache:'no-store'});
-  const text = await res.text();
-  let json;
-  try { json = JSON.parse(text); } catch (e) { throw new Error('Drive list returned invalid JSON.'); }
-  if (!json.ok) throw new Error(json.error || 'Could not load Drive filenames.');
-  const files = saveUploadFolderFiles(folder, json.files || []);
-  populateUploadExistingFiles(folder);
-  setUploadFileIndexStatus(folder, 'Live • ' + files.length + ' files • ' + new Date().toLocaleTimeString());
-  return files;
-}
-async function onUploadFolderChange() {
-  const folder = document.getElementById('uploadFolder').value;
-  populateUploadExistingFiles(folder);
-  if (!folder) { setUploadFileIndexStatus('', 'Drive list not loaded'); return; }
-  try { await loadUploadFileIndex(folder, false); }
-  catch (e) { setUploadFileIndexStatus(folder, '⚠ ' + e.message); }
-}
-async function refreshUploadFileIndex() {
-  const folder = document.getElementById('uploadFolder').value;
-  if (!folder) { setUploadFileIndexStatus('', 'Select a folder first'); return; }
-  try { await loadUploadFileIndex(folder, true); }
-  catch (e) { setUploadFileIndexStatus(folder, '⚠ ' + e.message); }
-}
-function onExistingUploadFileChange() {
-  const name = document.getElementById('uploadExistingFile').value;
-  if (!name) return;
-  const folder = document.getElementById('uploadFolder').value;
-  const status = document.getElementById('uploadStatus');
-  if (status) {
-    status.textContent = 'Already in Drive: ' + name;
-    status.style.color = '#64748b';
-  }
-  // Intentionally do NOT put the existing filename into Rename.
-  document.getElementById('uploadRename').value = '';
-}
 function onUploadFileChange(ev) {
   const f = ev.target.files && ev.target.files[0];
-  const renameEl = document.getElementById('uploadRename');
-  renameEl.value = '';
   if (!f) { state.uploadFile = null; state.uploadDataUrl = null; updateUploadPreview(); return; }
   state.uploadFile = f;
+
+  const orig = f.name.replace(/\.[^.]+$/, '');
+  const renameEl = document.getElementById('uploadRename');
+  if (!renameEl.value) renameEl.value = orig;
+
   const reader = new FileReader();
   reader.onload = e => {
     state.uploadDataUrl = e.target.result;
@@ -4047,114 +3937,97 @@ function onUploadFileChange(ev) {
   };
   reader.readAsDataURL(f);
 }
+
 function updateUploadPreview() {
   const box = document.getElementById('uploadPreview');
   const name = document.getElementById('uploadFileName');
   if (!state.uploadDataUrl) {
-    box.style.display = 'none'; box.innerHTML = ''; name.textContent = ''; return;
+    box.style.display = 'none';
+    box.innerHTML = '';
+    name.textContent = '';
+    return;
   }
-  box.innerHTML = '<img src="' + state.uploadDataUrl + '" style="max-width:100%;max-height:200px;border-radius:4px;object-fit:contain;">';
+  box.innerHTML = '<img src="' + state.uploadDataUrl + '" style="max-width:100%;max-height:200px;border-radius:4px;">';
   box.style.display = 'block';
   name.textContent = state.uploadFile ? state.uploadFile.name : '';
 }
-function compressUploadImage(file, maxDimension = 2200, maxBytes = 1800000) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith('image/')) return resolve({blob:file, name:file.name, mime:file.type || 'application/octet-stream'});
-    if (file.size <= maxBytes) return resolve({blob:file, name:file.name, mime:file.type || 'image/jpeg'});
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read image.'));
-    reader.onload = () => {
-      img.onload = () => {
-        let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-        const scale = Math.min(1, maxDimension / Math.max(w,h));
-        w = Math.max(1, Math.round(w * scale)); h = Math.max(1, Math.round(h * scale));
-        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d', {alpha:false});
-        ctx.drawImage(img, 0, 0, w, h);
-        let quality = 0.84;
-        const finish = () => canvas.toBlob(blob => {
-          if (!blob) return reject(new Error('Image compression failed.'));
-          if (blob.size > maxBytes && quality > 0.48) { quality -= 0.08; finish(); return; }
-          const base = file.name.replace(/\.[^.]+$/, '') || 'upload';
-          resolve({blob, name:base + '.jpg', mime:'image/jpeg', compressed:true});
-        }, 'image/jpeg', quality);
-        finish();
-      };
-      img.onerror = () => reject(new Error('Invalid image.'));
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-function blobToDataUrl(blob) {
-  return new Promise((resolve,reject) => {
-    const r = new FileReader(); r.onerror=()=>reject(new Error('Could not prepare image.')); r.onload=()=>resolve(r.result); r.readAsDataURL(blob);
-  });
-}
-function uploadNameExists(folder, finalName) {
-  const target = normalizeUploadFileName(finalName);
-  return getUploadFolderFiles(folder).some(n => normalizeUploadFileName(n) === target);
-}
-function rememberRecentUpload(item) {
-  state.recentUploads = [item].concat(state.recentUploads.filter(x => normalizeUploadFileName(x.name) !== normalizeUploadFileName(item.name))).slice(0,10);
-  try { localStorage.setItem('bansiRecentUploads.v1', JSON.stringify(state.recentUploads)); } catch (e) {}
-  renderRecentUploads();
-}
-async function doUpload() {
+
+function doUpload() {
   const folder = document.getElementById('uploadFolder').value;
   const nameInput = document.getElementById('uploadRename').value.trim();
   const status = document.getElementById('uploadStatus');
   const btn = document.getElementById('uploadBtn');
-  if (!folder) { status.textContent='Please select folder.'; status.style.color='#dc2626'; return; }
-  if (!state.uploadFile) { status.textContent='Please choose a photo.'; status.style.color='#dc2626'; return; }
-  if (!nameInput) { status.textContent='Please enter a new name.'; status.style.color='#dc2626'; return; }
-  let prepared;
-  try { prepared = await compressUploadImage(state.uploadFile); }
-  catch (e) { status.textContent='✗ ' + e.message; status.style.color='#dc2626'; return; }
-  const ext = prepared.compressed ? '.jpg' : ((prepared.name.match(/\.[^.]+$/)||['.jpg'])[0].toLowerCase());
-  const finalName = nameInput.replace(/\.[^.]+$/,'') + ext;
-  try { await loadUploadFileIndex(folder, false); } catch (e) {}
-  if (uploadNameExists(folder, finalName)) {
-    status.textContent='✗ Duplicate: ' + finalName + ' already exists in Drive.';
-    status.style.color='#dc2626'; return;
-  }
-  const uploadUrl=getUploadUrl();
-  if (!uploadUrl) { status.textContent='No upload URL configured.'; status.style.color='#dc2626'; return; }
-  status.textContent = prepared.compressed ? 'Compressing & uploading…' : 'Uploading…';
-  status.style.color='#2563eb'; btn.disabled=true;
-  try {
-    const dataUrl = await blobToDataUrl(prepared.blob);
-    const form = new URLSearchParams();
-    form.append('action','upload'); form.append('folder',folder); form.append('name',finalName);
-    form.append('mimeType',prepared.mime); form.append('file',dataUrl);
-    const res=await fetch(uploadUrl,{method:'POST',body:form,headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}});
-    const txt=await res.text(); let json=null; try{json=JSON.parse(txt);}catch(e){}
-    if (!json || !json.ok) throw new Error(json && json.error ? json.error : 'Upload failed.');
-    const savedName=json.fileName || finalName;
-    saveUploadFolderFiles(folder, getUploadFolderFiles(folder).concat(savedName));
-    populateUploadExistingFiles(folder);
-    setUploadFileIndexStatus(folder, 'Updated • ' + getUploadFolderFiles(folder).length + ' files');
-    rememberRecentUpload({name:savedName, when:new Date().toISOString(), url:json.url||'', folder:uploadFolderLabel(folder)});
-    status.textContent='✓ Uploaded: ' + savedName;
-    status.style.color='#16a34a';
-    document.getElementById('uploadRename').value='';
-    document.getElementById('uploadFileInput').value='';
-    document.getElementById('uploadExistingFile').value='';
-    state.uploadFile=null; state.uploadDataUrl=null; updateUploadPreview();
-  } catch(e) {
-    status.textContent='✗ ' + e.message; status.style.color='#dc2626';
-  } finally { btn.disabled=false; }
+
+  if (!folder) { status.textContent = 'Please select folder.'; status.style.color = '#dc2626'; return; }
+  if (!state.uploadDataUrl) { status.textContent = 'Please choose a photo.'; status.style.color = '#dc2626'; return; }
+  if (!nameInput) { status.textContent = 'Please enter a new name.'; status.style.color = '#dc2626'; return; }
+
+  const extMatch = state.uploadFile.name.match(/\.[^.]+$/);
+  const ext = extMatch ? extMatch[0].toLowerCase() : '.jpg';
+  const finalName = nameInput + ext;
+  const mimeType = state.uploadFile.type || 'image/jpeg';
+  const uploadUrl = getUploadUrl();
+  if (!uploadUrl) { status.textContent = 'No upload URL configured.'; status.style.color = '#dc2626'; return; }
+
+  status.textContent = 'Uploading…';
+  status.style.color = '#2563eb';
+  btn.disabled = true;
+
+  const form = new URLSearchParams();
+  form.append('folder', folder);
+  form.append('name', finalName);
+  form.append('mimeType', mimeType);
+  form.append('file', state.uploadDataUrl);
+
+  fetch(uploadUrl, {
+    method: 'POST',
+    body: form,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
+  })
+  .then(r => r.text())
+  .then(txt => {
+    let json = null;
+    try { json = JSON.parse(txt); } catch (e) {}
+    if (json && json.ok) {
+      status.textContent = '✓ Uploaded: ' + (json.fileName || finalName);
+      status.style.color = '#16a34a';
+      state.recentUploads.unshift({
+        name: json.fileName || finalName,
+        folder: folder === 'design' ? 'Design Number' : 'Order Form',
+        when: new Date().toLocaleString(),
+        url: json.url || ''
+      });
+      state.recentUploads = state.recentUploads.slice(0, 10);
+      renderRecentUploads();
+      document.getElementById('uploadRename').value = '';
+      document.getElementById('uploadFileInput').value = '';
+      state.uploadFile = null;
+      state.uploadDataUrl = null;
+      updateUploadPreview();
+    } else {
+      status.textContent = '✗ Error: ' + (json && json.error ? json.error : 'unknown');
+      status.style.color = '#dc2626';
+    }
+  })
+  .catch(err => {
+    status.textContent = '✗ Network error: ' + err.message;
+    status.style.color = '#dc2626';
+  })
+  .finally(() => {
+    btn.disabled = false;
+  });
 }
 function renderRecentUploads() {
-  const box=document.getElementById('recentUploads');
-  if(!state.recentUploads.length){box.innerHTML='<div class="empty" style="padding:12px;">No uploads yet.</div>';return;}
-  let html='<div style="font-size:10px;">';
-  state.recentUploads.slice(0,10).forEach(u=>{
-    let date=u.when||''; try{date=new Date(u.when).toLocaleDateString(undefined,{day:'2-digit',month:'2-digit',year:'numeric'});}catch(e){}
-    html+='<div style="padding:6px;border-bottom:1px solid #e5e7eb;"><b>'+escapeHtml(u.name)+'</b><br><span style="color:#64748b;">'+escapeHtml(date)+'</span></div>';
+  const box = document.getElementById('recentUploads');
+  if (!state.recentUploads.length) { box.innerHTML = '<div class="empty" style="padding:12px;">No uploads yet.</div>'; return; }
+  let html = '<div style="font-size:10px;">';
+  state.recentUploads.forEach(u => {
+    html += '<div style="padding:5px;border-bottom:1px solid #e5e7eb;">' +
+            '<b>' + escapeHtml(u.name) + '</b> → ' + escapeHtml(u.folder) +
+            '<br><span style="color:#64748b;">' + escapeHtml(u.when) + '</span></div>';
   });
-  html+='</div>'; box.innerHTML=html;
+  html += '</div>';
+  box.innerHTML = html;
 }
 
 /* ========= INIT ========= */
