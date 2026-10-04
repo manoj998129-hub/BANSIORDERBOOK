@@ -4067,7 +4067,12 @@ async function loadUploadFileIndex(folder, force = false) {
   let json;
   try { json = JSON.parse(text); } catch (e) { throw new Error('Drive list returned invalid JSON.'); }
   if (!json.ok) throw new Error(json.error || 'Could not load Drive filenames.');
-  const files = saveUploadFolderFiles(folder, json.files || []);
+  const driveFiles = Array.isArray(json.names)
+    ? json.names
+    : (Array.isArray(json.files) ? json.files.map(function(item) {
+        return (item && typeof item === 'object') ? item.name : item;
+      }) : []);
+  const files = saveUploadFolderFiles(folder, driveFiles);
   populateUploadExistingFiles(folder);
   setUploadFileIndexStatus(folder, 'Live • ' + files.length + ' files • ' + new Date().toLocaleTimeString());
   return files;
