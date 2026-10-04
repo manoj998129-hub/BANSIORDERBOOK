@@ -2136,7 +2136,7 @@ function renderChallanStep1(groupedRows, selectedChallans, type, fields) {
       const link = getRowDriveLink(row);
       if (link) {
         const rowIndex = state.data.rows.indexOf(row);
-        html += '<td class="challan-link-ok"><button type="button" class="btn blue" style="padding:4px 7px;font-size:9px;" onclick="openDrivePhotoByRow(' + rowIndex + ')">OPEN PHOTO</button></td>';
+        html += '<td class="challan-link-ok"><a href="#" style="font-size:9px;font-weight:700;" onclick="openDrivePhotoByRow(' + rowIndex + '); return false;">OPEN PHOTO</a></td>';
       } else {
         html += '<td class="challan-link-missing">✗ NO LINK FOUND</td>';
       }
@@ -2608,14 +2608,8 @@ function openDrivePhotoByRow(rowIndex) {
   if (!row) { alert('Selected challan row is no longer available.'); return; }
   const link = getRowDriveLink(row);
   if (!link) { alert('No Drive photo link found for this row.'); return; }
-  const a = document.createElement('a');
-  a.href = link;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  // Navigate directly so local/in-app browsers cannot block a popup/new tab.
+  window.location.href = link;
 }
 
 function loadChallanPhoto(rowIndex, challanNo, type) {
@@ -2629,10 +2623,7 @@ function loadChallanPhoto(rowIndex, challanNo, type) {
   const photoWrap = document.getElementById('challanPhotoWrap');
   const info = document.getElementById('challanStep2Info');
   const title = document.getElementById('challanStep2Title');
-  if (!photoWrap || !info || !title || !document.getElementById('challanStep2')) {
-    openDrivePhotoByRow(rowIndex);
-    return;
-  }
+  if (!photoWrap || !info || !title) return;
 
   const typeName = type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN';
   title.textContent = 'CHALLAN GENERATOR — STEP 2 & 3';
@@ -3541,6 +3532,20 @@ function attachAutocomplete(input) {
 
 document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
 
+/* Keep every existing filter control responsive without changing filter logic. */
+function wireFilterInputs() {
+  const ids = ['f-party','f-order','f-challan','f-design','f-material','f-job',
+               'f2-party','f2-order','f2-challan','f2-design','f2-material','f2-job'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.filterWired === '1') return;
+    el.dataset.filterWired = '1';
+    el.addEventListener('input', () => renderAll());
+    el.addEventListener('change', () => renderAll());
+  });
+}
+wireFilterInputs();
+
 /* ========= FILTER ========= */
 function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
 function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
@@ -3816,9 +3821,9 @@ if (challanFilter.length && i === orderIdx) {
 
         cellContent =
           '<a href="' + escapeAttr(link) + '" ' +
-          'target="_blank" rel="noopener noreferrer" ' +
           'data-link="' + escapeAttr(link) + '" ' +
           'data-text="' + escapeAttr(displayVal) + '" ' +
+          'onclick="return handleLinkClick(event, this)"' +
           (fg ? ' style="color:' + fg + ';"' : '') +
           '>' +
           escapeHtml(displayVal) +
@@ -3913,8 +3918,9 @@ function escapeAttr(s) {
 
 /* ========= LINK PREVIEW ========= */
 function handleLinkClick(e, el) {
-  e.preventDefault();
-  showPreview(el.getAttribute('data-link'), el.getAttribute('data-text'));
+  if (e) e.preventDefault();
+  const url = el && el.getAttribute('data-link');
+  if (url) window.location.href = url;
   return false;
 }
 function showPreview(url, title) {
