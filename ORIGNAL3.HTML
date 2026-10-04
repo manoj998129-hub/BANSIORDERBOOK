@@ -3469,59 +3469,123 @@ function buildAutocomplete() {
   autoData.order = state.orderGroups.slice();
 }
 
-function attachAutocomplete(input) {
-  const wrap = input.parentElement;
-  const list = document.createElement('div');
-  list.className = 'ac-list';
-  wrap.appendChild(list);
+/* ========= ROBUST FILTER AUTOCOMPLETE =========
+   Keep the original dropdown behaviour, but make multi-value selection reliable
+   on mouse + touch and after refresh/re-render. */
+const autocompleteBoundInputs = new WeakSet();
 
-  function close() { list.classList.remove('show'); list.innerHTML = ''; }
+function attachAutocomplete(input) {
+  if (!input || autocompleteBoundInputs.has(input)) return;
+  autocompleteBoundInputs.add(input);
+
+  const wrap = input.parentElement;
+  if (!wrap) return;
+
+  let list = wrap.querySelector('.ac-list');
+  if (!list) {
+    list = document.createElement('div');
+    list.className = 'ac-list';
+    wrap.appendChild(list);
+  }
+
+  function close() {
+    list.classList.remove('show');
+    list.innerHTML = '';
+  }
+
+  function multiKey(key) {
+    return key === 'order' || key === 'challan' || key === 'design';
+  }
+
   function lastFragment() {
-    const parts = input.value.split(',');
+    const parts = String(input.value || '').split(',');
     return parts[parts.length - 1].trim().toLowerCase();
   }
+
   function prefixBeforeLastComma() {
-    const idx = input.value.lastIndexOf(',');
+    const value = String(input.value || '');
+    const idx = value.lastIndexOf(',');
     if (idx < 0) return '';
-    return input.value.slice(0, idx + 1).trim() + ' ';
+    return value.slice(0, idx + 1).trim() + ' ';
   }
-  function open(matches) {
-    if (!matches.length) { close(); return; }
-    list.innerHTML = matches.slice(0, 80).map(m => '<div>' + escapeHtml(m) + '</div>').join('');
-    list.classList.add('show');
-    list.querySelectorAll('div').forEach(d => {
-      d.addEventListener('mousedown', e => {
-        e.preventDefault();
-        const chosen = d.textContent;
-        const key = input.dataset.col;
-        if (key === 'order' || key === 'challan' || key === 'design') {
-          input.value = prefixBeforeLastComma() + chosen;
-        } else {
-          input.value = chosen;
-        }
-        close();
-        renderAll();
-      });
-    });
-  }
-  input.addEventListener('input', () => {
-    const key = input.dataset.col;
-    const q = lastFragment();
+
+  function chooseValue(chosen) {
+    const key = input.dataset.col || '';
+    if (multiKey(key)) {
+      const prefix = prefixBeforeLastComma();
+      const existing = prefix ? prefix.slice(0, -1).trim() : '';
+      const parts = existing
+        ? existing.split(',').map(v => v.trim()).filter(Boolean)
+        : [];
+      const already = parts.some(v => norm(v) === norm(chosen));
+      if (!already) parts.push(String(chosen).trim());
+      input.value = parts.join(', ') + ', ';
+    } else {
+      input.value = String(chosen).trim();
+    }
+
+    /* Keep the field focused so the user can immediately choose another value. */
+    input.focus();
     renderAll();
-    if (!q) { open(autoData[key] || []); return; }
-    open((autoData[key] || []).filter(v => v.toLowerCase().includes(q)));
-  });
-  input.addEventListener('focus', () => {
-    const key = input.dataset.col;
     const q = lastFragment();
     const pool = autoData[key] || [];
     if (!q) open(pool);
-    else open(pool.filter(v => v.toLowerCase().includes(q)));
+    else open(pool.filter(v => norm(v).includes(q)));
+  }
+
+  function open(matches) {
+    if (!matches.length) { close(); return; }
+    list.innerHTML = matches.slice(0, 80).map(m =>
+      '<div data-value="' + escapeAttr(String(m)) + '">' + escapeHtml(m) + '</div>'
+    ).join('');
+    list.classList.add('show');
+
+    list.querySelectorAll('div').forEach(d => {
+      const select = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chooseValue(d.getAttribute('data-value') || d.textContent || '');
+      };
+      d.addEventListener('pointerdown', select, {passive:false});
+    });
+  }
+
+  function refreshDropdown() {
+    const key = input.dataset.col || '';
+    const q = lastFragment();
+    const pool = autoData[key] || [];
+    if (!q) open(pool);
+    else open(pool.filter(v => norm(v).includes(q)));
+  }
+
+  input.addEventListener('input', () => {
+    renderAll();
+    refreshDropdown();
   });
-  input.addEventListener('blur', () => setTimeout(close, 150));
+
+  input.addEventListener('focus', refreshDropdown);
+  input.addEventListener('click', refreshDropdown);
+  input.addEventListener('blur', () => setTimeout(close, 300));
+
+  /* Comma is the explicit multi-selection separator. */
+  input.addEventListener('keydown', e => {
+    const key = input.dataset.col || '';
+    if (!multiKey(key)) return;
+    if (e.key === 'Enter') {
+      const first = list.querySelector('.ac-list div');
+      if (first) {
+        e.preventDefault();
+        chooseValue(first.getAttribute('data-value') || first.textContent || '');
+      }
+    }
+  });
 }
 
-document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
+function refreshAllAutocompleteBindings() {
+  document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
+}
+
+refreshAllAutocompleteBindings();
 
 /* ========= FILTER ========= */
 function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
