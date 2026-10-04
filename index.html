@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Order Book Viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>BANSI FAB | Order Book</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -32,15 +32,15 @@
   }
   #tabs .tab {
     flex: 1;
-    padding: 11px 4px;
+    padding: 6px 4px;
     text-align: center;
     color: #cbd5e1;
     background: #334155;
     border-right: 1px solid #1e293b;
     cursor: pointer;
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
     user-select: none;
   }
   #tabs .tab.active { background: #0ea5e9; color: #fff; }
@@ -63,8 +63,10 @@
   .ac-wrap { position: relative; }
   .ac-wrap input {
     width: 100%;
-    padding: 7px 9px;
-    font-size: 11px;
+    padding: 5px 7px;
+    font-size: 10px;
+    line-height: 18px;
+    height: 28px;
     border: 1px solid #cbd5e1;
     background: #f8fafc;
     border-radius: 4px;
@@ -123,6 +125,7 @@
     color: #334155;
     margin-left: auto;
   }
+  .compact-refresh { padding: 5px 9px; font-size: 10px; }
 
   .table-wrap {
     overflow: auto;
@@ -156,7 +159,52 @@
     border-right: 2px solid #000;
   }
   thead tr th:first-child { background: #0f172a; z-index: 6; }
+
+  /* Sticky columns are controlled at runtime. Order No is the only permanent
+     sticky column. Other columns can be frozen/unfrozen by double-tapping their header. */
+  #wrap-all, #wrap-nochallan {
+    --sticky-order-width: 0px;
+  }
+  #wrap-all th[data-sticky-col], #wrap-all td[data-sticky-col],
+  #wrap-nochallan th[data-sticky-col], #wrap-nochallan td[data-sticky-col] {
+    position: sticky;
+    z-index: 7;
+    background: var(--surface, #fff);
+  }
+  #wrap-all thead th[data-sticky-col],
+  #wrap-nochallan thead th[data-sticky-col] {
+    z-index: 9;
+    background: #0f172a;
+    color: #fff;
+    cursor: pointer;
+  }
+  #wrap-all tbody tr:nth-child(even) td[data-sticky-col],
+  #wrap-nochallan tbody tr:nth-child(even) td[data-sticky-col] {
+    background: var(--surface-alt, #f8fafc);
+  }
+  #wrap-all td[data-sticky-col], #wrap-nochallan td[data-sticky-col] {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  /* Order No is deliberately compact. */
+  #wrap-all th.sticky-order, #wrap-all td.sticky-order,
+  #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
+    width: 1%;
+    min-width: 54px;
+    max-width: 78px;
+    white-space: nowrap;
+  }
+  #wrap-all th.sticky-party, #wrap-all td.sticky-party,
+  #wrap-nochallan th.sticky-party, #wrap-nochallan td.sticky-party {
+    /* kept as a class for compatibility; no longer permanently frozen */
+  }
+  th[data-sticky-col]::after {
+    content: ' •';
+    opacity: .55;
+    font-size: 8px;
+  }
   tr.blank-challan td.challan-col { background: #fecaca !important; }
+  tr.order-group-start td { border-top:2px solid #d9a51b !important; }
   td a { text-decoration: underline; font-weight: 700; cursor: pointer; }
 
   #preview {
@@ -174,9 +222,10 @@
   #preview .box {
     background: #fff;
     border-radius: 8px;
-    padding: 10px;
-    max-width: 95%;
-    max-height: 80vh;
+    padding: 8px;
+    width: fit-content;
+    max-width: min(94vw, 1000px);
+    max-height: 88vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -185,8 +234,10 @@
   }
   #preview .box img,
   #preview .box iframe {
+    width: auto;
     max-width: 100%;
-    max-height: 65vh;
+    max-height: 72vh;
+    min-height: 42vh;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background: #fff;
@@ -237,6 +288,66 @@
     flex-wrap: wrap;
   }
   .setting-box .msg { font-size: 10px; color: #16a34a; font-weight: 600; margin-left: 6px; }
+
+  /* ========= UPLOAD DRIVE FILE PICKER ========= */
+  .upload-folder-grid {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);
+    gap:6px;
+    align-items:end;
+  }
+  .upload-existing-wrap { min-width:0; }
+  .upload-existing-label {
+    display:block;
+    margin:0 0 3px;
+    font-size:9px;
+    font-weight:800;
+    color:var(--text,#0f172a);
+  }
+  #uploadFolder, #uploadExistingFile {
+    width:100%;
+    min-width:0;
+    min-height:38px;
+    height:38px;
+    padding:7px 9px;
+    margin:0;
+    border:1px solid var(--line,#cbd5e1);
+    border-radius:6px;
+    background:var(--surface-alt,#f8fafc);
+    color:var(--text,#0f172a) !important;
+    font-family:inherit;
+    font-size:13px !important;
+    font-weight:600;
+    line-height:20px;
+    opacity:1 !important;
+    outline:none;
+    -webkit-text-fill-color:var(--text,#0f172a);
+  }
+  #uploadFolder:focus, #uploadExistingFile:focus {
+    border-color:var(--primary,#0ea5e9);
+    background:var(--surface,#fff);
+  }
+  #uploadFolder option, #uploadExistingFile option {
+    color:#111827 !important;
+    background:#fff !important;
+    font-size:13px;
+    font-weight:600;
+  }
+  #uploadFileIndexStatus {
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  @media (max-width:600px) {
+    .upload-folder-grid { grid-template-columns:1fr; gap:7px; }
+    #uploadFolder, #uploadExistingFile {
+      min-height:38px;
+      height:38px;
+      font-size:13px !important;
+    }
+  }
+
   /* ========= CHALLAN PRINT SETTINGS ========= */
   .challan-type-select {
     min-width: 155px;
@@ -463,6 +574,12 @@
   .batch-preview-nav .btn { min-width:95px; }
   .batch-preview-all-actions { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:7px; padding-top:7px; border-top:1px solid #e2e8f0; }
   .batch-preview-all-actions .btn { min-width:125px; }
+  .batch-party-collages { margin-top:10px; padding:10px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; }
+  .batch-party-collages-title { font-size:11px; font-weight:800; color:#0f172a; margin-bottom:8px; }
+  .party-collage-card { border:1px solid #cbd5e1; border-radius:6px; padding:8px; margin-top:8px; background:#f8fafc; }
+  .party-collage-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:10px; font-weight:800; color:#0f172a; }
+  .party-collage-grid { display:grid; gap:6px; align-items:start; }
+  .party-collage-grid img { width:100%; height:auto; display:block; object-fit:contain; background:#fff; border:1px solid #e2e8f0; border-radius:4px; }
 
   /* ========= CHALLAN GENERATOR STEP 2 ========= */
   #challanStep2 {
@@ -504,6 +621,32 @@
     .challan-step-title { font-size:13px; }
   }
 
+  /* ========= GENERATE SECTION — COMPACT SINGLE-WINDOW UI ========= */
+  #challanStep1 .challan-step-box { max-width: 760px; max-height: 92vh; padding: 10px; }
+  #challanStep1 .challan-step-title { font-size: 13px; margin-bottom: 3px; }
+  #challanStep1 .challan-step-subtitle { font-size: 9px; margin-bottom: 7px; }
+  #challanStep1 .challan-summary { gap: 5px; margin-bottom: 7px; }
+  #challanStep1 .challan-summary-card { padding: 5px 7px; font-size: 9px; }
+  #challanStep1 .batch-generate-box { margin-top: 6px; padding: 7px; }
+  #challanStep1 .batch-progress-title { font-size: 9px; margin-bottom: 4px; }
+  #challanStep1 .batch-progress-track { height: 13px; }
+  #challanStep1 .batch-progress-status { margin-top: 4px; font-size: 9px; min-height: 13px; }
+  #challanStep1 .batch-generated-info { margin-top: 5px; padding: 5px 7px; font-size: 9px; }
+  #challanStep1 .batch-generated-list { font-size: 8px; line-height: 1.35; }
+  #challanStep1 .batch-generate-btn { margin-top: 6px; padding: 7px 10px; font-size: 10px; }
+  #challanStep1 .batch-preview-wrap { margin-top: 7px; padding: 7px; }
+  #challanStep1 .batch-preview-head { margin-bottom: 5px; }
+  #challanStep1 .batch-preview-title { font-size: 10px; }
+  #challanStep1 .batch-preview-counter { font-size: 9px; }
+  #challanStep1 .batch-preview-image-box { padding: 5px; max-height: 44vh; min-height: 90px; }
+  #challanStep1 .batch-preview-image-box img { max-width: 72%; max-height: 42vh; object-fit: contain; }
+  #challanStep1 .batch-preview-nav, #challanStep1 .batch-preview-actions, #challanStep1 .batch-preview-all-actions { gap: 4px; margin-top: 5px; }
+  #challanStep1 .batch-preview-actions .btn, #challanStep1 .batch-preview-nav .btn, #challanStep1 .batch-preview-all-actions .btn { min-width: 0; padding: 6px 8px; font-size: 9px; line-height: 1.05; }
+  #challanStep1 .challan-step-actions { gap: 5px; margin-top: 6px; }
+  #challanStep1 .challan-step-actions .btn { min-width: 0; padding: 7px 10px; font-size: 10px; }
+  .party-collage-card { border:0; padding:0; margin:0; background:transparent; }
+  .party-collage-head { display:none; }
+
   .empty {
     padding: 24px;
     text-align: center;
@@ -513,15 +656,548 @@
     color: #64748b;
     border-radius: 4px;
   }
+
+  /* ========= BANSI FAB UI, THEMES & CLIENT-SIDE ACCESS ========= */
+  :root {
+    --app-bg: #eef1f5;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --text: #172033;
+    --muted: #64748b;
+    --line: #cbd5e1;
+    --nav-bg: #1e293b;
+    --nav-item: #334155;
+    --primary: #0ea5e9;
+    --primary-ink: #ffffff;
+    --secondary: #2563eb;
+    --success: #15803d;
+    --danger: #b91c1c;
+    --accent: #7f1d1d;
+    --brand-gold: #c6a36b;
+    --soft-highlight: #e7edf5;
+    --table-head: #0f172a;
+    --table-head-ink: #ffffff;
+    --table-line: #94a3b8;
+    --shadow: 0 6px 20px rgba(15, 23, 42, .12);
+    --login-bg: radial-gradient(ellipse at 12% 18%, rgba(127,29,29,.36), transparent 40%), linear-gradient(135deg, #100706 0%, #250d0d 54%, #090605 100%);
+    --login-card: rgba(17,9,8,.95); --login-field: #211512; --login-border: #76583d;
+    --login-accent: #e2c38e; --login-copy: #e3d4be; --login-button: #c49a5a; --login-button-ink: #1a0d09;
+  }
+  :root[data-theme="theme1"] {
+    --app-bg: #111214; --surface: #1b1d20; --surface-alt: #25282c;
+    --text: #f4f4f2; --muted: #b1b5bc; --line: #555960;
+    --nav-bg: #08090a; --nav-item: #26292d; --primary: #565b63;
+    --primary-ink: #ffffff; --secondary: #777d86; --success: #24764f;
+    --danger: #a8323a; --accent: #d5d7db; --soft-highlight: #30343a;
+    --table-head: #08090a; --table-head-ink: #ffffff; --table-line: #686d75;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
+    --login-bg: linear-gradient(135deg, #090a0b, #202226);
+    --login-card: #1b1d20; --login-field: #25282c; --login-border: #555960;
+    --login-accent: #f4f4f2; --login-copy: #d1d3d7; --login-button: #565b63; --login-button-ink: #ffffff;
+  }
+  :root[data-theme="theme2"] {
+    --app-bg: #082d2b; --surface: #103a37; --surface-alt: #174642;
+    --text: #f4fbfa; --muted: #c0d5d1; --line: #6e9992;
+    --nav-bg: #062321; --nav-item: #17413d; --primary: #15877d;
+    --primary-ink: #ffffff; --secondary: #287f77; --success: #287a57;
+    --danger: #a83c42; --accent: #e0f1ed; --soft-highlight: #20534e;
+    --table-head: #062321; --table-head-ink: #ffffff; --table-line: #83aaa4;
+    --shadow: 0 8px 24px rgba(0,0,0,.24);
+    --login-bg: linear-gradient(135deg, #062321, #14504b);
+    --login-card: #103a37; --login-field: #174642; --login-border: #6e9992;
+    --login-accent: #e0f1ed; --login-copy: #c0d5d1; --login-button: #15877d; --login-button-ink: #ffffff;
+  }
+  :root[data-theme="theme3"] {
+    --app-bg: #c9cdd1; --surface: #e7e9eb; --surface-alt: #d8dbde;
+    --text: #17191b; --muted: #4d5359; --line: #292d31;
+    --nav-bg: #272a2d; --nav-item: #44494e; --primary: #41464b;
+    --primary-ink: #ffffff; --secondary: #51575e; --success: #286548;
+    --danger: #a62f35; --accent: #34383d; --soft-highlight: #c0c4c8;
+    --table-head: #25282b; --table-head-ink: #ffffff; --table-line: #292d31;
+    --shadow: 0 5px 16px rgba(0,0,0,.13);
+    --login-bg: linear-gradient(135deg, #bfc3c7, #e7e9eb);
+    --login-card: #e7e9eb; --login-field: #d8dbde; --login-border: #292d31;
+    --login-accent: #34383d; --login-copy: #353a3f; --login-button: #41464b; --login-button-ink: #ffffff;
+  }
+  :root[data-theme="theme4"] {
+    --app-bg: #120807; --surface: #1d100e; --surface-alt: #2a1714;
+    --text: #f5e8d4; --muted: #d2b996; --line: #70493a;
+    --nav-bg: #090504; --nav-item: #32100f; --primary: #c49a5a;
+    --primary-ink: #1a0d09; --secondary: #814337; --success: #a77f42;
+    --danger: #a83b42; --accent: #dfbd83; --soft-highlight: #3a201a;
+    --table-head: #100706; --table-head-ink: #f4d9a8; --table-line: #886449;
+    --brand-gold: #dfbd83; --shadow: 0 8px 24px rgba(0,0,0,.4);
+    --login-bg: radial-gradient(ellipse at 12% 18%, rgba(127,29,29,.36), transparent 40%), linear-gradient(135deg, #100706 0%, #250d0d 54%, #090605 100%);
+    --login-card: rgba(17,9,8,.95); --login-field: #211512; --login-border: #76583d;
+    --login-accent: #e2c38e; --login-copy: #e3d4be; --login-button: #c49a5a; --login-button-ink: #1a0d09;
+  }
+  :root[data-theme="theme5"] {
+    --app-bg: #f1f0e9; --surface: #fffdf7; --surface-alt: #e9e9df;
+    --text: #23342f; --muted: #61736c; --line: #c5cec6;
+    --nav-bg: #263b36; --nav-item: #3b514a; --primary: #7a3b35;
+    --primary-ink: #ffffff; --secondary: #405b52; --success: #3d7657;
+    --danger: #a83b3d; --accent: #783831; --soft-highlight: #e0e7df;
+    --table-head: #263b36; --table-head-ink: #ffffff; --table-line: #9eaaa1;
+    --shadow: 0 5px 18px rgba(35,52,47,.1);
+    --login-bg: linear-gradient(135deg, #e3e7df, #f1f0e9);
+    --login-card: #fffdf7; --login-field: #e9e9df; --login-border: #c5cec6;
+    --login-accent: #783831; --login-copy: #42564f; --login-button: #7a3b35; --login-button-ink: #ffffff;
+  }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--app-bg) !important;
+    color: var(--text) !important;
+    font-size: 13px;
+  }
+  #appShell.is-locked { display: none; }
+  #loginScreen {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: var(--login-bg);
+    color: var(--text);
+  }
+  #loginScreen[hidden] { display: none; }
+  .login-card {
+    width: min(100%, 390px);
+    padding: 24px;
+    border: 1px solid var(--login-border);
+    border-radius: 14px;
+    background: var(--login-card);
+    box-shadow: 0 20px 55px rgba(0,0,0,.42);
+  }
+  .login-brand, .brand-wordmark { font-family: Georgia, 'Times New Roman', serif; }
+  .login-brand { color: var(--login-accent); font-size: 25px; font-weight: 700; letter-spacing: .07em; }
+  .login-subbrand { margin-top: 3px; color: var(--muted); font-size: 10px; letter-spacing: .23em; }
+  .login-rule { height: 1px; margin: 17px 0; background: linear-gradient(90deg, transparent, var(--brand-gold), transparent); }
+  .login-title { margin: 0 0 14px; font-size: 16px; }
+  .login-card label { display: block; margin: 12px 0 5px; color: var(--login-copy); font-size: 12px; font-weight: 700; }
+  .login-card input {
+    width: 100%; min-height: 42px; padding: 9px 11px;
+    color: var(--text); background: var(--login-field); border: 1px solid var(--login-border);
+    border-radius: 7px; font-size: 14px;
+  }
+  .login-card input:focus { outline: 2px solid var(--brand-gold); border-color: var(--brand-gold); }
+  .login-submit {
+    width: 100%; min-height: 42px; margin-top: 17px;
+    border: 1px solid var(--brand-gold); border-radius: 7px; background: var(--login-button);
+    color: var(--login-button-ink); font-size: 12px; font-weight: 800; letter-spacing: .06em;
+  }
+  .login-note { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+  .auth-error { min-height: 17px; margin-top: 9px; color: #ffb3aa; font-size: 12px; }
+  .brand-bar {
+    display: flex; align-items: center; gap: 9px;
+    min-height: 45px; padding: 5px 10px;
+    color: #f2dfbd; background: linear-gradient(100deg, #100706, #2b0d10 60%, #100706);
+    border-bottom: 1px solid #8c6940;
+  }
+  .brand-mark {
+    display: grid; place-items: center; flex: 0 0 31px; height: 31px;
+    border: 1px solid #d3ad72; border-radius: 50%; color: #e2c38e;
+    font: italic 19px Georgia, serif;
+  }
+  .brand-copy { min-width: 0; }
+  .brand-wordmark { font-size: 15px; line-height: 1.1; letter-spacing: .07em; font-weight: 700; }
+  .brand-tagline { margin-top: 2px; font-size: 8px; letter-spacing: .16em; color: #d4c0a0; }
+  .brand-spacer { flex: 1; }
+  .logout-btn {
+    min-height: 32px; padding: 5px 9px; border: 1px solid #97764c; border-radius: 6px;
+    background: transparent; color: #f1dfbf; font-size: 10px; font-weight: 700;
+  }
+  #tabs { background: var(--nav-bg); }
+  #tabs .tab {
+    min-height: 43px; display: grid; place-items: center; padding: 8px 5px;
+    color: var(--text); background: var(--nav-item); border-color: var(--nav-bg);
+    font-size: 10px; line-height: 1.15;
+  }
+  #tabs .tab.active {
+    color: var(--primary-ink); background: var(--primary);
+    box-shadow: inset 0 -3px 0 var(--brand-gold);
+  }
+  .panel { padding: 8px; }
+  .filters-box, .setting-box, .print-setting-box, .empty {
+    background: var(--surface) !important; color: var(--text) !important;
+    border-color: var(--line) !important; box-shadow: var(--shadow);
+  }
+  .setting-box, .print-setting-box { padding: 9px; margin-bottom: 7px; border-radius: 8px; }
+  .filters-box { padding: 8px; border-radius: 8px; }
+  .filters { gap: 6px; }
+  .ac-wrap input, .setting-box input[type="text"], .setting-box input[type="password"],
+  .setting-box select, .challan-type-select, #reportType {
+    min-height: 38px; padding: 8px 9px; border-radius: 6px;
+    color: var(--text) !important; background: var(--surface-alt) !important;
+    border-color: var(--line) !important;
+  }
+  .ac-wrap input { font-size: 12px; }
+  input::placeholder { color: var(--muted); opacity: 1; }
+  .ac-wrap input:focus, select:focus, input:focus { border-color: var(--primary) !important; outline: 2px solid color-mix(in srgb, var(--primary) 22%, transparent); }
+  .ac-list, .multi-select-menu {
+    color: var(--text); background: var(--surface); border-color: var(--line);
+  }
+  .ac-list div, .multi-select-option { color: var(--text); border-color: var(--line); }
+  .ac-list div:hover, .multi-select-option:hover { background: var(--soft-highlight); }
+  option { color: var(--text); background: var(--surface); }
+  input[type="file"] { color: var(--text); }
+  input[type="file"]::file-selector-button {
+    min-height: 30px; margin-right: 7px; padding: 5px 9px;
+    color: var(--text); background: var(--surface-alt); border: 1px solid var(--line);
+    border-radius: 5px; font-weight: 700;
+  }
+  .btn {
+    min-height: 34px; padding: 7px 11px; border-radius: 6px;
+    background: var(--primary); color: var(--primary-ink);
+    font-size: 10px; letter-spacing: .02em;
+  }
+  .btn:hover, .logout-btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .btn.gray { background: #64748b; color: #fff; }
+  .btn.blue { background: var(--secondary); color: #fff; }
+  .btn.red { background: var(--danger); color: #fff; }
+  .btn.green { background: var(--success); color: #fff; }
+  .status { margin-left: auto; color: var(--text); background: var(--surface-alt); border-color: var(--line); }
+  .table-wrap { border-color: var(--line); background: var(--surface); border-radius: 7px; }
+  table { color: var(--text); background: var(--surface); }
+  th { color: var(--table-head-ink); background: var(--table-head); }
+  td { color: var(--text); border-color: var(--table-line); background: var(--surface); }
+  tbody tr:nth-child(even) td { background: var(--surface-alt); }
+  tbody tr td:first-child { border-right-color: var(--table-line); }
+  .setting-box label, .print-setting-title, .print-field-label,
+  #panel-nochallan label { color: var(--text) !important; }
+  .setting-box .msg, .print-setting-msg { color: var(--success); }
+  .multi-select-btn { color: var(--text); background: var(--surface-alt); border-color: var(--line); }
+  .multi-select-btn::after { color: var(--muted); }
+  .multi-select-actions { border-color: var(--line); }
+  .multi-select-actions button { color: var(--secondary); }
+  .challan-step-box, .challan-step2-box, #preview .box {
+    color: var(--text); background: var(--surface); border: 1px solid var(--line);
+  }
+  .challan-step-title, .challan-summary-card span, .challan-step2-info,
+  .challan-generated-title, .batch-progress-title, .batch-preview-title,
+  .challan-result-table td { color: var(--text) !important; }
+  .challan-step-subtitle, .challan-canvas-note, .challan-summary-card b,
+  .batch-progress-status, .batch-preview-counter { color: var(--muted) !important; }
+  .challan-summary-card, .batch-generate-box, .batch-preview-wrap,
+  .challan-photo-wrap, .challan-generated-image-box, .batch-preview-image-box,
+  .challan-step2-info { color: var(--text); background: var(--surface-alt); border-color: var(--line); }
+  .challan-result { border-color: var(--line); }
+  .challan-result-head { color: var(--table-head-ink); background: var(--table-head); }
+  .challan-result-table th { color: var(--text); background: var(--surface-alt); }
+  .batch-generated-info { background: var(--soft-highlight); border-color: var(--line); color: var(--text); }
+  .batch-generated-list { color: var(--text); }
+  #preview .box .title { color: var(--text); }
+  #offline-banner { background: #a16207; }
+  .section-kicker {
+    margin: 0 0 6px; color: var(--muted); font-size: 9px; font-weight: 800;
+    letter-spacing: .09em; text-transform: uppercase;
+  }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; align-items: start; }
+  .settings-card { min-width: 0; margin: 0; }
+  .settings-heading {
+    display: flex; align-items: center; gap: 7px; margin: 0 0 8px;
+    color: var(--text); font-size: 12px; font-weight: 800;
+  }
+  .settings-heading::before { content: ""; width: 3px; height: 15px; border-radius: 2px; background: var(--brand-gold); }
+  .settings-card label { margin-bottom: 4px; font-size: 10px; }
+  .settings-card label .hint { color: var(--muted); font-weight: 400; }
+  .settings-card input[type="text"], .settings-card input[type="password"],
+  .settings-card select { margin-bottom: 6px; }
+  .settings-card .row { gap: 5px; }
+  .settings-card .btn { min-height: 32px; }
+  .settings-card .settings-note { color: var(--muted); font-size: 10px; line-height: 1.45; }
+  .settings-card #cacheInfo { color: var(--text) !important; }
+  #recentUploads > div > div { border-color: var(--line) !important; }
+  #recentUploads > div > div span { color: var(--muted) !important; }
+  .settings-card-wide { grid-column: 1 / -1; }
+  .credential-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; align-items: end; }
+  .credential-row .btn { white-space: nowrap; }
+  .security-dialog {
+    position: fixed; inset: 0; z-index: 11000; display: none; place-items: center;
+    padding: 16px; background: rgba(7,8,10,.72);
+  }
+  .security-dialog.open { display: grid; }
+  .security-card {
+    width: min(100%, 360px); padding: 17px; color: var(--text);
+    background: var(--surface); border: 1px solid var(--brand-gold);
+    border-radius: 11px; box-shadow: 0 16px 48px rgba(0,0,0,.32);
+  }
+  .security-card h2 { margin: 0 0 5px; font-size: 15px; }
+  .security-card p { margin: 0 0 12px; color: var(--muted); font-size: 11px; }
+  .security-card input {
+    width: 100%; min-height: 40px; padding: 8px 10px; color: var(--text);
+    background: var(--surface-alt); border: 1px solid var(--line); border-radius: 6px;
+    font-size: 14px;
+  }
+  .security-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 11px; }
+  .security-message { min-height: 16px; margin-top: 7px; color: var(--danger); font-size: 11px; }
+  @media (max-width: 650px) {
+    /* iPhone Safari zooms the page when small form controls receive focus.
+       Keep controls compact visually but use a 16px text size to prevent that. */
+    .ac-wrap input, .filters input, select, textarea {
+      font-size: 13px !important;
+      line-height: 16px;
+      height: 28px;
+      min-height: 28px;
+      padding: 2px 6px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .filters-box { padding: 5px; margin-bottom: 5px; }
+    .section-kicker { font-size: 9px !important; margin-bottom: 3px !important; }
+    #challanType, #reportType { height: 28px !important; min-height: 28px !important; padding: 2px 6px !important; font-size: 13px !important; line-height: 16px !important; }
+    .toolbar { gap: 4px; margin-top: 6px; }
+    .toolbar .btn { padding: 5px 8px; font-size: 10px; min-height: 30px; }
+    .toolbar .status { margin-left: 0; flex: 1 1 150px; font-size: 9px; padding: 4px 6px; }
+    #wrap-all th, #wrap-all td, #wrap-nochallan th, #wrap-nochallan td {
+      min-width: 58px;
+      max-width: 135px;
+      font-size: 9px;
+      line-height: 1.15;
+      padding: 3px 4px;
+    }
+    #wrap-all th.sticky-order, #wrap-all td.sticky-order,
+    #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
+      min-width: 54px;
+      max-width: 78px;
+      width: 1%;
+      white-space: nowrap;
+    }
+    .batch-preview-actions .btn, .batch-preview-nav .btn,
+    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
+    .challan-step-actions .btn, .challan-step2-actions .btn {
+      min-height: 38px;
+      height: 38px;
+      padding: 5px 6px;
+      font-size: 9px;
+    }
+  }
+    #tabs .tab { min-width: 0; padding: 5px 3px; font-size: 9px; line-height: 12px; }
+    .settings-grid { grid-template-columns: minmax(0, 1fr); }
+    .settings-card-wide { grid-column: auto; }
+    .settings-card { padding: 8px; }
+    .credential-row { grid-template-columns: 1fr; }
+    .credential-row .btn { width: 100%; }
+    .toolbar { gap: 5px; }
+    .status { flex-basis: 100%; margin-left: 0; }
+    .login-card { padding: 20px; }
+  }
+
+  /* ========= IPHONE / NARROW VIEWPORT CONTAINMENT =========
+     Keep wide data inside its own scroll region; never let its intrinsic width
+     enlarge the document and trigger Safari's automatic page scaling. */
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  #appShell, #tabs, .panel, .filters-box, .filters, .toolbar, .settings-grid,
+  .table-wrap, .setting-box, .print-setting-box, .settings-card,
+  #challanStep1, #preview, .challan-step-box,
+  .challan-summary, #challanStep1Results, .challan-result, .challan-result-body,
+  .batch-generate-box, .batch-preview-wrap, .batch-preview-head,
+  .batch-preview-image-box, .challan-photo-wrap, .challan-generated-wrap,
+  .challan-generated-image-box, #preview .box, #previewContent {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+  #appShell, .panel, .filters-box, .settings-grid, .table-wrap {
+    width: 100%;
+  }
+  .table-wrap, .challan-result-body, .batch-preview-image-box,
+  .challan-photo-wrap, .challan-generated-image-box {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  #wrap-all table, #wrap-nochallan table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    table-layout: auto;
+  }
+  #wrap-all th, #wrap-all td, #wrap-nochallan th, #wrap-nochallan td {
+    min-width: 72px;
+    max-width: 176px;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .challan-result-head > * { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+  .challan-result-body { width: 100%; }
+  .challan-result-table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    table-layout: auto;
+  }
+  .challan-result-table th, .challan-result-table td {
+    min-width: 72px;
+    max-width: 160px;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .challan-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .challan-summary-card, .challan-summary-card span,
+  .challan-step-title, .challan-step-subtitle,
+  .challan-step2-info, .batch-progress-status, .batch-generated-info,
+  .batch-generated-list, .batch-preview-title, .challan-photo-error,
+  .challan-canvas-note {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .challan-step-box, .challan-step2-box {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: hidden;
+  }
+  #challanStep1 .challan-step-box > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .batch-preview-nav, .batch-preview-actions, .batch-preview-all-actions,
+  .challan-generated-actions, .challan-step-actions, .challan-step2-actions {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .batch-preview-image-box img, .challan-photo-wrap img,
+  .challan-generated-image-box img, #preview .box img, #preview .box iframe {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+  }
+  #preview { width: 100%; max-width: 100%; }
+  #preview .box { width: fit-content; max-width: 100%; }
+  #previewContent { width: auto; max-width: 100%; min-width: 0; }
+  #preview .actions { max-width: 100%; flex-wrap: wrap; justify-content: center; }
+  .brand-bar, .brand-copy, .brand-tagline { min-width: 0; max-width: 100%; }
+  .brand-tagline { overflow-wrap: anywhere; }
+  .toolbar > *, .setting-box .row > *, .print-save-row > * { min-width: 0; }
+  .challan-type-select { min-width: 0; }
+  .print-save-row .btn { min-width: 0; }
+
+  @media (max-width: 650px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+    .challan-type-select { min-width: 0; flex-basis: 130px; }
+    #challanStep1 { padding: 12px; }
+    #challanStep1 .challan-step-box {
+      width: calc(100vw - 24px);
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      padding: 10px;
+    }
+    .unused-challan-step2-box {
+      width: calc(100vw - 24px);
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      padding: 10px;
+    }
+    .challan-result { width: 100%; max-width: 100%; }
+    .challan-result-body { padding: 5px; }
+    .challan-summary { gap: 5px; }
+    .challan-summary-card { padding: 6px; }
+    .challan-step-subtitle { margin-bottom: 7px; }
+    .batch-generate-box, .batch-preview-wrap { margin-top: 7px; padding: 8px; }
+    .batch-preview-head { gap: 5px; margin-bottom: 5px; }
+    .batch-preview-nav, .batch-preview-actions, .batch-preview-all-actions,
+    .challan-generated-actions, .challan-step-actions, .challan-step2-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      justify-content: stretch;
+      margin-top: 7px;
+    }
+    .batch-preview-actions .btn, .batch-preview-nav .btn,
+    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
+    .challan-step-actions .btn, .challan-step2-actions .btn {
+      width: 100%;
+      min-width: 0 !important;
+      max-width: 100%;
+      min-height: 50px;
+      height: 50px;
+      padding: 6px 5px;
+      font-size: 10px;
+      line-height: 1.15;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .batch-preview-actions .btn, .batch-preview-all-actions .btn { letter-spacing: 0; }
+    .batch-preview-all-actions { padding-top: 6px; }
+    .batch-preview-image-box, .challan-photo-wrap, .challan-generated-image-box {
+      max-height: 58vh;
+      padding: 6px;
+    }
+    .batch-preview-image-box img, .challan-photo-wrap img,
+    .challan-generated-image-box img {
+      max-width: 100%;
+      max-height: none;
+      height: auto;
+      object-fit: contain;
+    }
+    .challan-step-actions, .challan-step2-actions { margin-top: 8px; }
+    .challan-load-btn { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+    #preview { padding: 12px; }
+    #preview .box { width: fit-content; max-width: 100%; max-height: 82dvh; }
+    #preview .actions button { min-height: 44px; }
+  }
+  @media (max-width: 360px) {
+    .batch-preview-nav, .batch-preview-actions, .batch-preview-all-actions,
+    .challan-generated-actions, .challan-step-actions, .challan-step2-actions {
+      gap: 5px;
+    }
+    .batch-preview-actions .btn, .batch-preview-nav .btn,
+    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
+    .challan-step-actions .btn, .challan-step2-actions .btn {
+      padding-left: 3px;
+      padding-right: 3px;
+      font-size: 9px;
+    }
+  }
 </style>
 </head>
 <body>
 
+<div id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <div class="login-brand">BANSI FAB</div>
+    <div class="login-subbrand">HOUSE OF FABRICS</div>
+    <div class="login-rule"></div>
+    <h1 class="login-title">Order Book Sign In</h1>
+    <label for="loginUsername">Username</label>
+    <input id="loginUsername" name="username" type="text" autocomplete="username" required>
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+    <div class="auth-error" id="loginError" role="alert" aria-live="polite"></div>
+    <button class="login-submit" id="loginSubmit" type="submit" disabled>SIGN IN</button>
+    <p class="login-note">Initial username: <b>bansi123</b>. Change login credentials after signing in from Settings.</p>
+  </form>
+</div>
+<div id="appShell" class="is-locked">
+<header class="brand-bar">
+  <div class="brand-mark" aria-hidden="true">B</div>
+  <div class="brand-copy">
+    <div class="brand-wordmark">BANSI FAB</div>
+    <div class="brand-tagline">HOUSE OF FABRICS · ORDER BOOK</div>
+  </div>
+  <div class="brand-spacer"></div>
+  <button type="button" class="logout-btn" onclick="logoutApp()">SIGN OUT</button>
+</header>
 <div id="offline-banner">⚠️ OFFLINE — showing cached data. Will sync when internet returns.</div>
 
 <div id="tabs">
   <div class="tab active" data-tab="all">ALL ORDERS</div>
-  <div class="tab" data-tab="nochallan">NO CHALLAN</div>
+  <div class="tab" data-tab="nochallan">REPORT</div>
   <div class="tab" data-tab="upload">UPLOAD</div>
   <div class="tab" data-tab="settings">SETTINGS</div>
 </div>
@@ -529,13 +1205,14 @@
 <!-- ===== TAB 1: ALL ORDERS ===== -->
 <div class="panel active" id="panel-all">
   <div class="filters-box">
+    <div class="section-kicker">Filter orders</div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f-party"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
-      <div class="ac-wrap"><input id="f-material" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f-job"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('all')">CLEAR</button>
@@ -545,7 +1222,7 @@
         <option value="dispatch">DISPATCH CHALLAN</option>
       </select>
       <button class="btn green" onclick="generateChallan()">▣ GENERATE</button>
-      <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
+      <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-all">No data loaded</span>
     </div>
   </div>
@@ -557,18 +1234,30 @@
 <!-- ===== TAB 2: NO CHALLAN ===== -->
 <div class="panel" id="panel-nochallan">
   <div class="filters-box">
+    <div class="section-kicker">Report filters</div>
+    <div style="margin-bottom:7px;">
+      <label for="reportType" style="font-weight:700;color:#0f172a;">REPORT</label>
+      <select id="reportType" aria-label="Select report" style="width:100%;padding:7px;margin-top:4px;border:1px solid #cbd5e1;border-radius:4px;background:#f8fafc;font-size:11px;">
+        <option value="no-challan">No Challan</option>
+        <option value="fabric-ordered">Fabric Ordered</option>
+        <option value="fabric-cutwork">Fabric Cutwork Done</option>
+        <option value="fabric-jobwork">Fabric Given and Program Given to Jobwork</option>
+        <option value="fabric-received">Fabric Received from Jobwork</option>
+        <option value="dispatch-done">Dispatch Done</option>
+      </select>
+    </div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f2-party"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f2-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f2-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f2-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
-      <div class="ac-wrap"><input id="f2-material" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f2-job"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f2-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f2-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f2-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f2-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f2-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f2-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
       <button class="btn blue" onclick="downloadPDF('nochallan')">PDF</button>
-      <button class="btn green" onclick="fetchData()">↻ REFRESH</button>
+      <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-nochallan">No data loaded</span>
     </div>
   </div>
@@ -581,11 +1270,26 @@
 <div class="panel" id="panel-upload">
   <div class="setting-box">
     <label>SELECT FOLDER</label>
-    <select id="uploadFolder">
-      <option value="">-- Choose --</option>
-      <option value="design">Design Number</option>
-      <option value="order">Order Form</option>
-    </select>
+    <div class="upload-folder-grid">
+      <div>
+        <label class="upload-existing-label">SELECT FOLDER</label>
+        <select id="uploadFolder" onchange="onUploadFolderChange()">
+          <option value="">-- Choose --</option>
+          <option value="design">Design Number</option>
+          <option value="order">Order Form</option>
+        </select>
+      </div>
+      <div class="upload-existing-wrap">
+        <label class="upload-existing-label" for="uploadExistingFile">EXISTING FILES</label>
+        <select id="uploadExistingFile" onchange="onExistingUploadFileChange()">
+          <option value="">Select folder first…</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:6px;">
+      <span id="uploadFileIndexStatus" style="font-size:9px;color:#64748b;">Drive list not loaded</span>
+      <button type="button" class="btn gray" onclick="refreshUploadFileIndex()" style="min-height:26px;padding:4px 8px;font-size:9px;">↻ REFRESH LIST</button>
+    </div>
   </div>
   <div class="setting-box">
     <label>CHOOSE PHOTO FROM GALLERY</label>
@@ -594,8 +1298,8 @@
     <div id="uploadPreview" style="display:none;margin-top:8px;"></div>
   </div>
   <div class="setting-box">
-    <label>RENAME</label>
-    <input type="text" id="uploadRename" placeholder="Type new name (extension auto-added)">
+    <label>RENAME <span style="font-weight:400;color:#64748b;">· leave blank until you choose the new name</span></label>
+    <input type="text" id="uploadRename" placeholder="Type new name (extension auto-added)" autocomplete="off">
   </div>
   <div class="setting-box">
     <button class="btn" id="uploadBtn" onclick="doUpload()" style="width:100%;padding:12px;font-size:13px;">⬆ UPLOAD</button>
@@ -609,34 +1313,37 @@
 
 <!-- ===== TAB 4: SETTINGS ===== -->
 <div class="panel" id="panel-settings">
-  <div class="setting-box">
-    <label>1. DATA ENDPOINT URL (leave blank to use default)</label>
-    <input type="text" id="dataUrl" placeholder="Default URL is used automatically">
+  <div class="settings-grid">
+  <section class="setting-box settings-card" aria-labelledby="dataSettingsTitle">
+    <h2 class="settings-heading" id="dataSettingsTitle">Data connection</h2>
+    <label for="dataUrl">Apps Script data URL <span class="hint">· blank uses current default</span></label>
+    <input type="text" id="dataUrl" placeholder="Default URL is used automatically" autocomplete="url">
     <div class="row">
       <button class="btn" onclick="saveDataUrl()">SAVE</button>
       <button class="btn red" onclick="clearDataUrl()">RESET TO DEFAULT</button>
       <span class="msg" id="dataMsg"></span>
     </div>
-  </div>
-  <div class="setting-box">
-    <label>2. UPLOAD ENDPOINT URL (leave blank to use default)</label>
-    <input type="text" id="uploadUrl" placeholder="Default URL is used automatically">
+  </section>
+  <section class="setting-box settings-card" aria-labelledby="uploadSettingsTitle">
+    <h2 class="settings-heading" id="uploadSettingsTitle">Upload connection</h2>
+    <label for="uploadUrl">Apps Script upload URL <span class="hint">· blank uses current default</span></label>
+    <input type="text" id="uploadUrl" placeholder="Default URL is used automatically" autocomplete="url">
     <div class="row">
       <button class="btn" onclick="saveUploadUrl()">SAVE</button>
       <button class="btn red" onclick="clearUploadUrl()">RESET TO DEFAULT</button>
       <span class="msg" id="uploadMsg"></span>
     </div>
-  </div>
-  <div class="setting-box">
-    <label>OFFLINE CACHE STATUS</label>
+  </section>
+  <section class="setting-box settings-card" aria-labelledby="cacheSettingsTitle">
+    <h2 class="settings-heading" id="cacheSettingsTitle">Cache &amp; sync status</h2>
     <div id="cacheInfo" style="font-size:10px; line-height:1.6; color:#334155;">Loading…</div>
     <div class="row" style="margin-top:6px;">
       <button class="btn red" onclick="clearOfflineCache()">CLEAR CACHE</button>
     </div>
-  </div>
+  </section>
 
-  <div class="print-setting-box">
-    <span class="print-setting-title">4. CHALLAN PRINT INFORMATION SETTING</span>
+  <section class="print-setting-box settings-card settings-card-wide" aria-labelledby="challanSettingsTitle">
+    <span class="print-setting-title settings-heading" id="challanSettingsTitle">Challan print settings</span>
     <div class="print-field-grid">
       <div class="print-field-control">
         <span class="print-field-label">JOBWORK CHALLAN FIELDS</span>
@@ -659,14 +1366,54 @@
       <button class="btn green" onclick="saveChallanPrintSettings()">SAVE CHALLAN SETTINGS</button>
       <span class="print-setting-msg" id="challanPrintMsg"></span>
     </div>
+  </section>
+  <section class="setting-box settings-card" aria-labelledby="themeSettingsTitle">
+    <h2 class="settings-heading" id="themeSettingsTitle">Theme &amp; appearance</h2>
+    <label for="themeSelect">Application theme</label>
+    <select id="themeSelect" aria-label="Application theme">
+      <option value="default">Default</option>
+      <option value="theme1">Theme 1 · Black / Inverted</option>
+      <option value="theme2">Theme 2 · Dark Teal</option>
+      <option value="theme3">Theme 3 · Grey + Black Lines</option>
+      <option value="theme4">Theme 4 · BANSI FAB Premium</option>
+      <option value="theme5">Theme 5 · Modern Sage</option>
+    </select>
+    <div class="settings-note">Saved on this browser and restored when the app is reopened.</div>
+  </section>
+  <section class="setting-box settings-card" aria-labelledby="loginCredentialsTitle">
+    <h2 class="settings-heading" id="loginCredentialsTitle">Login credentials</h2>
+    <label for="newLoginUsername">Change username</label>
+    <div class="credential-row">
+      <input type="text" id="newLoginUsername" autocomplete="off" placeholder="New username">
+      <button class="btn" type="button" onclick="changeLoginUsername()">UPDATE USERNAME</button>
+    </div>
+    <div class="row"><button class="btn red" type="button" onclick="resetLoginUsername()">RESET USERNAME</button></div>
+    <label for="newLoginPassword" style="margin-top:8px;">Change password</label>
+    <div class="credential-row">
+      <input type="password" id="newLoginPassword" autocomplete="new-password" placeholder="New password">
+      <button class="btn" type="button" onclick="changeLoginPassword()">UPDATE PASSWORD</button>
+    </div>
+    <div class="row"><button class="btn red" type="button" onclick="resetLoginPassword()">RESET PASSWORD</button></div>
+    <div class="settings-note" id="loginCredentialsMessage" aria-live="polite">Username and password are changed or reset independently.</div>
+  </section>
+  <section class="setting-box settings-card settings-card-wide" aria-labelledby="settingsSecurityTitle">
+    <h2 class="settings-heading" id="settingsSecurityTitle">Settings security</h2>
+    <label for="newSettingsPassword">Change Settings password</label>
+    <div class="credential-row">
+      <input type="password" id="newSettingsPassword" autocomplete="new-password" placeholder="New Settings password">
+      <button class="btn" type="button" onclick="changeSettingsPassword()">UPDATE SETTINGS PASSWORD</button>
+    </div>
+    <div class="row"><button class="btn red" type="button" onclick="resetSettingsPassword()">RESET SETTINGS PASSWORD</button></div>
+    <div class="settings-note" id="settingsCredentialMessage" aria-live="polite">This password is separate from the normal app login. Client-side protection only; it does not secure the Apps Script or Sheet.</div>
+  </section>
   </div>
 </div>
 
 <!-- ===== CHALLAN GENERATOR STEP 1 ===== -->
 <div id="challanStep1">
   <div class="challan-step-box">
-    <div class="challan-step-title" id="challanStep1Title">Challan Generator — Step 1</div>
-    <div class="challan-step-subtitle">Verify the exact Sheet rows found for the selected Challan No before we connect the Drive image generator.</div>
+    <div class="challan-step-title" id="challanStep1Title">CHALLAN GENERATOR</div>
+    <div class="challan-step-subtitle">Review selected challans, generate them in party sequence, then view each party collage as the final item for that party.</div>
     <div class="challan-summary" id="challanStep1Summary"></div>
     <div id="challanStep1Results"></div>
     <div class="batch-generate-box" id="batchGenerateBox">
@@ -706,31 +1453,6 @@
   </div>
 </div>
 
-<!-- ===== CHALLAN GENERATOR STEP 2 ===== -->
-<div id="challanStep2">
-  <div class="challan-step2-box">
-    <div class="challan-step-title" id="challanStep2Title">CHALLAN GENERATOR — STEP 2</div>
-    <div class="challan-step-subtitle">Load the original DS photo from the existing Drive link. The original photo is not changed.</div>
-    <div class="challan-step2-info" id="challanStep2Info">Loading…</div>
-    <div class="challan-photo-wrap" id="challanPhotoWrap"><div style="font-size:11px;color:#64748b;">Loading Drive photo…</div></div>
-    <div id="challanGeneratedWrap" class="challan-generated-wrap" style="display:none;">
-      <div class="challan-generated-title">FINAL CHALLAN IMAGE</div>
-      <div class="challan-generated-image-box">
-        <img id="challanGeneratedImage" alt="Generated challan">
-      </div>
-      <div class="challan-generated-actions">
-        <button class="btn green" onclick="downloadGeneratedChallan()">⬇ DOWNLOAD IMAGE</button>
-        <button class="btn blue" onclick="createGeneratedChallanPDF()">PDF</button>
-        <button class="btn" style="background:#25D366;color:#fff;" onclick="shareGeneratedChallan()">WHATSAPP / SHARE</button>
-      </div>
-    </div>
-    <div class="challan-step2-actions">
-      <button class="btn green" id="createFinalChallanBtn" style="display:none;" onclick="createFinalChallanImage()">CREATE FINAL IMAGE</button>
-      <button class="btn blue" onclick="closeChallanStep2()">CLOSE</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== PREVIEW OVERLAY ===== -->
 <div id="preview">
   <div class="box">
@@ -742,6 +1464,20 @@
     <button class="close" onclick="closePreview()">CLOSE</button>
   </div>
 </div>
+</div>
+
+<div class="security-dialog" id="settingsPasswordDialog" role="dialog" aria-modal="true" aria-labelledby="settingsPasswordTitle">
+  <form class="security-card" id="settingsPasswordForm">
+    <h2 id="settingsPasswordTitle">Settings password</h2>
+    <p>Enter the separate Settings password to continue.</p>
+    <input type="password" id="settingsPasswordInput" autocomplete="current-password" aria-label="Settings password">
+    <div class="security-message" id="settingsPasswordMessage" role="alert" aria-live="polite"></div>
+    <div class="security-actions">
+      <button class="btn gray" type="button" onclick="cancelSettingsUnlock()">CANCEL</button>
+      <button class="btn" id="settingsUnlockButton" type="submit">UNLOCK SETTINGS</button>
+    </div>
+  </form>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -751,7 +1487,7 @@
    DEFAULTS — hardcoded so the app works with zero setup
    ============================================================ */
 const DEFAULT_DATA_URL   = 'https://script.google.com/macros/s/AKfycbwCKbbbncdTeINdP0NkRlG8r0MrRyRy7WgJJdPW1N_Y6dkUvkKnyE2IbNtnBOOGUrTNMA/exec';
-const DEFAULT_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxGylcZWCJQaE1YcBUi8vW4JgrCYrrB7JzyIxQG_El5r5vAExjDs1QK8hJ9lj_I63YOQQ/exec';
+const DEFAULT_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzWeIKzKBuh-OUDmAKld8srm7yDHQtdAoD8sb7dfyRkA0ZLx_Qb6uyW2_GY5Ny9Ey4fyA/exec';
 
 function getDataUrl() {
   return (localStorage.getItem('dataUrl') || '').trim() || DEFAULT_DATA_URL;
@@ -763,28 +1499,287 @@ function getUploadUrl() {
 /* ========= STATE ========= */
 const state = {
   data: { headers: [], rows: [] },
+  syncVersion: '',
+  cacheNeedsFull: false,
   previewUrl: null,
   linkColumns: { order: -1, ds: -1 },
   cols: { party:-1, order:-1, challan:-1, design:-1, material:-1, job:-1, ds:-1 },
   uploadFile: null,
   uploadDataUrl: null,
   recentUploads: [],
+  uploadFileIndex: { design: null, order: null },
+  uploadFileIndexLoadedAt: { design: 0, order: 0 },
   challanPrint: {
     jobwork: [],
     dispatch: []
   },
   batchChallans: [],
-  batchPreviewIndex: 0
+  batchPreviewIndex: 0,
+  partyCollages: [],
+  // Only Order No is restored as frozen after a fresh app load.
+  frozenColumns: { all: new Set(), nochallan: new Set() }
 };
+
+/* ========= THEMES + CLIENT-SIDE LOGIN ========= */
+const THEME_STORAGE_KEY = 'bansiTheme';
+const AUTH_STORAGE_KEY = 'bansiAuth.v1';
+const SESSION_STORAGE_KEY = 'bansiSession.v1';
+const DEFAULT_APP_USERNAME = 'bansi123';
+const DEFAULT_APP_PASSWORD = 'bansi123';
+const DEFAULT_SETTINGS_PASSWORD = 'Bansi@1983';
+const APP_AUTH_ITERATIONS = 150000;
+let authConfig = null;
+let activeTabId = 'all';
+let settingsReturnTab = 'all';
+let appSyncStarted = false;
+let appSyncInterval = null;
+
+function applyTheme(theme, persist = false) {
+  const available = ['default', 'theme1', 'theme2', 'theme3', 'theme4', 'theme5'];
+  const selected = available.includes(theme) ? theme : 'default';
+  document.documentElement.setAttribute('data-theme', selected);
+  const control = document.getElementById('themeSelect');
+  if (control) control.value = selected;
+  if (persist) {
+    try { localStorage.setItem(THEME_STORAGE_KEY, selected); } catch (e) {}
+  }
+}
+function initializeTheme() {
+  let saved = 'default';
+  try { saved = localStorage.getItem(THEME_STORAGE_KEY) || 'default'; } catch (e) {}
+  applyTheme(saved, false);
+  const control = document.getElementById('themeSelect');
+  if (control) control.addEventListener('change', () => applyTheme(control.value, true));
+}
+function makeSalt() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  return bytes;
+}
+async function hashLocalPassword(password, saltHex) {
+  if (!window.crypto || !crypto.subtle) throw new Error('Secure browser password support is unavailable. Open this app in a current browser over HTTPS.');
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password), { name: 'PBKDF2' }, false, ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits({
+    name: 'PBKDF2', salt: hexToBytes(saltHex), iterations: APP_AUTH_ITERATIONS, hash: 'SHA-256'
+  }, key, 256);
+  return Array.from(new Uint8Array(bits), b => b.toString(16).padStart(2, '0')).join('');
+}
+async function createLocalCredential(password) {
+  const salt = makeSalt();
+  return { salt: salt, hash: await hashLocalPassword(password, salt) };
+}
+async function verifyLocalPassword(password, credential) {
+  if (!credential || !credential.salt || !credential.hash) return false;
+  const candidate = await hashLocalPassword(password, credential.salt);
+  return candidate === credential.hash;
+}
+function persistAuthConfig() {
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authConfig));
+}
+async function initializeAuthConfig() {
+  const existing = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (existing) {
+    const parsed = JSON.parse(existing);
+    if (!parsed || !parsed.username || !parsed.login || !parsed.settings) {
+      throw new Error('Saved sign-in settings could not be read. No recovery method is configured.');
+    }
+    authConfig = parsed;
+    return;
+  }
+  authConfig = {
+    username: DEFAULT_APP_USERNAME,
+    login: await createLocalCredential(DEFAULT_APP_PASSWORD),
+    settings: await createLocalCredential(DEFAULT_SETTINGS_PASSWORD)
+  };
+  persistAuthConfig();
+}
+function setLoginMessage(text) {
+  const message = document.getElementById('loginError');
+  if (message) message.textContent = text || '';
+}
+function activateTab(tabId) {
+  document.querySelectorAll('#tabs .tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.panel').forEach(panel => {
+    panel.classList.toggle('active', panel.id === 'panel-' + tabId);
+  });
+  activeTabId = tabId;
+}
+function requestTab(tabId) {
+  if (tabId !== 'settings') {
+    activateTab(tabId);
+    return;
+  }
+  if (activeTabId === 'settings') activateTab('all');
+  settingsReturnTab = activeTabId || 'all';
+  const dialog = document.getElementById('settingsPasswordDialog');
+  const input = document.getElementById('settingsPasswordInput');
+  document.getElementById('settingsPasswordMessage').textContent = '';
+  input.value = '';
+  dialog.classList.add('open');
+  setTimeout(() => input.focus(), 0);
+}
+function cancelSettingsUnlock() {
+  document.getElementById('settingsPasswordDialog').classList.remove('open');
+  document.getElementById('settingsPasswordMessage').textContent = '';
+  activateTab(settingsReturnTab || 'all');
+}
+async function submitSettingsUnlock(event) {
+  if (event) event.preventDefault();
+  const input = document.getElementById('settingsPasswordInput');
+  const button = document.getElementById('settingsUnlockButton');
+  const message = document.getElementById('settingsPasswordMessage');
+  if (!authConfig) { message.textContent = 'Sign-in settings are not ready.'; return; }
+  button.disabled = true;
+  try {
+    if (await verifyLocalPassword(input.value, authConfig.settings)) {
+      document.getElementById('settingsPasswordDialog').classList.remove('open');
+      message.textContent = '';
+      activateTab('settings');
+      updateCacheInfo();
+    } else {
+      message.textContent = 'Incorrect Settings password.';
+      input.value = '';
+      input.focus();
+    }
+  } catch (e) {
+    message.textContent = e.message || 'Could not verify the Settings password.';
+  } finally {
+    button.disabled = false;
+  }
+}
+function startAppSync() {
+  if (appSyncStarted) return;
+  appSyncStarted = true;
+  const hadCache = loadCachedData(true);
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (navigator.onLine) syncIncremental();
+    else if (hadCache) showOfflineBanner('⚠️ OFFLINE — showing last saved data');
+  }, 2000);
+  appSyncInterval = window.setInterval(() => {
+    if (navigator.onLine && document.visibilityState === 'visible' &&
+        localStorage.getItem(SESSION_STORAGE_KEY) === '1') syncIncremental();
+  }, AUTO_SYNC_INTERVAL_MS);
+}
+function enterApp(remember = true) {
+  if (remember) localStorage.setItem(SESSION_STORAGE_KEY, '1');
+  document.getElementById('loginScreen').hidden = true;
+  document.getElementById('appShell').classList.remove('is-locked');
+  startAppSync();
+}
+function logoutApp() {
+  try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) {}
+  if (syncTimer) clearTimeout(syncTimer);
+  if (appSyncInterval) clearInterval(appSyncInterval);
+  appSyncInterval = null;
+  appSyncStarted = false;
+  document.getElementById('settingsPasswordDialog').classList.remove('open');
+  document.getElementById('appShell').classList.add('is-locked');
+  document.getElementById('loginPassword').value = '';
+  setLoginMessage('');
+  document.getElementById('loginScreen').hidden = false;
+  document.getElementById('loginUsername').focus();
+}
+async function submitLogin(event) {
+  event.preventDefault();
+  const submit = document.getElementById('loginSubmit');
+  submit.disabled = true;
+  setLoginMessage('');
+  try {
+    if (!authConfig) await initializeAuthConfig();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (username === authConfig.username && await verifyLocalPassword(password, authConfig.login)) {
+      document.getElementById('loginPassword').value = '';
+      enterApp(true);
+    } else {
+      setLoginMessage('Username or password is incorrect.');
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginPassword').focus();
+    }
+  } catch (e) {
+    setLoginMessage(e.message || 'Sign-in could not be completed.');
+  } finally {
+    submit.disabled = false;
+  }
+}
+function setCredentialMessage(id, text, isError = false) {
+  const message = document.getElementById(id);
+  if (!message) return;
+  message.textContent = text;
+  message.style.color = isError ? 'var(--danger)' : 'var(--success)';
+}
+async function changeLoginUsername() {
+  const username = document.getElementById('newLoginUsername').value.trim();
+  if (!username) { setCredentialMessage('loginCredentialsMessage', 'Enter a non-empty username.', true); return; }
+  authConfig.username = username;
+  persistAuthConfig();
+  document.getElementById('newLoginUsername').value = '';
+  setCredentialMessage('loginCredentialsMessage', 'Login username updated.');
+}
+async function resetLoginUsername() {
+  authConfig.username = DEFAULT_APP_USERNAME;
+  persistAuthConfig();
+  document.getElementById('newLoginUsername').value = '';
+  setCredentialMessage('loginCredentialsMessage', 'Login username reset. The current password was not changed.');
+}
+async function changeLoginPassword() {
+  const password = document.getElementById('newLoginPassword').value;
+  if (!password) { setCredentialMessage('loginCredentialsMessage', 'Enter a new password.', true); return; }
+  try {
+    authConfig.login = await createLocalCredential(password);
+    persistAuthConfig();
+    document.getElementById('newLoginPassword').value = '';
+    setCredentialMessage('loginCredentialsMessage', 'Login password updated. The username was not changed.');
+  } catch (e) { setCredentialMessage('loginCredentialsMessage', e.message, true); }
+}
+async function resetLoginPassword() {
+  try {
+    authConfig.login = await createLocalCredential(DEFAULT_APP_PASSWORD);
+    persistAuthConfig();
+    document.getElementById('newLoginPassword').value = '';
+    setCredentialMessage('loginCredentialsMessage', 'Login password reset. The username was not changed.');
+  } catch (e) { setCredentialMessage('loginCredentialsMessage', e.message, true); }
+}
+async function changeSettingsPassword() {
+  const password = document.getElementById('newSettingsPassword').value;
+  if (!password) { setCredentialMessage('settingsCredentialMessage', 'Enter a new Settings password.', true); return; }
+  try {
+    authConfig.settings = await createLocalCredential(password);
+    persistAuthConfig();
+    document.getElementById('newSettingsPassword').value = '';
+    setCredentialMessage('settingsCredentialMessage', 'Settings password updated.');
+  } catch (e) { setCredentialMessage('settingsCredentialMessage', e.message, true); }
+}
+async function resetSettingsPassword() {
+  try {
+    authConfig.settings = await createLocalCredential(DEFAULT_SETTINGS_PASSWORD);
+    persistAuthConfig();
+    document.getElementById('newSettingsPassword').value = '';
+    setCredentialMessage('settingsCredentialMessage', 'Settings password reset to its default.');
+  } catch (e) { setCredentialMessage('settingsCredentialMessage', e.message, true); }
+}
 
 /* ========= TABS ========= */
 document.querySelectorAll('#tabs .tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('#tabs .tab').forEach(x => x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
-  });
+  t.addEventListener('click', () => requestTab(t.dataset.tab));
+});
+document.getElementById('reportType').addEventListener('change', () => renderTab('nochallan'));
+document.getElementById('loginForm').addEventListener('submit', submitLogin);
+document.getElementById('settingsPasswordForm').addEventListener('submit', submitSettingsUnlock);
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.getElementById('settingsPasswordDialog').classList.contains('open')) {
+    cancelSettingsUnlock();
+  }
 });
      /* ========= SETTINGS ========= */
 function loadSettings() {
@@ -792,6 +1787,20 @@ function loadSettings() {
   const uploadStored = localStorage.getItem('uploadUrl');
   document.getElementById('dataUrl').value   = dataStored   != null ? dataStored   : '';
   document.getElementById('uploadUrl').value = uploadStored != null ? uploadStored : '';
+  try {
+    const savedRecent = JSON.parse(localStorage.getItem('bansiRecentUploads.v1') || '[]');
+    state.recentUploads = Array.isArray(savedRecent) ? savedRecent.slice(0,10) : [];
+  } catch (e) { state.recentUploads = []; }
+  try {
+    ['design','order'].forEach(folder => {
+      const raw = localStorage.getItem('bansiDriveFileIndex.' + folder + '.v1');
+      const obj = raw ? JSON.parse(raw) : null;
+      if (obj && Array.isArray(obj.files)) {
+        state.uploadFileIndex[folder] = obj.files;
+        state.uploadFileIndexLoadedAt[folder] = Number(obj.loadedAt || 0);
+      }
+    });
+  } catch (e) {}
   updateCacheInfo();
 }
 function saveDataUrl() {
@@ -994,15 +2003,15 @@ function generateChallan() {
   const typeEl = document.getElementById('challanType');
   const type = typeEl ? typeEl.value : 'jobwork';
 
-  /* HARD LIMIT: maximum 5 challans per generation */
+  /* HARD LIMIT: maximum 12 challans per generation */
   const uniqueChallans = Array.from(new Set(selectedChallans.map(ch => norm(ch))));
-  if (uniqueChallans.length > 5) {
-    alert('⚠️ MAXIMUM 5 CHALLANS ALLOWED\n\nYou can generate not more than 5 challans at a time.\nPlease select 5 or fewer challans.');
+  if (uniqueChallans.length > 12) {
+    alert('⚠️ MAXIMUM 12 CHALLANS ALLOWED\n\nYou can generate not more than 12 challans at a time.\nPlease select 12 or fewer challans.');
     return;
   }
 
-  if (selectedChallans.length > 5) {
-    alert('⚠️ MAXIMUM 5 CHALLANS ALLOWED\n\nYou can generate not more than 5 challans at a time.\nPlease select 5 or fewer challans.');
+  if (selectedChallans.length > 12) {
+    alert('⚠️ MAXIMUM 12 CHALLANS ALLOWED\n\nYou can generate not more than 12 challans at a time.\nPlease select 12 or fewer challans.');
     return;
   }
 
@@ -1127,7 +2136,7 @@ function renderChallanStep1(groupedRows, selectedChallans, type, fields) {
       const link = getRowDriveLink(row);
       if (link) {
         const rowIndex = state.data.rows.indexOf(row);
-        html += '<td class="challan-link-ok">✓ LINK FOUND</td>';
+        html += '<td class="challan-link-ok"><a href="' + escapeAttr(link) + '" data-link="' + escapeAttr(link) + '" onclick="return handleLinkClick(event,this)" style="font-size:9px;font-weight:700;">OPEN PHOTO</a></td>';
       } else {
         html += '<td class="challan-link-missing">✗ NO LINK FOUND</td>';
       }
@@ -1153,6 +2162,7 @@ function setBatchProgress(percent, status) {
 function resetBatchGenerateUI() {
   state.batchChallans = [];
   state.batchPreviewIndex = 0;
+  state.partyCollages = [];
   setBatchProgress(0, 'Ready. Click GENERATE ALL CHALLANS.');
   const info = document.getElementById('batchGeneratedInfo');
   if (info) { info.style.display = 'none'; info.innerHTML = ''; }
@@ -1190,7 +2200,6 @@ async function generateAllChallans() {
   const btn = document.getElementById('generateAllChallansBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'GENERATING…'; }
 
-  // Keep the progress UI, but clear any previous generated preview.
   state.batchChallans = [];
   state.batchPreviewIndex = 0;
   const info = document.getElementById('batchGeneratedInfo');
@@ -1202,7 +2211,6 @@ async function generateAllChallans() {
   const type = state.generatedChallan.type;
   const grouped = {};
   selected.forEach(ch => grouped[norm(ch)] = []);
-
   (state.generatedChallan.rows || []).forEach(row => {
     const c = norm(row.values[state.cols.challan]);
     if (Object.prototype.hasOwnProperty.call(grouped, c)) grouped[c].push(row);
@@ -1215,80 +2223,148 @@ async function generateAllChallans() {
   for (let i = 0; i < selected.length; i++) {
     const challanNo = selected[i];
     const rows = grouped[norm(challanNo)] || [];
-    const row = rows.find(r => !!getRowDriveLink(r));
+    const row = rows[0] || null;
+    const dsIdx = state.cols.design;
+    const dsNo = row && dsIdx >= 0 ? getRowFieldValue(row, state.data.headers[dsIdx] || 'DS NO') : '';
+    const partyIdx = state.cols.party;
+    const partyName = row && partyIdx >= 0 && row.values[partyIdx] != null && String(row.values[partyIdx]).trim()
+      ? String(row.values[partyIdx]).trim() : 'PARTY NAME NOT AVAILABLE';
+
     setBatchProgress(Math.round((i / total) * 100), 'Working on challan ' + challanNo + ' (' + (i + 1) + ' of ' + total + ')…');
 
-    if (!row) {
-      skipped.push({ challanNo: challanNo, reason: rows.length ? 'DS / Drive link missing' : 'No matching row' });
-      setBatchProgress(Math.round(((i + 1) / total) * 100), 'Challan ' + challanNo + ' skipped — no Drive image link.');
-      continue;
+    let dataUrl = '';
+    let noPhoto = false;
+    try {
+      const link = row ? getRowDriveLink(row) : '';
+      if (link) {
+        const loaded = await loadDriveImageForBatch(link);
+        state.currentChallanPhoto = {
+          row: row, rowIndex: state.data.rows.indexOf(row), challanNo: challanNo, type: type,
+          link: link, dsNo: dsNo, image: loaded.image, imageUrl: loaded.imageUrl
+        };
+        createFinalChallanImage(false);
+        dataUrl = state.currentChallanPhoto.generatedDataUrl || '';
+      }
+      if (!dataUrl) {
+        noPhoto = true;
+        dataUrl = createNoPhotoChallanImage(row, challanNo, type, state.generatedChallan.fields || state.challanPrint[type] || [], dsNo);
+      }
+    } catch (err) {
+      noPhoto = true;
+      dataUrl = createNoPhotoChallanImage(row, challanNo, type, state.generatedChallan.fields || state.challanPrint[type] || [], dsNo);
     }
 
-    const link = getRowDriveLink(row);
-    const dsIdx = state.cols.design;
-    const dsNo = dsIdx >= 0 ? getRowFieldValue(row, state.data.headers[dsIdx] || 'DS NO') : '';
-
-    try {
-      const loaded = await loadDriveImageForBatch(link);
-      state.currentChallanPhoto = {
-        row: row,
-        rowIndex: state.data.rows.indexOf(row),
-        challanNo: challanNo,
-        type: type,
-        link: link,
-        dsNo: dsNo,
-        image: loaded.image,
-        imageUrl: loaded.imageUrl
-      };
-
-      // Create the image silently. Do not open the old Step 2 screen for each challan.
-      createFinalChallanImage(false);
-      const dataUrl = state.currentChallanPhoto.generatedDataUrl;
-      if (!dataUrl) throw new Error('Final image was not created');
-
-      generated.push({
-        challanNo: challanNo,
-        dsNo: dsNo,
-        type: type,
-        dataUrl: dataUrl
-      });
-
-      state.batchChallans = generated.slice();
-      setBatchProgress(Math.round(((i + 1) / total) * 100), '✓ Challan ' + challanNo + ' generated (' + (i + 1) + ' of ' + total + ').');
-    } catch (err) {
-      skipped.push({ challanNo: challanNo, reason: err && err.message ? err.message : 'Generation failed' });
-      setBatchProgress(Math.round(((i + 1) / total) * 100), '⚠ Challan ' + challanNo + ' could not be generated. Continuing…');
+    if (dataUrl) {
+      generated.push({ challanNo: challanNo, dsNo: dsNo, type: type, partyName: partyName, dataUrl: dataUrl, noPhoto: noPhoto });
+      setBatchProgress(Math.round(((i + 1) / total) * 100), (noPhoto ? '⚠ No photo — placeholder generated for challan ' : '✓ Challan ') + challanNo + ' (' + (i + 1) + ' of ' + total + ').');
+    } else {
+      skipped.push({ challanNo: challanNo, reason: 'Image generation failed' });
     }
   }
 
-  state.batchChallans = generated.slice();
+  // First appearance order by party. Each party is immediately followed by its final collage.
+  const partyOrder = [];
+  const partyMap = new Map();
+  generated.forEach(item => {
+    const key = item.partyName || 'PARTY NAME NOT AVAILABLE';
+    if (!partyMap.has(key)) { partyMap.set(key, []); partyOrder.push(key); }
+    partyMap.get(key).push(item);
+  });
+
+  const collages = await createPartyWiseCollages(generated);
+  const collageMap = new Map(collages.map(c => [c.partyName, c]));
+  const sequence = [];
+  partyOrder.forEach(party => {
+    (partyMap.get(party) || []).forEach(item => sequence.push(item));
+    const collage = collageMap.get(party);
+    if (collage) sequence.push({ kind: 'collage', partyName: party, type: type, dataUrl: collage.dataUrl, items: collage.items });
+  });
+
+  state.batchChallans = sequence;
+  state.partyCollages = collages;
 
   if (info) {
     let html = '✓ ' + generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED';
     if (skipped.length) {
-      html += '<div class="batch-generated-list">';
-      html += skipped.length + ' not generated: ';
-      html += skipped.map(x => escapeHtml(String(x.challanNo)) + ' (' + escapeHtml(x.reason) + ')').join(', ');
-      html += '</div>';
+      html += '<div class="batch-generated-list">Not generated: ' + skipped.map(x => escapeHtml(String(x.challanNo)) + ' (' + escapeHtml(x.reason) + ')').join(', ') + '</div>';
     }
-    if (generated.length) {
-      html += '<div class="batch-generated-list">Generated: ' + generated.map(x => escapeHtml(String(x.challanNo))).join(', ') + '</div>';
+    if (generated.some(x => x.noPhoto)) {
+      html += '<div class="batch-generated-list">Black placeholder used for: ' + generated.filter(x => x.noPhoto).map(x => escapeHtml(String(x.challanNo))).join(', ') + '</div>';
     }
     info.innerHTML = html;
     info.style.display = 'block';
   }
 
   setBatchProgress(100, 'Completed. ' + generated.length + ' of ' + total + ' challans generated.');
+  if (sequence.length) { state.batchPreviewIndex = 0; renderBatchChallanPreview(); }
+  if (btn) { btn.disabled = true; btn.textContent = generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED'; }
+}
 
-  if (generated.length) {
-    state.batchPreviewIndex = 0;
-    renderBatchChallanPreview();
-  }
+async function createPartyWiseCollages(items) {
+  const groups = [];
+  const map = new Map();
+  (items || []).forEach(item => {
+    const party = item.partyName || 'PARTY NAME NOT AVAILABLE';
+    if (!map.has(party)) { map.set(party, []); groups.push({ partyName: party, items: map.get(party) }); }
+    map.get(party).push(item);
+  });
 
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED';
+  const out = [];
+  for (const group of groups) {
+    try {
+      const images = [];
+      for (const item of group.items) {
+        const img = new Image();
+        await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = item.dataUrl; });
+        images.push({ item, img });
+      }
+      const count = images.length;
+      const cols = count === 1 ? 1 : count <= 4 ? 2 : count <= 9 ? 3 : 4;
+      const cellW = 700, gap = 16, headerH = 92, labelH = 34;
+      const cellHs = images.map(x => Math.round(cellW * x.img.height / x.img.width) + labelH);
+      const rows = Math.ceil(count / cols);
+      const rowHeights = Array.from({length: rows}, (_, r) => Math.max(...cellHs.slice(r*cols, Math.min((r+1)*cols, count))));
+      const canvas = document.createElement('canvas');
+      canvas.width = cols * cellW + (cols + 1) * gap;
+      canvas.height = headerH + rowHeights.reduce((a,b)=>a+b,0) + (rows + 1) * gap;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#0f172a'; ctx.font = '800 34px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(group.partyName, canvas.width/2, headerH/2);
+
+      let y = headerH + gap, idx = 0;
+      for (let r = 0; r < rows; r++) {
+        const rh = rowHeights[r];
+        for (let c = 0; c < cols && idx < count; c++, idx++) {
+          const x = gap + c * (cellW + gap);
+          const item = images[idx].item, img = images[idx].img;
+          const imageAreaH = rh - labelH;
+          const scale = Math.min(cellW / img.width, imageAreaH / img.height);
+          const w = img.width * scale, h = img.height * scale;
+          const dx = x + (cellW-w)/2, dy = y + (imageAreaH-h)/2;
+          ctx.fillStyle = '#f8fafc'; ctx.fillRect(x, y, cellW, rh);
+          ctx.drawImage(img, dx, dy, w, h);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(x, y + rh - labelH, cellW, labelH);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '700 22px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('CHALLAN NO ' + String(item.challanNo || '—'), x + cellW/2, y + rh - labelH/2);
+        }
+        y += rh + gap;
+      }
+      out.push({ partyName: group.partyName, dataUrl: canvas.toDataURL('image/jpeg', 0.92), items: group.items.slice() });
+    } catch (e) {}
   }
+  return out;
+}
+
+function downloadPartyCollage(index) {
+  const item = state.partyCollages && state.partyCollages[index];
+  if (!item) return;
+  const a = document.createElement('a');
+  a.href = item.dataUrl;
+  a.download = 'party_collage_' + item.partyName.replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.jpg';
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 function renderBatchChallanPreview() {
@@ -1299,21 +2375,26 @@ function renderBatchChallanPreview() {
   const counter = document.getElementById('batchPreviewCounter');
   const prev = document.getElementById('batchPrevBtn');
   const next = document.getElementById('batchNextBtn');
+  const actions = document.querySelector('#batchPreviewWrap .batch-preview-actions');
+  const allActions = document.querySelector('#batchPreviewWrap .batch-preview-all-actions');
 
-  if (!list.length || !wrap || !img) {
-    if (wrap) wrap.style.display = 'none';
-    return;
-  }
-
+  if (!list.length || !wrap || !img) { if (wrap) wrap.style.display = 'none'; return; }
   if (state.batchPreviewIndex < 0) state.batchPreviewIndex = list.length - 1;
   if (state.batchPreviewIndex >= list.length) state.batchPreviewIndex = 0;
 
   const item = list[state.batchPreviewIndex];
   img.src = item.dataUrl;
-  if (title) title.textContent = (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') + ' — ' + item.challanNo;
+  const isCollage = item.kind === 'collage';
+  if (title) title.textContent = isCollage ? 'PARTY COLLAGE — ' + item.partyName : (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') + ' — ' + item.challanNo;
   if (counter) counter.textContent = (state.batchPreviewIndex + 1) + ' / ' + list.length;
   if (prev) prev.disabled = list.length <= 1;
   if (next) next.disabled = list.length <= 1;
+  if (actions) {
+    actions.innerHTML = isCollage
+      ? '<button class="btn green" onclick="downloadCurrentBatchChallan()">⬇ DOWNLOAD COLLAGE</button><button class="btn blue" onclick="createCurrentBatchPDF()">PDF</button><button class="btn" style="background:#25D366;color:#fff;" onclick="shareCurrentBatchChallan()">SHARE</button>'
+      : '<button class="btn green" onclick="downloadCurrentBatchChallan()">⬇ DOWNLOAD</button><button class="btn blue" onclick="createCurrentBatchPDF()">PDF</button><button class="btn blue" onclick="shareCurrentBatchPDF()">SHARE PDF</button><button class="btn" style="background:#25D366;color:#fff;" onclick="shareCurrentBatchChallan()">WHATSAPP / SHARE</button>';
+  }
+  if (allActions) allActions.style.display = isCollage ? 'none' : 'flex';
   wrap.style.display = 'block';
 }
 
@@ -1337,10 +2418,12 @@ function getCurrentBatchChallan() {
 
 function downloadCurrentBatchChallan() {
   const item = getCurrentBatchChallan();
-  if (!item) { alert('No generated challan preview available.'); return; }
+  if (!item) { alert('No generated preview available.'); return; }
   const a = document.createElement('a');
   a.href = item.dataUrl;
-  a.download = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+  a.download = item.kind === 'collage'
+    ? 'party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.jpg'
+    : (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
   document.body.appendChild(a); a.click(); a.remove();
 }
 
@@ -1356,7 +2439,7 @@ function createCurrentBatchPDF() {
     const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
     const w = img.width * scale, h = img.height * scale;
     doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    doc.save((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
+    doc.save(item.kind === 'collage' ? ('party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.pdf') : ((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf'));
   };
   img.src = item.dataUrl;
 }
@@ -1365,73 +2448,32 @@ function createAllBatchPDF() {
   const list = state.batchChallans || [];
   if (!list.length) { alert('No generated challans available.'); return; }
   const { jsPDF } = window.jspdf;
-  const first = new Image();
-  first.onload = function() {
+  Promise.all(list.map(item => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ item: item, img: img });
+    img.onerror = () => reject(new Error('Could not load a generated challan or collage image.'));
+    img.src = item.dataUrl;
+  }))).then(images => {
+    const first = images[0].img;
     const orientation = first.width >= first.height ? 'landscape' : 'portrait';
     const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
-    const addImage = (dataUrl, isFirst) => {
-      const img = new Image();
-      img.onload = function() {
-        if (!isFirst) doc.addPage('a4', orientation);
-        const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
-        const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
-        const w = img.width * scale, h = img.height * scale;
-        doc.addImage(dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-        addNext();
-      };
-      img.src = dataUrl;
-    };
-    let index = 0;
-    const addNext = () => {
-      if (index >= list.length) {
-        const prefix = list[0].type === 'jobwork' ? 'jobwork' : 'dispatch';
-        doc.save(prefix + '_challans_' + list.map(x => x.challanNo).join('_') + '.pdf');
-        return;
-      }
-      const item = list[index++];
-      addImage(item.dataUrl, index === 1);
-    };
-    addNext();
-  };
-  first.src = list[0].dataUrl;
-}
-
-async function shareCurrentBatchPDF() {
-  const item = getCurrentBatchChallan();
-  if (!item) { alert('No generated challan preview available.'); return; }
-  const { jsPDF } = window.jspdf;
-  const img = new Image();
-  img.onload = async function() {
-    const orientation = img.width >= img.height ? 'landscape' : 'portrait';
-    const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
-    const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
-    const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
-    const w = img.width * scale, h = img.height * scale;
-    doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf';
-
-    try {
-      const blob = doc.output('blob');
-      const file = new File([blob], filename, { type:'application/pdf' });
-      if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
-        await navigator.share({
-          title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
-          text: 'Challan No: ' + item.challanNo,
-          files:[file]
-        });
-        return;
-      }
-    } catch (err) {
-      if (err && err.name === 'AbortError') return;
-    }
-
-    doc.save(filename);
-  };
-  img.src = item.dataUrl;
+    images.forEach(({ item, img }, index) => {
+      const pageOrientation = img.width >= img.height ? 'landscape' : 'portrait';
+      if (index > 0) doc.addPage('a4', pageOrientation);
+      if (index === 0 && pageOrientation !== orientation) doc.setPage(1);
+      const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+      const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      const format = item.dataUrl.indexOf('data:image/png') === 0 ? 'PNG' : 'JPEG';
+      doc.addImage(item.dataUrl, format, (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+    });
+    const prefix = list.find(x => x.kind !== 'collage')?.type === 'jobwork' ? 'jobwork' : 'dispatch';
+    doc.save(prefix + '_challans_and_collages.pdf');
+  }).catch(err => alert(err.message || 'Could not create the PDF.'));
 }
 
 function downloadAllBatchChallans() {
-  const list = state.batchChallans || [];
+  const list = (state.batchChallans || []).filter(x => x.kind !== 'collage');
   if (!list.length) { alert('No generated challans available.'); return; }
   list.forEach((item, i) => {
     setTimeout(() => {
@@ -1446,7 +2488,9 @@ function downloadAllBatchChallans() {
 async function shareCurrentBatchChallan() {
   const item = getCurrentBatchChallan();
   if (!item) { alert('No generated challan preview available.'); return; }
-  const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+  const filename = item.kind === 'collage'
+    ? 'party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.jpg'
+    : (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
 
   try {
     const response = await fetch(item.dataUrl);
@@ -1454,8 +2498,8 @@ async function shareCurrentBatchChallan() {
     const file = new File([blob], filename, { type:'image/jpeg' });
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
       await navigator.share({
-        title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
-        text: 'Challan No: ' + item.challanNo,
+        title: item.kind === 'collage' ? ('Party Collage — ' + item.partyName) : ((item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo),
+        text: item.kind === 'collage' ? ('Party: ' + item.partyName) : ('Challan No: ' + item.challanNo),
         files:[file]
       });
       return;
@@ -1518,6 +2562,15 @@ function resetGeneratedChallanUI() {
   if (gi) gi.removeAttribute('src');
 }
 
+function openDrivePhotoByRow(rowIndex) {
+  const row = state.data.rows[rowIndex];
+  if (!row) { alert('Selected challan row is no longer available.'); return; }
+  const link = getRowDriveLink(row);
+  if (!link) { alert('No Drive photo link found for this row.'); return; }
+  // Navigate directly so local/in-app browsers cannot block a popup/new tab.
+  window.location.href = link;
+}
+
 function loadChallanPhoto(rowIndex, challanNo, type) {
   const row = state.data.rows[rowIndex];
   if (!row) { alert('Selected challan row is no longer available.'); return; }
@@ -1557,7 +2610,7 @@ function loadChallanPhoto(rowIndex, challanNo, type) {
   function tryNext() {
     if (attempt >= candidates.length) {
       photoWrap.innerHTML = '<div class="challan-photo-error">Could not load the Drive image directly for canvas use.<br><br>' +
-        '<button class="btn blue" onclick="window.open(\'' + escapeAttr(link) + '\',\'_blank\',\'noopener\')">OPEN DRIVE IMAGE</button>' +
+        '<button class="btn blue" onclick="showPreview(\'' + escapeAttr(link) + '\',\'Photo Preview\')">OPEN DRIVE IMAGE</button>' +
         '<div class="challan-canvas-note">The Drive photo itself is available, but the browser may block canvas access.</div></div>';
       return;
     }
@@ -1591,9 +2644,8 @@ function closeChallanStep2() {
   resetGeneratedChallanUI();
 }
 
-document.getElementById('challanStep2').addEventListener('click', function(e) {
-  if (e.target === this) closeChallanStep2();
-});
+const legacyStep2 = document.getElementById('challanStep2');
+if (legacyStep2) legacyStep2.addEventListener('click', function(e) { if (e.target === this) closeChallanStep2(); });
 
 function canvasRoundRect(ctx, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -1824,9 +2876,55 @@ function drawPhotoLabel(ctx, x, y, w, h, title, value, accent) {
   ctx.restore();
 }
 
+function createNoPhotoChallanImage(row, challanNo, type, fields, dsNo) {
+  const safeRow = row || { values: [] };
+  const W = 1400;
+  const headerH = 150;
+  const noPhotoH = 500;
+  const challanH = 190;
+  const gap = 16, side = 28;
+  const cols = fields.length <= 5 ? 3 : (fields.length <= 8 ? 3 : 4);
+  const cardW = Math.floor((W - side * 2 - gap * (cols - 1)) / cols);
+  const cardH = fields.length <= 5 ? 158 : 144;
+  const rowsCount = Math.max(1, Math.ceil(fields.length / cols));
+  const panelPad = 26;
+  const cardsH = panelPad + rowsCount * cardH + Math.max(0, rowsCount - 1) * gap + 34;
+  const H = headerH + noPhotoH + challanH + cardsH;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  drawChallanHeader(ctx, W, 0, headerH, type);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, headerH, W, noPhotoH);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 54px Arial';
+  ctx.fillText('NO PHOTO FOUND', W / 2, headerH + noPhotoH / 2 - 38);
+  ctx.fillStyle = '#d9a52a';
+  ctx.font = '800 34px Arial';
+  ctx.fillText('FOR THIS CHALLAN', W / 2, headerH + noPhotoH / 2 + 25);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '600 24px Arial';
+  ctx.fillText('Challan No: ' + String(challanNo || '—'), W / 2, headerH + noPhotoH / 2 + 76);
+  ctx.fillStyle = '#d9a52a';
+  ctx.fillRect(0, headerH + noPhotoH, W, 8);
+  drawLargeChallanNo(ctx, W, headerH + noPhotoH + 18, challanH - 30, challanNo);
+  const cardsTop = headerH + noPhotoH + challanH;
+  ctx.fillStyle = '#fbf4df'; ctx.fillRect(0, cardsTop, W, cardsH);
+  (fields || []).forEach((field, i) => {
+    const col = i % cols, rr = Math.floor(i / cols);
+    const x = side + col * (cardW + gap), y = cardsTop + panelPad + rr * (cardH + gap);
+    drawFieldCard(ctx, x, y, cardW, cardH, getChallanFieldLabel(field, type), getChallanPrintFieldValue(safeRow, field), type);
+  });
+  ctx.fillStyle = '#0b2344'; ctx.fillRect(0, H - 18, W, 18);
+  ctx.strokeStyle = '#d9a52a'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(0, H - 24); ctx.lineTo(W, H - 24); ctx.stroke();
+  return canvas.toDataURL('image/jpeg', 0.94);
+}
+
 function createFinalChallanImage(showUI = true) {
   const item = state.currentChallanPhoto;
-  if (!item || !item.image) { alert('Please load the Drive photo first.'); return; }
+  if (!item || !item.image) { if (showUI) alert('Please load the Drive photo first.'); return; }
 
   const row = item.row;
   const type = item.type;
@@ -1909,7 +3007,7 @@ function createFinalChallanImage(showUI = true) {
   try {
     dataUrl = canvas.toDataURL('image/jpeg', 0.94);
   } catch (err) {
-    alert('The Drive image is visible, but the browser is blocking canvas access to it. We need the Drive image proxy step before the final image can be downloaded.');
+    if (showUI) alert('The Drive image is visible, but the browser is blocking canvas access to it. We need the Drive image proxy step before the final image can be downloaded.');
     return;
   }
 
@@ -1945,7 +3043,7 @@ function createGeneratedChallanPDF() {
     const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
     const w = img.width * scale, h = img.height * scale;
     doc.addImage(item.generatedDataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    doc.save((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
+    doc.save(item.kind === 'collage' ? ('party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.pdf') : ((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf'));
   };
   img.src = item.generatedDataUrl;
 }
@@ -1986,79 +3084,237 @@ async function shareGeneratedChallan() {
   window.open('https://wa.me/?text=' + message, '_blank', 'noopener');
 }
 
-/* ========= FETCH (offline-aware) ========= */
-async function fetchData() {
-  const url = getDataUrl();
-  if (!url) { renderAll(); return; }
-  setStatus('all', 'Loading…');
-  setStatus('nochallan', 'Loading…');
-  hideOfflineBanner();
-  try {
-    const res = await fetch(url);
-    const text = await res.text();
-    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
-      throw new Error('Not JSON');
-    }
-    const json = JSON.parse(text);
-    if (Array.isArray(json)) {
-      state.data.headers = json[0] || [];
-      state.data.rows = json.slice(1).map(r => ({
-        values: r, links: [], bgs: [], fgs: [], bolds: []
-      }));
-    } else {
-      state.data.headers = json.headers || [];
-      state.data.rows = (json.rows || []).map(r => ({
-        values: r.values || r,
-        links:  r.links  || [],
-        bgs:    r.bgs    || [],
-        fgs:    r.fgs    || [],
-        bolds:  r.bolds  || []
-      }));
-    }
-    try {
-      localStorage.setItem('offlineData', JSON.stringify({
-        headers: state.data.headers,
-        rows:    state.data.rows,
-        savedAt: Date.now()
-      }));
-      updateCacheInfo();
-    } catch (e) { console.log('Offline save failed:', e); }
+/* ========= FETCH / LOCAL-FIRST INCREMENTAL SYNC ========= */
+let syncTimer = null;
+const AUTO_SYNC_INTERVAL_MS = 30000;
+let syncInProgress = false;
 
-    const when = new Date().toLocaleString();
-    setStatus('all',       'Loaded ' + state.data.rows.length + ' rows — ' + when);
-    setStatus('nochallan', 'Loaded ' + state.data.rows.length + ' rows — ' + when);
+function normalizeRowPayload(r) {
+  return {
+    values: r && r.values ? r.values : (Array.isArray(r) ? r : []),
+    links:  r && r.links  ? r.links  : [],
+    bgs:    r && r.bgs    ? r.bgs    : [],
+    fgs:    r && r.fgs    ? r.fgs    : [],
+    bolds:  r && r.bolds  ? r.bolds  : [],
+    sheetRow: r && Number(r.sheetRow) > 1 ? Number(r.sheetRow) : undefined
+  };
+}
+
+function saveOfflineData(version) {
+  try {
+    localStorage.setItem('offlineData', JSON.stringify({
+      headers: state.data.headers,
+      rows: state.data.rows,
+      version: version || state.syncVersion || '',
+      formatVersion: 2,
+      savedAt: Date.now()
+    }));
+    updateCacheInfo();
+  } catch (e) {
+    console.log('Offline save failed:', e);
+  }
+}
+
+function loadCachedData(showStatus = true) {
+  const cached = localStorage.getItem('offlineData');
+  if (!cached) return false;
+  try {
+    const c = JSON.parse(cached);
+    if (!Array.isArray(c.headers) || !Array.isArray(c.rows)) return false;
+
+    // Old cache versions do not contain sheetRow. Keep them usable, but
+    // force the first online sync to do a safe FULL fetch.
+    const hasRowKeys = c.rows.length === 0 || c.rows.every(r => Number(r && r.sheetRow) > 1);
+    state.data.headers = c.headers || [];
+    state.data.rows = c.rows.map(normalizeRowPayload);
+    state.syncVersion = hasRowKeys ? (c.version || '') : '';
+    state.cacheNeedsFull = !hasRowKeys;
+
     detectColumns();
     buildOrderGroups();
     buildAutocomplete();
     renderAll();
     renderPrintFieldSettings();
-  } catch (e) {
-    const cached = localStorage.getItem('offlineData');
-    if (cached) {
-      try {
-        const c = JSON.parse(cached);
-        state.data.headers = c.headers || [];
-        state.data.rows    = c.rows    || [];
-        detectColumns();
-        buildOrderGroups();
-        buildAutocomplete();
-        renderAll();
-        renderPrintFieldSettings();
-        const when = new Date(c.savedAt).toLocaleString();
-        setStatus('all',       '⚠️ OFFLINE — data from ' + when);
-        setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
-        showOfflineBanner('⚠️ OFFLINE — showing data from ' + when);
-      } catch (err) {
-        setStatus('all',       'Error: ' + e.message);
-        setStatus('nochallan', 'Error: ' + e.message);
-      }
-    } else {
-      setStatus('all',       'Error: ' + e.message + ' (no offline copy)');
-      setStatus('nochallan', 'Error: ' + e.message);
+
+    if (showStatus) {
+      const when = c.savedAt ? new Date(c.savedAt).toLocaleString() : 'unknown time';
+      setStatus('all', '✓ Cached ' + state.data.rows.length + ' rows — ' + when);
+      setStatus('nochallan', '✓ Cached ' + state.data.rows.length + ' rows — ' + when);
     }
+    return true;
+  } catch (e) {
+    console.warn('Cached data unreadable:', e);
+    return false;
   }
 }
+
+function applyFullPayload(json) {
+  if (Array.isArray(json)) {
+    state.data.headers = json[0] || [];
+    state.data.rows = json.slice(1).map((r, i) => normalizeRowPayload({ values:r, sheetRow:i+2 }));
+    state.syncVersion = '';
+  } else {
+    state.data.headers = json.headers || [];
+    state.data.rows = (json.rows || []).map((r, i) => {
+      const row = normalizeRowPayload(r);
+      if (!(Number(row.sheetRow) > 1)) row.sheetRow = i + 2;
+      return row;
+    });
+    state.syncVersion = json.version || '';
+  }
+  state.cacheNeedsFull = false;
+}
+
+function applyDeltaPayload(json) {
+  if (json.headersChanged && Array.isArray(json.headers)) {
+    state.data.headers = json.headers;
+  }
+
+  const bySheetRow = new Map();
+  state.data.rows.forEach(r => {
+    const n = Number(r && r.sheetRow);
+    if (n > 1) bySheetRow.set(n, r);
+  });
+
+  (json.changedRows || []).forEach(item => {
+    const n = Number(item && item.sheetRow);
+    if (n > 1 && item.row) {
+      const row = normalizeRowPayload(item.row);
+      row.sheetRow = n;
+      bySheetRow.set(n, row);
+    }
+  });
+
+  (json.deletedRows || []).forEach(n0 => {
+    const n = Number(n0);
+    if (n > 1) bySheetRow.delete(n);
+  });
+
+  // Sheet row numbers are the stable sync keys. Rebuild the client array in
+  // exact sheet order after applying changes/deletions.
+  state.data.rows = Array.from(bySheetRow.keys()).sort((a,b) => a-b).map(n => bySheetRow.get(n));
+  state.syncVersion = json.version || state.syncVersion || '';
+  state.cacheNeedsFull = false;
+}
+
+async function syncIncremental() {
+  if (syncInProgress || !navigator.onLine) return;
+  syncInProgress = true;
+  hideOfflineBanner();
+
+  try {
+    const url = getDataUrl();
+    if (!url) return;
+
+    // If there is no compatible cache/version, the first sync is a safe FULL fetch.
+    const cached = localStorage.getItem('offlineData');
+    let cacheObj = null;
+    try { cacheObj = cached ? JSON.parse(cached) : null; } catch (e) {}
+    const hasCompatibleCache = cacheObj && cacheObj.formatVersion === 2 &&
+      Array.isArray(cacheObj.headers) && Array.isArray(cacheObj.rows) &&
+      (cacheObj.rows.length === 0 || cacheObj.rows.every(r => Number(r && r.sheetRow) > 1)) &&
+      (cacheObj.rows.length === 0 || cacheObj.rows.every(r =>
+        r && Array.isArray(r.values) && Array.isArray(r.bgs) &&
+        Array.isArray(r.fgs) && Array.isArray(r.bolds) && Array.isArray(r.links)
+      )) && !!cacheObj.version;
+
+    let requestUrl;
+    if (hasCompatibleCache) {
+      requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') +
+        'mode=delta&since=' + encodeURIComponent(cacheObj.version);
+    } else {
+      requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'mode=full';
+    }
+
+    const res = await fetch(requestUrl, { cache: 'no-store' });
+    const text = await res.text();
+    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) throw new Error('Not JSON');
+    const json = JSON.parse(text);
+
+    if (json.syncMode === 'delta' && hasCompatibleCache) {
+      applyDeltaPayload(json);
+    } else {
+      applyFullPayload(json);
+    }
+
+    saveOfflineData(state.syncVersion);
+    detectColumns();
+    buildOrderGroups();
+    buildAutocomplete();
+    renderAll();
+    renderPrintFieldSettings();
+
+    const when = new Date().toLocaleString();
+    const changed = json.syncMode === 'delta'
+      ? ((json.changedRows || []).length + (json.deletedRows || []).length)
+      : state.data.rows.length;
+    const msg = json.syncMode === 'delta'
+      ? (changed ? '✓ Synced ' + changed + ' changed row(s) — ' + when : '✓ Up to date — ' + when)
+      : '✓ Loaded ' + state.data.rows.length + ' rows — ' + when;
+    setStatus('all', msg);
+    setStatus('nochallan', msg);
+  } catch (e) {
+    // Cached data remains on screen. Do not replace it with an error page.
+    if (state.data.rows.length) {
+      const cached = localStorage.getItem('offlineData');
+      let when = '';
+      try { when = new Date(JSON.parse(cached).savedAt).toLocaleString(); } catch (x) {}
+      setStatus('all', '⚠️ Sync failed — showing cached data' + (when ? ' from ' + when : ''));
+      setStatus('nochallan', '⚠️ Sync failed — showing cached data');
+      showOfflineBanner('⚠️ Could not sync now — showing last saved data');
+    } else {
+      setStatus('all', 'Error: ' + e.message);
+      setStatus('nochallan', 'Error: ' + e.message);
+    }
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+async function fetchData(forceFull = false) {
+  // Refresh buttons use a direct full fetch. Normal/background calls use delta.
+  if (!forceFull) return syncIncremental();
+  if (syncInProgress) return;
+
+  const url = getDataUrl();
+  if (!url) { renderAll(); return; }
+  syncInProgress = true;
+  setStatus('all', 'Refreshing…');
+  setStatus('nochallan', 'Refreshing…');
+  hideOfflineBanner();
+
+  try {
+    const requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'mode=full';
+    const res = await fetch(requestUrl, { cache: 'no-store' });
+    const text = await res.text();
+    if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) throw new Error('Not JSON');
+    const json = JSON.parse(text);
+    applyFullPayload(json);
+    saveOfflineData(state.syncVersion);
+
+    detectColumns();
+    buildOrderGroups();
+    buildAutocomplete();
+    renderAll();
+    renderPrintFieldSettings();
+
+    const when = new Date().toLocaleString();
+    setStatus('all', '✓ Refreshed ' + state.data.rows.length + ' rows — ' + when);
+    setStatus('nochallan', '✓ Refreshed ' + state.data.rows.length + ' rows — ' + when);
+  } catch (e) {
+    if (!loadCachedData(false)) {
+      setStatus('all', 'Error: ' + e.message + ' (no offline copy)');
+      setStatus('nochallan', 'Error: ' + e.message);
+    } else {
+      showOfflineBanner('⚠️ Refresh failed — showing last saved data');
+    }
+  } finally {
+    syncInProgress = false;
+  }
+}
+
 function setStatus(tab, txt) {
+
   const el = document.getElementById('status-' + tab);
   if (el) el.textContent = txt;
 }
@@ -2235,6 +3491,20 @@ function attachAutocomplete(input) {
 
 document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
 
+/* Keep every existing filter control responsive without changing filter logic. */
+function wireFilterInputs() {
+  const ids = ['f-party','f-order','f-challan','f-design','f-material','f-job',
+               'f2-party','f2-order','f2-challan','f2-design','f2-material','f2-job'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.filterWired === '1') return;
+    el.dataset.filterWired = '1';
+    el.addEventListener('input', () => renderAll());
+    el.addEventListener('change', () => renderAll());
+  });
+}
+wireFilterInputs();
+
 /* ========= FILTER ========= */
 function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
 function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
@@ -2257,12 +3527,14 @@ function getFiltered(tab) {
   const ci = state.cols;
   let rows = state.data.rows;
 
-  /* ===== NO CHALLAN ===== */
-  if (tab === 'nochallan' && ci.challan >= 0) {
-    rows = rows.filter(r =>
-      !r.values[ci.challan] ||
-      r.values[ci.challan].toString().trim() === ''
-    );
+  /* ===== REPORT TYPE ===== */
+  if (tab === 'nochallan') {
+    const reportType = document.getElementById('reportType').value;
+    if (reportType !== 'no-challan') return [];
+    if (ci.challan < 0) return [];
+    // This report is for pending sub-orders only; main order header rows are
+    // not challan-pending entries on their own.
+    rows = rows.filter(r => r._subOrder && norm(r.values[ci.challan]) === '');
   }
 
   /* ===== ORDER FILTER ===== */
@@ -2390,14 +3662,32 @@ function renderTab(tab) {
     return;
   }
 
+  if (tab === 'nochallan' && document.getElementById('reportType').value !== 'no-challan') {
+    const reportName = document.getElementById('reportType').selectedOptions[0].text;
+    wrap.innerHTML = '<div class="empty">Filtering rules for “' + escapeHtml(reportName) + '” have not been defined yet.</div>';
+    return;
+  }
+
   const rows = getFiltered(tab);
   const challanIdx = state.cols.challan;
   const orderIdx = state.cols.order;
 
+  // Order No is the only permanent freeze. Any other frozen columns live only
+  // in memory and disappear when the app is closed/reloaded.
+  if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set();
+  state.frozenColumns[tab].add(orderIdx);
+  const frozenSet = state.frozenColumns[tab];
+
   let html = '<table><thead><tr>';
 
-  state.data.headers.forEach(h => {
-    html += '<th>' + escapeHtml(h || '') + '</th>';
+  state.data.headers.forEach((h, i) => {
+    const isFrozen = frozenSet.has(i);
+    const cls = i === orderIdx ? 'sticky-order' : '';
+    html += '<th' + (isFrozen ? ' data-sticky-col="' + i + '"' : '') +
+            (cls ? ' class="' + cls + '"' : '') +
+            ' ondblclick="toggleColumnFreeze(\'' + tab + '\',' + i + ')"' +
+            ' title="Double-tap to ' + (isFrozen ? 'unfreeze' : 'freeze') + ' this column">' +
+            escapeHtml(h || '') + '</th>';
   });
 
   html += '</tr></thead><tbody>';
@@ -2414,8 +3704,11 @@ function renderTab(tab) {
         (i === challanIdx &&
         (!val || val.toString().trim() === ''));
 
-      const cls =
-        isBlankChallan ? ' class="challan-col"' : '';
+      const isFrozen = frozenSet.has(i);
+      const stickyClass = i === orderIdx ? 'sticky-order' : '';
+      const classNames = [stickyClass, isBlankChallan ? 'challan-col' : ''].filter(Boolean);
+      const cls = classNames.length ? ' class="' + classNames.join(' ') + '"' : '';
+      const stickyAttr = isFrozen ? ' data-sticky-col="' + i + '"' : '';
 
       const rawLink =
         r.links && r.links[i] ? r.links[i] : null;
@@ -2454,6 +3747,10 @@ function renderTab(tab) {
 
 let displayVal = val.toString();
 
+if (tab === 'nochallan' && i === orderIdx && r._subOrder) {
+  displayVal = r._mainOrder + '/' + r._subOrder;
+}
+
 /* Only CHALLAN filter changes order display to Main/Sub */
 const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
 
@@ -2482,10 +3779,10 @@ if (challanFilter.length && i === orderIdx) {
       if (link) {
 
         cellContent =
-          '<a href="' + escapeAttr(link) + '" ' +
+          '<a href="' + escapeAttr(link) + '" target="_blank" rel="noopener noreferrer" ' +
           'data-link="' + escapeAttr(link) + '" ' +
-          'data-text="' + escapeAttr(displayVal) + '" ' +
-          'onclick="return handleLinkClick(event, this)"' +
+          'onclick="return handleLinkClick(event,this)" ' +
+          'data-text="' + escapeAttr(displayVal) + '"' +
           (fg ? ' style="color:' + fg + ';"' : '') +
           '>' +
           escapeHtml(displayVal) +
@@ -2498,7 +3795,7 @@ if (challanFilter.length && i === orderIdx) {
       }
 
       html +=
-        '<td' + cls + styleAttr + '>' +
+        '<td' + cls + stickyAttr + styleAttr + '>' +
         cellContent +
         '</td>';
     });
@@ -2509,8 +3806,66 @@ if (challanFilter.length && i === orderIdx) {
   html += '</tbody></table>';
 
   wrap.innerHTML = html;
+  bindDoubleTapHeaders(wrap);
+  requestAnimationFrame(() => syncStickyColumns(wrap));
 }
 
+function syncStickyColumns(wrap) {
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  if (!table) return;
+  const cells = Array.from(table.querySelectorAll('thead th[data-sticky-col]'));
+  let left = 0;
+  // Freeze columns in their natural table order. This keeps the frozen area
+  // gap-free and works for any column selected by double-tap.
+  cells.sort((a, b) => Number(a.dataset.stickyCol) - Number(b.dataset.stickyCol));
+  cells.forEach(th => {
+    const idx = th.dataset.stickyCol;
+    const width = Math.ceil(th.getBoundingClientRect().width);
+    table.querySelectorAll('[data-sticky-col="' + idx + '"]').forEach(cell => {
+      cell.style.left = left + 'px';
+    });
+    left += width;
+  });
+}
+
+function syncAllStickyColumns() {
+  ['wrap-all','wrap-nochallan'].forEach(id => syncStickyColumns(document.getElementById(id)));
+}
+
+function toggleColumnFreeze(tab, index) {
+  const orderIdx = state.cols.order;
+  if (index === orderIdx) return; // Order No is permanently frozen.
+  if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set([orderIdx]);
+  const set = state.frozenColumns[tab];
+  if (set.has(index)) set.delete(index);
+  else set.add(index);
+  renderTab(tab);
+  requestAnimationFrame(syncAllStickyColumns);
+}
+
+function bindDoubleTapHeaders(wrap) {
+  if (!wrap) return;
+  // ondblclick handles desktop double-click. This small touch handler gives
+  // iPhone/Android a true double-tap without changing normal horizontal scroll.
+  wrap.querySelectorAll('thead th').forEach(th => {
+    let lastTap = 0;
+    th.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 320) {
+        e.preventDefault();
+        const index = Number(th.dataset.stickyCol || th.cellIndex);
+        toggleColumnFreeze(wrap.id.replace('wrap-', ''), index);
+        lastTap = 0;
+      } else {
+        lastTap = now;
+      }
+    }, { passive: false });
+  });
+}
+
+window.addEventListener('resize', syncAllStickyColumns);
+window.addEventListener('orientationchange', () => setTimeout(syncAllStickyColumns, 150));
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -2522,10 +3877,20 @@ function escapeAttr(s) {
 
 /* ========= LINK PREVIEW ========= */
 function handleLinkClick(e, el) {
-  e.preventDefault();
-  showPreview(el.getAttribute('data-link'), el.getAttribute('data-text'));
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const url = el && el.getAttribute('data-link');
+  if (url) showPreview(url, el.getAttribute('data-text') || 'Photo Preview');
   return false;
 }
+document.addEventListener('click', function(e) {
+  const link = e.target && e.target.closest ? e.target.closest('a') : null;
+  if (!link) return;
+  const url = link.getAttribute('data-link') || link.getAttribute('href');
+  if (!url || !/drive\.google\.com\/(?:file\/d\/|open\?|uc\?)/i.test(url)) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  showPreview(url, link.getAttribute('data-text') || link.textContent.trim() || 'Photo Preview');
+}, true);
 function showPreview(url, title) {
   state.previewUrl = url;
   document.getElementById('previewTitle').textContent = title || 'Preview';
@@ -2536,9 +3901,9 @@ function showPreview(url, title) {
   if (m) fileId = m[1];
   if (!fileId) { m = url.match(/[?&]id=([^&]+)/); if (m) fileId = m[1]; }
   if (fileId) {
-    content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" ' +
-                        'width="500" height="500" allow="autoplay" ' +
-                        'style="border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
+    content.innerHTML = '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w2400" alt="Photo preview" ' +
+                        'style="display:block;width:auto;max-width:min(88vw,760px);height:auto;max-height:76vh;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;background:#fff;" ' +
+                        'onerror="this.outerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
   } else {
     content.innerHTML = '<img src="' + url + '" alt="preview" ' +
                         'onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
@@ -2578,7 +3943,18 @@ function downloadPDF(tab) {
   doc.text('Generated: ' + new Date().toLocaleString(), 20, 34);
   doc.text('Total Rows: ' + rows.length, pageW - 20, 34, { align: 'right' });
 
-  const body = rows.map(r => r.values.map(v => v == null ? '' : v.toString()));
+  const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
+  const challanFilter = document.getElementById(challanInputId) ? parseMulti(document.getElementById(challanInputId).value) : [];
+  const orderPdfIdx = state.cols.order;
+  const body = rows.map(r => r.values.map((v, i) => {
+    if (i === orderPdfIdx && challanFilter.length) {
+      const main = r._mainOrder || '';
+      const sub = r._subOrder || '';
+      if (main && sub) return main + '/' + sub;
+      if (main) return main;
+    }
+    return v == null ? '' : v.toString();
+  }));
   const colCount = state.data.headers.length;
   let fontSize = 8;
   if (colCount > 8)  fontSize = 7;
@@ -2651,15 +4027,102 @@ function hexToRgb(hex) {
 }
 
 /* ========= UPLOAD TAB ========= */
+const UPLOAD_INDEX_MAX_AGE = 30 * 60 * 1000;
+
+function uploadFolderLabel(folder) {
+  return folder === 'design' ? 'Design Number' : 'Order Form';
+}
+function normalizeUploadFileName(name) {
+  return String(name || '').trim().toLowerCase();
+}
+function getUploadFolderFiles(folder) {
+  return Array.isArray(state.uploadFileIndex[folder]) ? state.uploadFileIndex[folder] : [];
+}
+function saveUploadFolderFiles(folder, files) {
+  const clean = Array.from(new Set((files || []).map(String).map(s => s.trim()).filter(Boolean)))
+    .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+  state.uploadFileIndex[folder] = clean;
+  state.uploadFileIndexLoadedAt[folder] = Date.now();
+  try {
+    localStorage.setItem('bansiDriveFileIndex.' + folder + '.v1', JSON.stringify({loadedAt: Date.now(), files: clean}));
+  } catch (e) {}
+  return clean;
+}
+function populateUploadExistingFiles(folder) {
+  const el = document.getElementById('uploadExistingFile');
+  const files = getUploadFolderFiles(folder);
+  if (!folder) {
+    el.innerHTML = '<option value="">Select folder first…</option>';
+    return;
+  }
+  let html = '<option value="">Existing files (' + files.length + ') — choose to view</option>';
+  files.forEach(name => {
+    html += '<option value="' + escapeHtml(name).replace(/"/g,'&quot;') + '">' + escapeHtml(name) + '</option>';
+  });
+  el.innerHTML = html;
+}
+function setUploadFileIndexStatus(folder, text) {
+  const el = document.getElementById('uploadFileIndexStatus');
+  if (el) el.textContent = text || (folder ? ('Existing files: ' + getUploadFolderFiles(folder).length) : 'Drive list not loaded');
+}
+async function loadUploadFileIndex(folder, force = false) {
+  if (!folder) return [];
+  const age = Date.now() - Number(state.uploadFileIndexLoadedAt[folder] || 0);
+  if (!force && getUploadFolderFiles(folder).length && age < UPLOAD_INDEX_MAX_AGE) {
+    populateUploadExistingFiles(folder);
+    setUploadFileIndexStatus(folder, 'Cached • ' + getUploadFolderFiles(folder).length + ' files');
+    return getUploadFolderFiles(folder);
+  }
+  const uploadUrl = getUploadUrl();
+  if (!uploadUrl) throw new Error('No upload URL configured.');
+  setUploadFileIndexStatus(folder, 'Loading Drive list…');
+  const sep = uploadUrl.indexOf('?') >= 0 ? '&' : '?';
+  const res = await fetch(uploadUrl + sep + 'action=listFiles&folder=' + encodeURIComponent(folder), {cache:'no-store'});
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); } catch (e) { throw new Error('Drive list returned invalid JSON.'); }
+  if (!json.ok) throw new Error(json.error || 'Could not load Drive filenames.');
+  const driveFiles = Array.isArray(json.names)
+    ? json.names
+    : (Array.isArray(json.files) ? json.files.map(function(item) {
+        return (item && typeof item === 'object') ? item.name : item;
+      }) : []);
+  const files = saveUploadFolderFiles(folder, driveFiles);
+  populateUploadExistingFiles(folder);
+  setUploadFileIndexStatus(folder, 'Live • ' + files.length + ' files • ' + new Date().toLocaleTimeString());
+  return files;
+}
+async function onUploadFolderChange() {
+  const folder = document.getElementById('uploadFolder').value;
+  populateUploadExistingFiles(folder);
+  if (!folder) { setUploadFileIndexStatus('', 'Drive list not loaded'); return; }
+  try { await loadUploadFileIndex(folder, false); }
+  catch (e) { setUploadFileIndexStatus(folder, '⚠ ' + e.message); }
+}
+async function refreshUploadFileIndex() {
+  const folder = document.getElementById('uploadFolder').value;
+  if (!folder) { setUploadFileIndexStatus('', 'Select a folder first'); return; }
+  try { await loadUploadFileIndex(folder, true); }
+  catch (e) { setUploadFileIndexStatus(folder, '⚠ ' + e.message); }
+}
+function onExistingUploadFileChange() {
+  const name = document.getElementById('uploadExistingFile').value;
+  if (!name) return;
+  const folder = document.getElementById('uploadFolder').value;
+  const status = document.getElementById('uploadStatus');
+  if (status) {
+    status.textContent = 'Already in Drive: ' + name;
+    status.style.color = '#64748b';
+  }
+  // Intentionally do NOT put the existing filename into Rename.
+  document.getElementById('uploadRename').value = '';
+}
 function onUploadFileChange(ev) {
   const f = ev.target.files && ev.target.files[0];
+  const renameEl = document.getElementById('uploadRename');
+  renameEl.value = '';
   if (!f) { state.uploadFile = null; state.uploadDataUrl = null; updateUploadPreview(); return; }
   state.uploadFile = f;
-
-  const orig = f.name.replace(/\.[^.]+$/, '');
-  const renameEl = document.getElementById('uploadRename');
-  if (!renameEl.value) renameEl.value = orig;
-
   const reader = new FileReader();
   reader.onload = e => {
     state.uploadDataUrl = e.target.result;
@@ -2667,131 +4130,142 @@ function onUploadFileChange(ev) {
   };
   reader.readAsDataURL(f);
 }
-
 function updateUploadPreview() {
   const box = document.getElementById('uploadPreview');
   const name = document.getElementById('uploadFileName');
   if (!state.uploadDataUrl) {
-    box.style.display = 'none';
-    box.innerHTML = '';
-    name.textContent = '';
-    return;
+    box.style.display = 'none'; box.innerHTML = ''; name.textContent = ''; return;
   }
-  box.innerHTML = '<img src="' + state.uploadDataUrl + '" style="max-width:100%;max-height:200px;border-radius:4px;">';
+  box.innerHTML = '<img src="' + state.uploadDataUrl + '" style="max-width:100%;max-height:200px;border-radius:4px;object-fit:contain;">';
   box.style.display = 'block';
   name.textContent = state.uploadFile ? state.uploadFile.name : '';
 }
-
-function doUpload() {
+function compressUploadImage(file, maxDimension = 2200, maxBytes = 1800000) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) return resolve({blob:file, name:file.name, mime:file.type || 'application/octet-stream'});
+    if (file.size <= maxBytes) return resolve({blob:file, name:file.name, mime:file.type || 'image/jpeg'});
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read image.'));
+    reader.onload = () => {
+      img.onload = () => {
+        let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        const scale = Math.min(1, maxDimension / Math.max(w,h));
+        w = Math.max(1, Math.round(w * scale)); h = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d', {alpha:false});
+        ctx.drawImage(img, 0, 0, w, h);
+        let quality = 0.84;
+        const finish = () => canvas.toBlob(blob => {
+          if (!blob) return reject(new Error('Image compression failed.'));
+          if (blob.size > maxBytes && quality > 0.48) { quality -= 0.08; finish(); return; }
+          const base = file.name.replace(/\.[^.]+$/, '') || 'upload';
+          resolve({blob, name:base + '.jpg', mime:'image/jpeg', compressed:true});
+        }, 'image/jpeg', quality);
+        finish();
+      };
+      img.onerror = () => reject(new Error('Invalid image.'));
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function blobToDataUrl(blob) {
+  return new Promise((resolve,reject) => {
+    const r = new FileReader(); r.onerror=()=>reject(new Error('Could not prepare image.')); r.onload=()=>resolve(r.result); r.readAsDataURL(blob);
+  });
+}
+function uploadNameExists(folder, finalName) {
+  const target = normalizeUploadFileName(finalName);
+  return getUploadFolderFiles(folder).some(n => normalizeUploadFileName(n) === target);
+}
+function rememberRecentUpload(item) {
+  state.recentUploads = [item].concat(state.recentUploads.filter(x => normalizeUploadFileName(x.name) !== normalizeUploadFileName(item.name))).slice(0,10);
+  try { localStorage.setItem('bansiRecentUploads.v1', JSON.stringify(state.recentUploads)); } catch (e) {}
+  renderRecentUploads();
+}
+async function doUpload() {
   const folder = document.getElementById('uploadFolder').value;
   const nameInput = document.getElementById('uploadRename').value.trim();
   const status = document.getElementById('uploadStatus');
   const btn = document.getElementById('uploadBtn');
-
-  if (!folder) { status.textContent = 'Please select folder.'; status.style.color = '#dc2626'; return; }
-  if (!state.uploadDataUrl) { status.textContent = 'Please choose a photo.'; status.style.color = '#dc2626'; return; }
-  if (!nameInput) { status.textContent = 'Please enter a new name.'; status.style.color = '#dc2626'; return; }
-
-  const extMatch = state.uploadFile.name.match(/\.[^.]+$/);
-  const ext = extMatch ? extMatch[0].toLowerCase() : '.jpg';
-  const finalName = nameInput + ext;
-  const mimeType = state.uploadFile.type || 'image/jpeg';
-  const uploadUrl = getUploadUrl();
-  if (!uploadUrl) { status.textContent = 'No upload URL configured.'; status.style.color = '#dc2626'; return; }
-
-  status.textContent = 'Uploading…';
-  status.style.color = '#2563eb';
-  btn.disabled = true;
-
-  const form = new URLSearchParams();
-  form.append('folder', folder);
-  form.append('name', finalName);
-  form.append('mimeType', mimeType);
-  form.append('file', state.uploadDataUrl);
-
-  fetch(uploadUrl, {
-    method: 'POST',
-    body: form,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
-  })
-  .then(r => r.text())
-  .then(txt => {
-    let json = null;
-    try { json = JSON.parse(txt); } catch (e) {}
-    if (json && json.ok) {
-      status.textContent = '✓ Uploaded: ' + (json.fileName || finalName);
-      status.style.color = '#16a34a';
-      state.recentUploads.unshift({
-        name: json.fileName || finalName,
-        folder: folder === 'design' ? 'Design Number' : 'Order Form',
-        when: new Date().toLocaleString(),
-        url: json.url || ''
-      });
-      state.recentUploads = state.recentUploads.slice(0, 10);
-      renderRecentUploads();
-      document.getElementById('uploadRename').value = '';
-      document.getElementById('uploadFileInput').value = '';
-      state.uploadFile = null;
-      state.uploadDataUrl = null;
-      updateUploadPreview();
-    } else {
-      status.textContent = '✗ Error: ' + (json && json.error ? json.error : 'unknown');
-      status.style.color = '#dc2626';
-    }
-  })
-  .catch(err => {
-    status.textContent = '✗ Network error: ' + err.message;
-    status.style.color = '#dc2626';
-  })
-  .finally(() => {
-    btn.disabled = false;
-  });
+  if (!folder) { status.textContent='Please select folder.'; status.style.color='#dc2626'; return; }
+  if (!state.uploadFile) { status.textContent='Please choose a photo.'; status.style.color='#dc2626'; return; }
+  if (!nameInput) { status.textContent='Please enter a new name.'; status.style.color='#dc2626'; return; }
+  let prepared;
+  try { prepared = await compressUploadImage(state.uploadFile); }
+  catch (e) { status.textContent='✗ ' + e.message; status.style.color='#dc2626'; return; }
+  const ext = prepared.compressed ? '.jpg' : ((prepared.name.match(/\.[^.]+$/)||['.jpg'])[0].toLowerCase());
+  const finalName = nameInput.replace(/\.[^.]+$/,'') + ext;
+  try { await loadUploadFileIndex(folder, false); } catch (e) {}
+  if (uploadNameExists(folder, finalName)) {
+    status.textContent='✗ Duplicate: ' + finalName + ' already exists in Drive.';
+    status.style.color='#dc2626'; return;
+  }
+  const uploadUrl=getUploadUrl();
+  if (!uploadUrl) { status.textContent='No upload URL configured.'; status.style.color='#dc2626'; return; }
+  status.textContent = prepared.compressed ? 'Compressing & uploading…' : 'Uploading…';
+  status.style.color='#2563eb'; btn.disabled=true;
+  try {
+    const dataUrl = await blobToDataUrl(prepared.blob);
+    const form = new URLSearchParams();
+    form.append('action','upload'); form.append('folder',folder); form.append('name',finalName);
+    form.append('mimeType',prepared.mime); form.append('file',dataUrl);
+    const res=await fetch(uploadUrl,{method:'POST',body:form,headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}});
+    const txt=await res.text(); let json=null; try{json=JSON.parse(txt);}catch(e){}
+    if (!json || !json.ok) throw new Error(json && json.error ? json.error : 'Upload failed.');
+    const savedName=json.fileName || finalName;
+    saveUploadFolderFiles(folder, getUploadFolderFiles(folder).concat(savedName));
+    populateUploadExistingFiles(folder);
+    setUploadFileIndexStatus(folder, 'Updated • ' + getUploadFolderFiles(folder).length + ' files');
+    rememberRecentUpload({name:savedName, when:new Date().toISOString(), url:json.url||'', folder:uploadFolderLabel(folder)});
+    status.textContent='✓ Uploaded: ' + savedName;
+    status.style.color='#16a34a';
+    document.getElementById('uploadRename').value='';
+    document.getElementById('uploadFileInput').value='';
+    document.getElementById('uploadExistingFile').value='';
+    state.uploadFile=null; state.uploadDataUrl=null; updateUploadPreview();
+  } catch(e) {
+    status.textContent='✗ ' + e.message; status.style.color='#dc2626';
+  } finally { btn.disabled=false; }
 }
 function renderRecentUploads() {
-  const box = document.getElementById('recentUploads');
-  if (!state.recentUploads.length) { box.innerHTML = '<div class="empty" style="padding:12px;">No uploads yet.</div>'; return; }
-  let html = '<div style="font-size:10px;">';
-  state.recentUploads.forEach(u => {
-    html += '<div style="padding:5px;border-bottom:1px solid #e5e7eb;">' +
-            '<b>' + escapeHtml(u.name) + '</b> → ' + escapeHtml(u.folder) +
-            '<br><span style="color:#64748b;">' + escapeHtml(u.when) + '</span></div>';
+  const box=document.getElementById('recentUploads');
+  if(!state.recentUploads.length){box.innerHTML='<div class="empty" style="padding:12px;">No uploads yet.</div>';return;}
+  let html='<div style="font-size:10px;">';
+  state.recentUploads.slice(0,10).forEach(u=>{
+    let date=u.when||''; try{date=new Date(u.when).toLocaleDateString(undefined,{day:'2-digit',month:'2-digit',year:'numeric'});}catch(e){}
+    html+='<div style="padding:6px;border-bottom:1px solid #e5e7eb;"><b>'+escapeHtml(u.name)+'</b><br><span style="color:#64748b;">'+escapeHtml(date)+'</span></div>';
   });
-  html += '</div>';
-  box.innerHTML = html;
+  html+='</div>'; box.innerHTML=html;
 }
 
 /* ========= INIT ========= */
+initializeTheme();
 loadSettings();
 loadChallanPrintSettings();
 renderRecentUploads();
 
 window.addEventListener('DOMContentLoaded', () => {
-  const cached = localStorage.getItem('offlineData');
-  if (cached && !navigator.onLine) {
-    try {
-      const c = JSON.parse(cached);
-      if (c.headers && c.rows && c.rows.length) {
-        state.data.headers = c.headers;
-        state.data.rows    = c.rows;
-        detectColumns();
-        buildOrderGroups();
-        buildAutocomplete();
-        renderAll();
-        renderPrintFieldSettings();
-        const when = new Date(c.savedAt).toLocaleString();
-        setStatus('all',       '⚠️ OFFLINE — data from ' + when);
-        setStatus('nochallan', '⚠️ OFFLINE — data from ' + when);
-        showOfflineBanner('⚠️ OFFLINE — showing data from ' + when);
-      }
-    } catch (e) {}
-  } else {
-    fetchData();
-  }
+  initializeAuthConfig().then(() => {
+    document.getElementById('loginSubmit').disabled = false;
+    setLoginMessage('');
+    if (localStorage.getItem(SESSION_STORAGE_KEY) === '1') enterApp(false);
+  }).catch(error => {
+    setLoginMessage(error.message || 'Could not initialize local sign-in.');
+  });
 });
 
-window.addEventListener('online', () => { hideOfflineBanner(); fetchData(); });
+window.addEventListener('online', () => {
+  if (localStorage.getItem(SESSION_STORAGE_KEY) !== '1') return;
+  hideOfflineBanner();
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncIncremental(), 500);
+});
 window.addEventListener('offline', () => {
-  showOfflineBanner('⚠️ OFFLINE — showing cached data');
+  if (localStorage.getItem(SESSION_STORAGE_KEY) === '1' && state.data.rows.length) {
+    showOfflineBanner('⚠️ OFFLINE — showing cached data');
+  }
 });
 </script>
 </body>
