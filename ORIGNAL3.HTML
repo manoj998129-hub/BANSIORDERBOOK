@@ -1207,12 +1207,12 @@
   <div class="filters-box">
     <div class="section-kicker">Filter orders</div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f-party"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
-      <div class="ac-wrap"><input id="f-material" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f-job"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('all')">CLEAR</button>
@@ -1247,12 +1247,12 @@
       </select>
     </div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f2-party"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f2-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f2-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f2-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
-      <div class="ac-wrap"><input id="f2-material" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f2-job"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f2-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f2-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f2-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f2-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f2-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f2-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
@@ -2136,7 +2136,7 @@ function renderChallanStep1(groupedRows, selectedChallans, type, fields) {
       const link = getRowDriveLink(row);
       if (link) {
         const rowIndex = state.data.rows.indexOf(row);
-        html += '<td class="challan-link-ok">✓ LINK FOUND</td>';
+        html += '<td class="challan-link-ok"><a href="' + escapeAttr(link) + '" target="_blank" rel="noopener noreferrer" style="font-size:9px;font-weight:700;">OPEN PHOTO</a></td>';
       } else {
         html += '<td class="challan-link-missing">✗ NO LINK FOUND</td>';
       }
@@ -2601,6 +2601,15 @@ function resetGeneratedChallanUI() {
   if (b) b.style.display = 'none';
   const gi = document.getElementById('challanGeneratedImage');
   if (gi) gi.removeAttribute('src');
+}
+
+function openDrivePhotoByRow(rowIndex) {
+  const row = state.data.rows[rowIndex];
+  if (!row) { alert('Selected challan row is no longer available.'); return; }
+  const link = getRowDriveLink(row);
+  if (!link) { alert('No Drive photo link found for this row.'); return; }
+  // Navigate directly so local/in-app browsers cannot block a popup/new tab.
+  window.location.href = link;
 }
 
 function loadChallanPhoto(rowIndex, challanNo, type) {
@@ -3523,6 +3532,20 @@ function attachAutocomplete(input) {
 
 document.querySelectorAll('.ac-wrap input').forEach(attachAutocomplete);
 
+/* Keep every existing filter control responsive without changing filter logic. */
+function wireFilterInputs() {
+  const ids = ['f-party','f-order','f-challan','f-design','f-material','f-job',
+               'f2-party','f2-order','f2-challan','f2-design','f2-material','f2-job'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.filterWired === '1') return;
+    el.dataset.filterWired = '1';
+    el.addEventListener('input', () => renderAll());
+    el.addEventListener('change', () => renderAll());
+  });
+}
+wireFilterInputs();
+
 /* ========= FILTER ========= */
 function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
 function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
@@ -3797,10 +3820,9 @@ if (challanFilter.length && i === orderIdx) {
       if (link) {
 
         cellContent =
-          '<a href="' + escapeAttr(link) + '" ' +
+          '<a href="' + escapeAttr(link) + '" target="_blank" rel="noopener noreferrer" ' +
           'data-link="' + escapeAttr(link) + '" ' +
-          'data-text="' + escapeAttr(displayVal) + '" ' +
-          'onclick="return handleLinkClick(event, this)"' +
+          'data-text="' + escapeAttr(displayVal) + '"' +
           (fg ? ' style="color:' + fg + ';"' : '') +
           '>' +
           escapeHtml(displayVal) +
@@ -3895,8 +3917,8 @@ function escapeAttr(s) {
 
 /* ========= LINK PREVIEW ========= */
 function handleLinkClick(e, el) {
-  e.preventDefault();
-  showPreview(el.getAttribute('data-link'), el.getAttribute('data-text'));
+  const url = el && el.getAttribute('data-link');
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
   return false;
 }
 function showPreview(url, title) {
