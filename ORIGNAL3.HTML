@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BANSI FAB | Order Book</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -32,15 +32,15 @@
   }
   #tabs .tab {
     flex: 1;
-    padding: 6px 4px;
+    padding: 11px 4px;
     text-align: center;
     color: #cbd5e1;
     background: #334155;
     border-right: 1px solid #1e293b;
     cursor: pointer;
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
     user-select: none;
   }
   #tabs .tab.active { background: #0ea5e9; color: #fff; }
@@ -63,10 +63,8 @@
   .ac-wrap { position: relative; }
   .ac-wrap input {
     width: 100%;
-    padding: 5px 7px;
-    font-size: 10px;
-    line-height: 18px;
-    height: 28px;
+    padding: 7px 9px;
+    font-size: 11px;
     border: 1px solid #cbd5e1;
     background: #f8fafc;
     border-radius: 4px;
@@ -125,7 +123,6 @@
     color: #334155;
     margin-left: auto;
   }
-  .compact-refresh { padding: 5px 9px; font-size: 10px; }
 
   .table-wrap {
     overflow: auto;
@@ -159,50 +156,6 @@
     border-right: 2px solid #000;
   }
   thead tr th:first-child { background: #0f172a; z-index: 6; }
-
-  /* Sticky columns are controlled at runtime. Order No is the only permanent
-     sticky column. Other columns can be frozen/unfrozen by double-tapping their header. */
-  #wrap-all, #wrap-nochallan {
-    --sticky-order-width: 0px;
-  }
-  #wrap-all th[data-sticky-col], #wrap-all td[data-sticky-col],
-  #wrap-nochallan th[data-sticky-col], #wrap-nochallan td[data-sticky-col] {
-    position: sticky;
-    z-index: 7;
-    background: var(--surface, #fff);
-  }
-  #wrap-all thead th[data-sticky-col],
-  #wrap-nochallan thead th[data-sticky-col] {
-    z-index: 9;
-    background: #0f172a;
-    color: #fff;
-    cursor: pointer;
-  }
-  #wrap-all tbody tr:nth-child(even) td[data-sticky-col],
-  #wrap-nochallan tbody tr:nth-child(even) td[data-sticky-col] {
-    background: var(--surface-alt, #f8fafc);
-  }
-  #wrap-all td[data-sticky-col], #wrap-nochallan td[data-sticky-col] {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  /* Order No is deliberately compact. */
-  #wrap-all th.sticky-order, #wrap-all td.sticky-order,
-  #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
-    width: 1%;
-    min-width: 54px;
-    max-width: 78px;
-    white-space: nowrap;
-  }
-  #wrap-all th.sticky-party, #wrap-all td.sticky-party,
-  #wrap-nochallan th.sticky-party, #wrap-nochallan td.sticky-party {
-    /* kept as a class for compatibility; no longer permanently frozen */
-  }
-  th[data-sticky-col]::after {
-    content: ' •';
-    opacity: .55;
-    font-size: 8px;
-  }
   tr.blank-challan td.challan-col { background: #fecaca !important; }
   td a { text-decoration: underline; font-weight: 700; cursor: pointer; }
 
@@ -221,10 +174,9 @@
   #preview .box {
     background: #fff;
     border-radius: 8px;
-    padding: 8px;
-    width: min(94vw, 1000px);
-    max-width: 94vw;
-    max-height: 88vh;
+    padding: 10px;
+    max-width: 95%;
+    max-height: 80vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -233,10 +185,8 @@
   }
   #preview .box img,
   #preview .box iframe {
-    width: auto;
     max-width: 100%;
-    max-height: 72vh;
-    min-height: 42vh;
+    max-height: 65vh;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background: #fff;
@@ -838,46 +788,7 @@
   .security-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 11px; }
   .security-message { min-height: 16px; margin-top: 7px; color: var(--danger); font-size: 11px; }
   @media (max-width: 650px) {
-    /* iPhone Safari zooms the page when small form controls receive focus.
-       Keep controls compact visually but use a 16px text size to prevent that. */
-    .ac-wrap input, .filters input, select, textarea {
-      font-size: 13px !important;
-      line-height: 16px;
-      height: 28px;
-      min-height: 28px;
-      padding: 2px 6px;
-      -webkit-text-size-adjust: 100%;
-    }
-    .filters-box { padding: 5px; margin-bottom: 5px; }
-    .section-kicker { font-size: 9px !important; margin-bottom: 3px !important; }
-    #challanType, #reportType { height: 28px !important; min-height: 28px !important; padding: 2px 6px !important; font-size: 13px !important; line-height: 16px !important; }
-    .toolbar { gap: 4px; margin-top: 6px; }
-    .toolbar .btn { padding: 5px 8px; font-size: 10px; min-height: 30px; }
-    .toolbar .status { margin-left: 0; flex: 1 1 150px; font-size: 9px; padding: 4px 6px; }
-    #wrap-all th, #wrap-all td, #wrap-nochallan th, #wrap-nochallan td {
-      min-width: 58px;
-      max-width: 135px;
-      font-size: 9px;
-      line-height: 1.15;
-      padding: 3px 4px;
-    }
-    #wrap-all th.sticky-order, #wrap-all td.sticky-order,
-    #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
-      min-width: 54px;
-      max-width: 78px;
-      width: 1%;
-      white-space: nowrap;
-    }
-    .batch-preview-actions .btn, .batch-preview-nav .btn,
-    .batch-preview-all-actions .btn, .challan-generated-actions .btn,
-    .challan-step-actions .btn, .challan-step2-actions .btn {
-      min-height: 38px;
-      height: 38px;
-      padding: 5px 6px;
-      font-size: 9px;
-    }
-  }
-    #tabs .tab { min-width: 0; padding: 5px 3px; font-size: 9px; line-height: 12px; }
+    #tabs .tab { min-width: 0; padding: 8px 3px; font-size: 9px; }
     .settings-grid { grid-template-columns: minmax(0, 1fr); }
     .settings-card-wide { grid-column: auto; }
     .settings-card { padding: 8px; }
@@ -1115,12 +1026,12 @@
   <div class="filters-box">
     <div class="section-kicker">Filter orders</div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f-party"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
-      <div class="ac-wrap"><input id="f-material" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f-job"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('all')">CLEAR</button>
@@ -1130,7 +1041,7 @@
         <option value="dispatch">DISPATCH CHALLAN</option>
       </select>
       <button class="btn green" onclick="generateChallan()">▣ GENERATE</button>
-      <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
+      <button class="btn green" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-all">No data loaded</span>
     </div>
   </div>
@@ -1155,17 +1066,17 @@
       </select>
     </div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f2-party"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f2-order"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f2-challan"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f2-design"   placeholder="DS No (comma for multi)" data-col="design"></div>
-      <div class="ac-wrap"><input id="f2-material" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f2-job"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f2-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f2-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f2-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f2-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f2-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
+      <div class="ac-wrap"><input id="f2-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
       <button class="btn blue" onclick="downloadPDF('nochallan')">PDF</button>
-      <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
+      <button class="btn green" onclick="fetchData(true)">↻ REFRESH</button>
       <span class="status" id="status-nochallan">No data loaded</span>
     </div>
   </div>
@@ -1430,9 +1341,7 @@ const state = {
     dispatch: []
   },
   batchChallans: [],
-  batchPreviewIndex: 0,
-  // Only Order No is restored as frozen after a fresh app load.
-  frozenColumns: { all: new Set(), nochallan: new Set() }
+  batchPreviewIndex: 0
 };
 
 /* ========= THEMES + CLIENT-SIDE LOGIN ========= */
@@ -3470,22 +3379,10 @@ function renderTab(tab) {
   const challanIdx = state.cols.challan;
   const orderIdx = state.cols.order;
 
-  // Order No is the only permanent freeze. Any other frozen columns live only
-  // in memory and disappear when the app is closed/reloaded.
-  if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set();
-  state.frozenColumns[tab].add(orderIdx);
-  const frozenSet = state.frozenColumns[tab];
-
   let html = '<table><thead><tr>';
 
-  state.data.headers.forEach((h, i) => {
-    const isFrozen = frozenSet.has(i);
-    const cls = i === orderIdx ? 'sticky-order' : '';
-    html += '<th' + (isFrozen ? ' data-sticky-col="' + i + '"' : '') +
-            (cls ? ' class="' + cls + '"' : '') +
-            ' ondblclick="toggleColumnFreeze(\'' + tab + '\',' + i + ')"' +
-            ' title="Double-tap to ' + (isFrozen ? 'unfreeze' : 'freeze') + ' this column">' +
-            escapeHtml(h || '') + '</th>';
+  state.data.headers.forEach(h => {
+    html += '<th>' + escapeHtml(h || '') + '</th>';
   });
 
   html += '</tr></thead><tbody>';
@@ -3502,11 +3399,8 @@ function renderTab(tab) {
         (i === challanIdx &&
         (!val || val.toString().trim() === ''));
 
-      const isFrozen = frozenSet.has(i);
-      const stickyClass = i === orderIdx ? 'sticky-order' : '';
-      const classNames = [stickyClass, isBlankChallan ? 'challan-col' : ''].filter(Boolean);
-      const cls = classNames.length ? ' class="' + classNames.join(' ') + '"' : '';
-      const stickyAttr = isFrozen ? ' data-sticky-col="' + i + '"' : '';
+      const cls =
+        isBlankChallan ? ' class="challan-col"' : '';
 
       const rawLink =
         r.links && r.links[i] ? r.links[i] : null;
@@ -3580,7 +3474,7 @@ if (challanFilter.length && i === orderIdx) {
           '<a href="' + escapeAttr(link) + '" ' +
           'data-link="' + escapeAttr(link) + '" ' +
           'data-text="' + escapeAttr(displayVal) + '" ' +
-          'onclick="return handleLinkClick(event, this)"' +
+          'target="_blank" rel="noopener noreferrer"' +
           (fg ? ' style="color:' + fg + ';"' : '') +
           '>' +
           escapeHtml(displayVal) +
@@ -3593,7 +3487,7 @@ if (challanFilter.length && i === orderIdx) {
       }
 
       html +=
-        '<td' + cls + stickyAttr + styleAttr + '>' +
+        '<td' + cls + styleAttr + '>' +
         cellContent +
         '</td>';
     });
@@ -3604,66 +3498,8 @@ if (challanFilter.length && i === orderIdx) {
   html += '</tbody></table>';
 
   wrap.innerHTML = html;
-  bindDoubleTapHeaders(wrap);
-  requestAnimationFrame(() => syncStickyColumns(wrap));
 }
 
-function syncStickyColumns(wrap) {
-  if (!wrap) return;
-  const table = wrap.querySelector('table');
-  if (!table) return;
-  const cells = Array.from(table.querySelectorAll('thead th[data-sticky-col]'));
-  let left = 0;
-  // Freeze columns in their natural table order. This keeps the frozen area
-  // gap-free and works for any column selected by double-tap.
-  cells.sort((a, b) => Number(a.dataset.stickyCol) - Number(b.dataset.stickyCol));
-  cells.forEach(th => {
-    const idx = th.dataset.stickyCol;
-    const width = Math.ceil(th.getBoundingClientRect().width);
-    table.querySelectorAll('[data-sticky-col="' + idx + '"]').forEach(cell => {
-      cell.style.left = left + 'px';
-    });
-    left += width;
-  });
-}
-
-function syncAllStickyColumns() {
-  ['wrap-all','wrap-nochallan'].forEach(id => syncStickyColumns(document.getElementById(id)));
-}
-
-function toggleColumnFreeze(tab, index) {
-  const orderIdx = state.cols.order;
-  if (index === orderIdx) return; // Order No is permanently frozen.
-  if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set([orderIdx]);
-  const set = state.frozenColumns[tab];
-  if (set.has(index)) set.delete(index);
-  else set.add(index);
-  renderTab(tab);
-  requestAnimationFrame(syncAllStickyColumns);
-}
-
-function bindDoubleTapHeaders(wrap) {
-  if (!wrap) return;
-  // ondblclick handles desktop double-click. This small touch handler gives
-  // iPhone/Android a true double-tap without changing normal horizontal scroll.
-  wrap.querySelectorAll('thead th').forEach(th => {
-    let lastTap = 0;
-    th.addEventListener('touchend', function(e) {
-      const now = Date.now();
-      if (now - lastTap < 320) {
-        e.preventDefault();
-        const index = Number(th.dataset.stickyCol || th.cellIndex);
-        toggleColumnFreeze(wrap.id.replace('wrap-', ''), index);
-        lastTap = 0;
-      } else {
-        lastTap = now;
-      }
-    }, { passive: false });
-  });
-}
-
-window.addEventListener('resize', syncAllStickyColumns);
-window.addEventListener('orientationchange', () => setTimeout(syncAllStickyColumns, 150));
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -3690,8 +3526,8 @@ function showPreview(url, title) {
   if (!fileId) { m = url.match(/[?&]id=([^&]+)/); if (m) fileId = m[1]; }
   if (fileId) {
     content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" ' +
-                        'allow="autoplay" ' +
-                        'style="width:min(88vw,900px);height:min(72vh,760px);border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
+                        'width="500" height="500" allow="autoplay" ' +
+                        'style="border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
   } else {
     content.innerHTML = '<img src="' + url + '" alt="preview" ' +
                         'onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
