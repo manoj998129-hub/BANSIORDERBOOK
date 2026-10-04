@@ -621,32 +621,6 @@
     .challan-step-title { font-size:13px; }
   }
 
-  /* ========= GENERATE SECTION — COMPACT SINGLE-WINDOW UI ========= */
-  #challanStep1 .challan-step-box { max-width: 760px; max-height: 92vh; padding: 10px; }
-  #challanStep1 .challan-step-title { font-size: 13px; margin-bottom: 3px; }
-  #challanStep1 .challan-step-subtitle { font-size: 9px; margin-bottom: 7px; }
-  #challanStep1 .challan-summary { gap: 5px; margin-bottom: 7px; }
-  #challanStep1 .challan-summary-card { padding: 5px 7px; font-size: 9px; }
-  #challanStep1 .batch-generate-box { margin-top: 6px; padding: 7px; }
-  #challanStep1 .batch-progress-title { font-size: 9px; margin-bottom: 4px; }
-  #challanStep1 .batch-progress-track { height: 13px; }
-  #challanStep1 .batch-progress-status { margin-top: 4px; font-size: 9px; min-height: 13px; }
-  #challanStep1 .batch-generated-info { margin-top: 5px; padding: 5px 7px; font-size: 9px; }
-  #challanStep1 .batch-generated-list { font-size: 8px; line-height: 1.35; }
-  #challanStep1 .batch-generate-btn { margin-top: 6px; padding: 7px 10px; font-size: 10px; }
-  #challanStep1 .batch-preview-wrap { margin-top: 7px; padding: 7px; }
-  #challanStep1 .batch-preview-head { margin-bottom: 5px; }
-  #challanStep1 .batch-preview-title { font-size: 10px; }
-  #challanStep1 .batch-preview-counter { font-size: 9px; }
-  #challanStep1 .batch-preview-image-box { padding: 5px; max-height: 44vh; min-height: 90px; }
-  #challanStep1 .batch-preview-image-box img { max-width: 72%; max-height: 42vh; object-fit: contain; }
-  #challanStep1 .batch-preview-nav, #challanStep1 .batch-preview-actions, #challanStep1 .batch-preview-all-actions { gap: 4px; margin-top: 5px; }
-  #challanStep1 .batch-preview-actions .btn, #challanStep1 .batch-preview-nav .btn, #challanStep1 .batch-preview-all-actions .btn { min-width: 0; padding: 6px 8px; font-size: 9px; line-height: 1.05; }
-  #challanStep1 .challan-step-actions { gap: 5px; margin-top: 6px; }
-  #challanStep1 .challan-step-actions .btn { min-width: 0; padding: 7px 10px; font-size: 10px; }
-  .party-collage-card { border:0; padding:0; margin:0; background:transparent; }
-  .party-collage-head { display:none; }
-
   .empty {
     padding: 24px;
     text-align: center;
@@ -994,7 +968,7 @@
   }
   #appShell, #tabs, .panel, .filters-box, .filters, .toolbar, .settings-grid,
   .table-wrap, .setting-box, .print-setting-box, .settings-card,
-  #challanStep1, #preview, .challan-step-box,
+  #challanStep1, #challanStep2, #preview, .challan-step-box, .challan-step2-box,
   .challan-summary, #challanStep1Results, .challan-result, .challan-result-body,
   .batch-generate-box, .batch-preview-wrap, .batch-preview-head,
   .batch-preview-image-box, .challan-photo-wrap, .challan-generated-wrap,
@@ -1059,7 +1033,7 @@
     margin-right: auto;
     overflow-x: hidden;
   }
-  #challanStep1 .challan-step-box > * {
+  #challanStep1 .challan-step-box > *, #challanStep2 .challan-step2-box > * {
     min-width: 0;
     max-width: 100%;
   }
@@ -1090,13 +1064,14 @@
     }
     .challan-type-select { min-width: 0; flex-basis: 130px; }
     #challanStep1 { padding: 12px; }
+    #challanStep2 { padding: 12px; }
     #challanStep1 .challan-step-box {
       width: calc(100vw - 24px);
       max-width: calc(100vw - 24px);
       max-height: calc(100dvh - 24px);
       padding: 10px;
     }
-    .unused-challan-step2-box {
+    #challanStep2 .challan-step2-box {
       width: calc(100vw - 24px);
       max-width: calc(100vw - 24px);
       max-height: calc(100dvh - 24px);
@@ -1412,8 +1387,8 @@
 <!-- ===== CHALLAN GENERATOR STEP 1 ===== -->
 <div id="challanStep1">
   <div class="challan-step-box">
-    <div class="challan-step-title" id="challanStep1Title">CHALLAN GENERATOR</div>
-    <div class="challan-step-subtitle">Review selected challans, generate them in party sequence, then view each party collage as the final item for that party.</div>
+    <div class="challan-step-title" id="challanStep1Title">Challan Generator — Step 1</div>
+    <div class="challan-step-subtitle">Verify the exact Sheet rows found for the selected Challan No before we connect the Drive image generator.</div>
     <div class="challan-summary" id="challanStep1Summary"></div>
     <div id="challanStep1Results"></div>
     <div class="batch-generate-box" id="batchGenerateBox">
@@ -1444,11 +1419,40 @@
           <button class="btn green" onclick="downloadAllBatchChallans()">⬇ DOWNLOAD ALL</button>
           <button class="btn blue" onclick="createAllBatchPDF()">PDF ALL</button>
         </div>
+        <div class="batch-party-collages" id="batchPartyCollages" style="display:none;">
+          <div class="batch-party-collages-title">PARTY-WISE COLLAGES</div>
+          <div id="batchPartyCollagesBody"></div>
+        </div>
       </div>
     </div>
     <div class="challan-step-actions">
       <button class="btn green batch-generate-btn" id="generateAllChallansBtn" onclick="generateAllChallans()">GENERATE ALL CHALLANS</button>
       <button class="btn blue" onclick="closeChallanStep1()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHALLAN GENERATOR STEP 2 ===== -->
+<div id="challanStep2">
+  <div class="challan-step2-box">
+    <div class="challan-step-title" id="challanStep2Title">CHALLAN GENERATOR — STEP 2</div>
+    <div class="challan-step-subtitle">Load the original DS photo from the existing Drive link. The original photo is not changed.</div>
+    <div class="challan-step2-info" id="challanStep2Info">Loading…</div>
+    <div class="challan-photo-wrap" id="challanPhotoWrap"><div style="font-size:11px;color:#64748b;">Loading Drive photo…</div></div>
+    <div id="challanGeneratedWrap" class="challan-generated-wrap" style="display:none;">
+      <div class="challan-generated-title">FINAL CHALLAN IMAGE</div>
+      <div class="challan-generated-image-box">
+        <img id="challanGeneratedImage" alt="Generated challan">
+      </div>
+      <div class="challan-generated-actions">
+        <button class="btn green" onclick="downloadGeneratedChallan()">⬇ DOWNLOAD IMAGE</button>
+        <button class="btn blue" onclick="createGeneratedChallanPDF()">PDF</button>
+        <button class="btn" style="background:#25D366;color:#fff;" onclick="shareGeneratedChallan()">WHATSAPP / SHARE</button>
+      </div>
+    </div>
+    <div class="challan-step2-actions">
+      <button class="btn green" id="createFinalChallanBtn" style="display:none;" onclick="createFinalChallanImage()">CREATE FINAL IMAGE</button>
+      <button class="btn blue" onclick="closeChallanStep2()">CLOSE</button>
     </div>
   </div>
 </div>
@@ -2170,6 +2174,10 @@ function resetBatchGenerateUI() {
   if (wrap) wrap.style.display = 'none';
   const img = document.getElementById('batchPreviewImage');
   if (img) img.removeAttribute('src');
+  const collageWrap = document.getElementById('batchPartyCollages');
+  const collageBody = document.getElementById('batchPartyCollagesBody');
+  if (collageWrap) collageWrap.style.display = 'none';
+  if (collageBody) collageBody.innerHTML = '';
   const btn = document.getElementById('generateAllChallansBtn');
   if (btn) { btn.disabled = false; btn.textContent = 'GENERATE ALL CHALLANS'; }
 }
@@ -2200,6 +2208,7 @@ async function generateAllChallans() {
   const btn = document.getElementById('generateAllChallansBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'GENERATING…'; }
 
+  // Keep the progress UI, but clear any previous generated preview.
   state.batchChallans = [];
   state.batchPreviewIndex = 0;
   const info = document.getElementById('batchGeneratedInfo');
@@ -2211,6 +2220,7 @@ async function generateAllChallans() {
   const type = state.generatedChallan.type;
   const grouped = {};
   selected.forEach(ch => grouped[norm(ch)] = []);
+
   (state.generatedChallan.rows || []).forEach(row => {
     const c = norm(row.values[state.cols.challan]);
     if (Object.prototype.hasOwnProperty.call(grouped, c)) grouped[c].push(row);
@@ -2223,81 +2233,95 @@ async function generateAllChallans() {
   for (let i = 0; i < selected.length; i++) {
     const challanNo = selected[i];
     const rows = grouped[norm(challanNo)] || [];
-    const row = rows[0] || null;
-    const dsIdx = state.cols.design;
-    const dsNo = row && dsIdx >= 0 ? getRowFieldValue(row, state.data.headers[dsIdx] || 'DS NO') : '';
-    const partyIdx = state.cols.party;
-    const partyName = row && partyIdx >= 0 && row.values[partyIdx] != null && String(row.values[partyIdx]).trim()
-      ? String(row.values[partyIdx]).trim() : 'PARTY NAME NOT AVAILABLE';
-
+    const row = rows.find(r => !!getRowDriveLink(r));
     setBatchProgress(Math.round((i / total) * 100), 'Working on challan ' + challanNo + ' (' + (i + 1) + ' of ' + total + ')…');
 
-    let dataUrl = '';
-    let noPhoto = false;
-    try {
-      const link = row ? getRowDriveLink(row) : '';
-      if (link) {
-        const loaded = await loadDriveImageForBatch(link);
-        state.currentChallanPhoto = {
-          row: row, rowIndex: state.data.rows.indexOf(row), challanNo: challanNo, type: type,
-          link: link, dsNo: dsNo, image: loaded.image, imageUrl: loaded.imageUrl
-        };
-        createFinalChallanImage(false);
-        dataUrl = state.currentChallanPhoto.generatedDataUrl || '';
-      }
-      if (!dataUrl) {
-        noPhoto = true;
-        dataUrl = createNoPhotoChallanImage(row, challanNo, type, state.generatedChallan.fields || state.challanPrint[type] || [], dsNo);
-      }
-    } catch (err) {
-      noPhoto = true;
-      dataUrl = createNoPhotoChallanImage(row, challanNo, type, state.generatedChallan.fields || state.challanPrint[type] || [], dsNo);
+    if (!row) {
+      skipped.push({ challanNo: challanNo, reason: rows.length ? 'DS / Drive link missing' : 'No matching row' });
+      setBatchProgress(Math.round(((i + 1) / total) * 100), 'Challan ' + challanNo + ' skipped — no Drive image link.');
+      continue;
     }
 
-    if (dataUrl) {
-      generated.push({ challanNo: challanNo, dsNo: dsNo, type: type, partyName: partyName, dataUrl: dataUrl, noPhoto: noPhoto });
-      setBatchProgress(Math.round(((i + 1) / total) * 100), (noPhoto ? '⚠ No photo — placeholder generated for challan ' : '✓ Challan ') + challanNo + ' (' + (i + 1) + ' of ' + total + ').');
-    } else {
-      skipped.push({ challanNo: challanNo, reason: 'Image generation failed' });
+    const link = getRowDriveLink(row);
+    const dsIdx = state.cols.design;
+    const dsNo = dsIdx >= 0 ? getRowFieldValue(row, state.data.headers[dsIdx] || 'DS NO') : '';
+
+    try {
+      const loaded = await loadDriveImageForBatch(link);
+      state.currentChallanPhoto = {
+        row: row,
+        rowIndex: state.data.rows.indexOf(row),
+        challanNo: challanNo,
+        type: type,
+        link: link,
+        dsNo: dsNo,
+        image: loaded.image,
+        imageUrl: loaded.imageUrl
+      };
+
+      // Create the image silently. Do not open the old Step 2 screen for each challan.
+      createFinalChallanImage(false);
+      const dataUrl = state.currentChallanPhoto.generatedDataUrl;
+      if (!dataUrl) throw new Error('Final image was not created');
+
+      const partyIdx = state.cols.party;
+      const partyName = partyIdx >= 0 && row.values[partyIdx] != null && String(row.values[partyIdx]).trim()
+        ? String(row.values[partyIdx]).trim()
+        : 'PARTY NAME NOT AVAILABLE';
+      generated.push({
+        challanNo: challanNo,
+        dsNo: dsNo,
+        type: type,
+        partyName: partyName,
+        dataUrl: dataUrl
+      });
+
+      state.batchChallans = generated.slice();
+      setBatchProgress(Math.round(((i + 1) / total) * 100), '✓ Challan ' + challanNo + ' generated (' + (i + 1) + ' of ' + total + ').');
+    } catch (err) {
+      skipped.push({ challanNo: challanNo, reason: err && err.message ? err.message : 'Generation failed' });
+      setBatchProgress(Math.round(((i + 1) / total) * 100), '⚠ Challan ' + challanNo + ' could not be generated. Continuing…');
     }
   }
 
-  // First appearance order by party. Each party is immediately followed by its final collage.
+  // Group individual previews by party in first-appearance order.
   const partyOrder = [];
-  const partyMap = new Map();
+  const partySeen = new Set();
   generated.forEach(item => {
     const key = item.partyName || 'PARTY NAME NOT AVAILABLE';
-    if (!partyMap.has(key)) { partyMap.set(key, []); partyOrder.push(key); }
-    partyMap.get(key).push(item);
+    if (!partySeen.has(key)) { partySeen.add(key); partyOrder.push(key); }
   });
-
-  const collages = await createPartyWiseCollages(generated);
-  const collageMap = new Map(collages.map(c => [c.partyName, c]));
-  const sequence = [];
-  partyOrder.forEach(party => {
-    (partyMap.get(party) || []).forEach(item => sequence.push(item));
-    const collage = collageMap.get(party);
-    if (collage) sequence.push({ kind: 'collage', partyName: party, type: type, dataUrl: collage.dataUrl, items: collage.items });
-  });
-
-  state.batchChallans = sequence;
-  state.partyCollages = collages;
+  generated.sort((a, b) => partyOrder.indexOf(a.partyName) - partyOrder.indexOf(b.partyName));
+  state.batchChallans = generated.slice();
+  state.partyCollages = await createPartyWiseCollages(generated);
 
   if (info) {
     let html = '✓ ' + generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED';
     if (skipped.length) {
-      html += '<div class="batch-generated-list">Not generated: ' + skipped.map(x => escapeHtml(String(x.challanNo)) + ' (' + escapeHtml(x.reason) + ')').join(', ') + '</div>';
+      html += '<div class="batch-generated-list">';
+      html += skipped.length + ' not generated: ';
+      html += skipped.map(x => escapeHtml(String(x.challanNo)) + ' (' + escapeHtml(x.reason) + ')').join(', ');
+      html += '</div>';
     }
-    if (generated.some(x => x.noPhoto)) {
-      html += '<div class="batch-generated-list">Black placeholder used for: ' + generated.filter(x => x.noPhoto).map(x => escapeHtml(String(x.challanNo))).join(', ') + '</div>';
+    if (generated.length) {
+      html += '<div class="batch-generated-list">Generated: ' + generated.map(x => escapeHtml(String(x.challanNo))).join(', ') + '</div>';
     }
     info.innerHTML = html;
     info.style.display = 'block';
   }
 
   setBatchProgress(100, 'Completed. ' + generated.length + ' of ' + total + ' challans generated.');
-  if (sequence.length) { state.batchPreviewIndex = 0; renderBatchChallanPreview(); }
-  if (btn) { btn.disabled = true; btn.textContent = generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED'; }
+
+  if (generated.length) {
+    state.batchPreviewIndex = 0;
+    renderBatchChallanPreview();
+    renderPartyWiseCollages();
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = generated.length + ' CHALLAN' + (generated.length === 1 ? '' : 'S') + ' GENERATED';
+  }
 }
 
 async function createPartyWiseCollages(items) {
@@ -2308,7 +2332,6 @@ async function createPartyWiseCollages(items) {
     if (!map.has(party)) { map.set(party, []); groups.push({ partyName: party, items: map.get(party) }); }
     map.get(party).push(item);
   });
-
   const out = [];
   for (const group of groups) {
     try {
@@ -2320,8 +2343,10 @@ async function createPartyWiseCollages(items) {
       }
       const count = images.length;
       const cols = count === 1 ? 1 : count <= 4 ? 2 : count <= 9 ? 3 : 4;
-      const cellW = 700, gap = 16, headerH = 92, labelH = 34;
-      const cellHs = images.map(x => Math.round(cellW * x.img.height / x.img.width) + labelH);
+      const cellW = 700;
+      const gap = 16;
+      const headerH = 80;
+      const cellHs = images.map(x => Math.round(cellW * x.img.height / x.img.width));
       const rows = Math.ceil(count / cols);
       const rowHeights = Array.from({length: rows}, (_, r) => Math.max(...cellHs.slice(r*cols, Math.min((r+1)*cols, count))));
       const canvas = document.createElement('canvas');
@@ -2329,26 +2354,18 @@ async function createPartyWiseCollages(items) {
       canvas.height = headerH + rowHeights.reduce((a,b)=>a+b,0) + (rows + 1) * gap;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = '#0f172a'; ctx.font = '800 34px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle = '#0f172a'; ctx.font = 'bold 34px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(group.partyName, canvas.width/2, headerH/2);
-
-      let y = headerH + gap, idx = 0;
+      let y = headerH + gap;
+      let idx = 0;
       for (let r = 0; r < rows; r++) {
         const rh = rowHeights[r];
         for (let c = 0; c < cols && idx < count; c++, idx++) {
           const x = gap + c * (cellW + gap);
-          const item = images[idx].item, img = images[idx].img;
-          const imageAreaH = rh - labelH;
-          const scale = Math.min(cellW / img.width, imageAreaH / img.height);
+          const img = images[idx].img;
+          const scale = Math.min(cellW / img.width, rh / img.height);
           const w = img.width * scale, h = img.height * scale;
-          const dx = x + (cellW-w)/2, dy = y + (imageAreaH-h)/2;
-          ctx.fillStyle = '#f8fafc'; ctx.fillRect(x, y, cellW, rh);
-          ctx.drawImage(img, dx, dy, w, h);
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(x, y + rh - labelH, cellW, labelH);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = '700 22px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText('CHALLAN NO ' + String(item.challanNo || '—'), x + cellW/2, y + rh - labelH/2);
+          ctx.drawImage(img, x + (cellW-w)/2, y + (rh-h)/2, w, h);
         }
         y += rh + gap;
       }
@@ -2356,6 +2373,20 @@ async function createPartyWiseCollages(items) {
     } catch (e) {}
   }
   return out;
+}
+
+function renderPartyWiseCollages() {
+  const wrap = document.getElementById('batchPartyCollages');
+  const body = document.getElementById('batchPartyCollagesBody');
+  const list = state.partyCollages || [];
+  if (!wrap || !body) return;
+  if (!list.length) { wrap.style.display='none'; body.innerHTML=''; return; }
+  body.innerHTML = list.map((c, i) =>
+    '<div class="party-collage-card"><div class="party-collage-head"><span>' + escapeHtml(c.partyName) + '</span><span>' + c.items.length + ' challan' + (c.items.length===1?'':'s') + '</span></div>' +
+    '<div class="party-collage-grid" style="grid-template-columns:repeat(' + (c.items.length===1?1:c.items.length<=4?2:c.items.length<=9?3:4) + ',minmax(0,1fr));"><img src="' + c.dataUrl + '" alt="Party collage"></div>' +
+    '<div class="batch-preview-actions"><button class="btn green" onclick="downloadPartyCollage(' + i + ')">⬇ DOWNLOAD COLLAGE</button></div></div>'
+  ).join('');
+  wrap.style.display='block';
 }
 
 function downloadPartyCollage(index) {
@@ -2375,26 +2406,21 @@ function renderBatchChallanPreview() {
   const counter = document.getElementById('batchPreviewCounter');
   const prev = document.getElementById('batchPrevBtn');
   const next = document.getElementById('batchNextBtn');
-  const actions = document.querySelector('#batchPreviewWrap .batch-preview-actions');
-  const allActions = document.querySelector('#batchPreviewWrap .batch-preview-all-actions');
 
-  if (!list.length || !wrap || !img) { if (wrap) wrap.style.display = 'none'; return; }
+  if (!list.length || !wrap || !img) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
   if (state.batchPreviewIndex < 0) state.batchPreviewIndex = list.length - 1;
   if (state.batchPreviewIndex >= list.length) state.batchPreviewIndex = 0;
 
   const item = list[state.batchPreviewIndex];
   img.src = item.dataUrl;
-  const isCollage = item.kind === 'collage';
-  if (title) title.textContent = isCollage ? 'PARTY COLLAGE — ' + item.partyName : (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') + ' — ' + item.challanNo;
+  if (title) title.textContent = (item.type === 'jobwork' ? 'JOBWORK CHALLAN' : 'DISPATCH CHALLAN') + ' — ' + item.challanNo;
   if (counter) counter.textContent = (state.batchPreviewIndex + 1) + ' / ' + list.length;
   if (prev) prev.disabled = list.length <= 1;
   if (next) next.disabled = list.length <= 1;
-  if (actions) {
-    actions.innerHTML = isCollage
-      ? '<button class="btn green" onclick="downloadCurrentBatchChallan()">⬇ DOWNLOAD COLLAGE</button><button class="btn blue" onclick="createCurrentBatchPDF()">PDF</button><button class="btn" style="background:#25D366;color:#fff;" onclick="shareCurrentBatchChallan()">SHARE</button>'
-      : '<button class="btn green" onclick="downloadCurrentBatchChallan()">⬇ DOWNLOAD</button><button class="btn blue" onclick="createCurrentBatchPDF()">PDF</button><button class="btn blue" onclick="shareCurrentBatchPDF()">SHARE PDF</button><button class="btn" style="background:#25D366;color:#fff;" onclick="shareCurrentBatchChallan()">WHATSAPP / SHARE</button>';
-  }
-  if (allActions) allActions.style.display = isCollage ? 'none' : 'flex';
   wrap.style.display = 'block';
 }
 
@@ -2418,12 +2444,10 @@ function getCurrentBatchChallan() {
 
 function downloadCurrentBatchChallan() {
   const item = getCurrentBatchChallan();
-  if (!item) { alert('No generated preview available.'); return; }
+  if (!item) { alert('No generated challan preview available.'); return; }
   const a = document.createElement('a');
   a.href = item.dataUrl;
-  a.download = item.kind === 'collage'
-    ? 'party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.jpg'
-    : (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+  a.download = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
   document.body.appendChild(a); a.click(); a.remove();
 }
 
@@ -2439,13 +2463,13 @@ function createCurrentBatchPDF() {
     const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
     const w = img.width * scale, h = img.height * scale;
     doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    doc.save(item.kind === 'collage' ? ('party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.pdf') : ((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf'));
+    doc.save((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
   };
   img.src = item.dataUrl;
 }
 
 function createAllBatchPDF() {
-  const list = (state.batchChallans || []).filter(x => x.kind !== 'collage');
+  const list = state.batchChallans || [];
   if (!list.length) { alert('No generated challans available.'); return; }
   const { jsPDF } = window.jspdf;
   const first = new Image();
@@ -2491,15 +2515,15 @@ async function shareCurrentBatchPDF() {
     const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
     const w = img.width * scale, h = img.height * scale;
     doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    const filename = item.kind === 'collage' ? ('party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.pdf') : ((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
+    const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf';
 
     try {
       const blob = doc.output('blob');
       const file = new File([blob], filename, { type:'application/pdf' });
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
         await navigator.share({
-          title: item.kind === 'collage' ? ('Party Collage — ' + item.partyName) : ((item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo),
-          text: item.kind === 'collage' ? ('Party: ' + item.partyName) : ('Challan No: ' + item.challanNo),
+          title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
+          text: 'Challan No: ' + item.challanNo,
           files:[file]
         });
         return;
@@ -2514,7 +2538,7 @@ async function shareCurrentBatchPDF() {
 }
 
 function downloadAllBatchChallans() {
-  const list = (state.batchChallans || []).filter(x => x.kind !== 'collage');
+  const list = state.batchChallans || [];
   if (!list.length) { alert('No generated challans available.'); return; }
   list.forEach((item, i) => {
     setTimeout(() => {
@@ -2529,9 +2553,7 @@ function downloadAllBatchChallans() {
 async function shareCurrentBatchChallan() {
   const item = getCurrentBatchChallan();
   if (!item) { alert('No generated challan preview available.'); return; }
-  const filename = item.kind === 'collage'
-    ? 'party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.jpg'
-    : (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
+  const filename = (item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '_' + (item.dsNo || 'NO_DS') + '.jpg';
 
   try {
     const response = await fetch(item.dataUrl);
@@ -2539,8 +2561,8 @@ async function shareCurrentBatchChallan() {
     const file = new File([blob], filename, { type:'image/jpeg' });
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
       await navigator.share({
-        title: item.kind === 'collage' ? ('Party Collage — ' + item.partyName) : ((item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo),
-        text: item.kind === 'collage' ? ('Party: ' + item.partyName) : ('Challan No: ' + item.challanNo),
+        title: (item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo,
+        text: 'Challan No: ' + item.challanNo,
         files:[file]
       });
       return;
@@ -2676,8 +2698,9 @@ function closeChallanStep2() {
   resetGeneratedChallanUI();
 }
 
-const legacyStep2 = document.getElementById('challanStep2');
-if (legacyStep2) legacyStep2.addEventListener('click', function(e) { if (e.target === this) closeChallanStep2(); });
+document.getElementById('challanStep2').addEventListener('click', function(e) {
+  if (e.target === this) closeChallanStep2();
+});
 
 function canvasRoundRect(ctx, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -2908,55 +2931,9 @@ function drawPhotoLabel(ctx, x, y, w, h, title, value, accent) {
   ctx.restore();
 }
 
-function createNoPhotoChallanImage(row, challanNo, type, fields, dsNo) {
-  const safeRow = row || { values: [] };
-  const W = 1400;
-  const headerH = 150;
-  const noPhotoH = 500;
-  const challanH = 190;
-  const gap = 16, side = 28;
-  const cols = fields.length <= 5 ? 3 : (fields.length <= 8 ? 3 : 4);
-  const cardW = Math.floor((W - side * 2 - gap * (cols - 1)) / cols);
-  const cardH = fields.length <= 5 ? 158 : 144;
-  const rowsCount = Math.max(1, Math.ceil(fields.length / cols));
-  const panelPad = 26;
-  const cardsH = panelPad + rowsCount * cardH + Math.max(0, rowsCount - 1) * gap + 34;
-  const H = headerH + noPhotoH + challanH + cardsH;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-  drawChallanHeader(ctx, W, 0, headerH, type);
-  ctx.fillStyle = '#000'; ctx.fillRect(0, headerH, W, noPhotoH);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#fff';
-  ctx.font = '900 54px Arial';
-  ctx.fillText('NO PHOTO FOUND', W / 2, headerH + noPhotoH / 2 - 38);
-  ctx.fillStyle = '#d9a52a';
-  ctx.font = '800 34px Arial';
-  ctx.fillText('FOR THIS CHALLAN', W / 2, headerH + noPhotoH / 2 + 25);
-  ctx.fillStyle = '#cbd5e1';
-  ctx.font = '600 24px Arial';
-  ctx.fillText('Challan No: ' + String(challanNo || '—'), W / 2, headerH + noPhotoH / 2 + 76);
-  ctx.fillStyle = '#d9a52a';
-  ctx.fillRect(0, headerH + noPhotoH, W, 8);
-  drawLargeChallanNo(ctx, W, headerH + noPhotoH + 18, challanH - 30, challanNo);
-  const cardsTop = headerH + noPhotoH + challanH;
-  ctx.fillStyle = '#fbf4df'; ctx.fillRect(0, cardsTop, W, cardsH);
-  (fields || []).forEach((field, i) => {
-    const col = i % cols, rr = Math.floor(i / cols);
-    const x = side + col * (cardW + gap), y = cardsTop + panelPad + rr * (cardH + gap);
-    drawFieldCard(ctx, x, y, cardW, cardH, getChallanFieldLabel(field, type), getChallanPrintFieldValue(safeRow, field), type);
-  });
-  ctx.fillStyle = '#0b2344'; ctx.fillRect(0, H - 18, W, 18);
-  ctx.strokeStyle = '#d9a52a'; ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.moveTo(0, H - 24); ctx.lineTo(W, H - 24); ctx.stroke();
-  return canvas.toDataURL('image/jpeg', 0.94);
-}
-
 function createFinalChallanImage(showUI = true) {
   const item = state.currentChallanPhoto;
-  if (!item || !item.image) { if (showUI) alert('Please load the Drive photo first.'); return; }
+  if (!item || !item.image) { alert('Please load the Drive photo first.'); return; }
 
   const row = item.row;
   const type = item.type;
@@ -3039,7 +3016,7 @@ function createFinalChallanImage(showUI = true) {
   try {
     dataUrl = canvas.toDataURL('image/jpeg', 0.94);
   } catch (err) {
-    if (showUI) alert('The Drive image is visible, but the browser is blocking canvas access to it. We need the Drive image proxy step before the final image can be downloaded.');
+    alert('The Drive image is visible, but the browser is blocking canvas access to it. We need the Drive image proxy step before the final image can be downloaded.');
     return;
   }
 
@@ -3075,7 +3052,7 @@ function createGeneratedChallanPDF() {
     const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
     const w = img.width * scale, h = img.height * scale;
     doc.addImage(item.generatedDataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    doc.save(item.kind === 'collage' ? ('party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.pdf') : ((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf'));
+    doc.save((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
   };
   img.src = item.generatedDataUrl;
 }
@@ -4090,12 +4067,7 @@ async function loadUploadFileIndex(folder, force = false) {
   let json;
   try { json = JSON.parse(text); } catch (e) { throw new Error('Drive list returned invalid JSON.'); }
   if (!json.ok) throw new Error(json.error || 'Could not load Drive filenames.');
-  const driveFiles = Array.isArray(json.names)
-    ? json.names
-    : (Array.isArray(json.files) ? json.files.map(function(item) {
-        return (item && typeof item === 'object') ? item.name : item;
-      }) : []);
-  const files = saveUploadFolderFiles(folder, driveFiles);
+  const files = saveUploadFolderFiles(folder, json.files || []);
   populateUploadExistingFiles(folder);
   setUploadFileIndexStatus(folder, 'Live • ' + files.length + ' files • ' + new Date().toLocaleTimeString());
   return files;
