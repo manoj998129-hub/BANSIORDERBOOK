@@ -223,8 +223,8 @@
     background: #fff;
     border-radius: 8px;
     padding: 8px;
-    width: min(94vw, 1000px);
-    max-width: 94vw;
+    width: fit-content;
+    max-width: min(94vw, 1000px);
     max-height: 88vh;
     display: flex;
     flex-direction: column;
@@ -1075,8 +1075,8 @@
     height: auto;
   }
   #preview { width: 100%; max-width: 100%; }
-  #preview .box { width: min(100%, 760px); }
-  #previewContent { width: 100%; min-width: 0; }
+  #preview .box { width: fit-content; max-width: 100%; }
+  #previewContent { width: auto; max-width: 100%; min-width: 0; }
   #preview .actions { max-width: 100%; flex-wrap: wrap; justify-content: center; }
   .brand-bar, .brand-copy, .brand-tagline { min-width: 0; max-width: 100%; }
   .brand-tagline { overflow-wrap: anywhere; }
@@ -1148,7 +1148,7 @@
     .challan-step-actions, .challan-step2-actions { margin-top: 8px; }
     .challan-load-btn { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
     #preview { padding: 12px; }
-    #preview .box { width: 100%; max-width: 100%; max-height: 82dvh; }
+    #preview .box { width: fit-content; max-width: 100%; max-height: 82dvh; }
     #preview .actions button { min-height: 44px; }
   }
   @media (max-width: 360px) {
@@ -2136,7 +2136,7 @@ function renderChallanStep1(groupedRows, selectedChallans, type, fields) {
       const link = getRowDriveLink(row);
       if (link) {
         const rowIndex = state.data.rows.indexOf(row);
-        html += '<td class="challan-link-ok"><a href="' + escapeAttr(link) + '" target="_blank" rel="noopener noreferrer" style="font-size:9px;font-weight:700;">OPEN PHOTO</a></td>';
+        html += '<td class="challan-link-ok"><a href="' + escapeAttr(link) + '" data-link="' + escapeAttr(link) + '" onclick="return handleLinkClick(event,this)" style="font-size:9px;font-weight:700;">OPEN PHOTO</a></td>';
       } else {
         html += '<td class="challan-link-missing">✗ NO LINK FOUND</td>';
       }
@@ -2445,72 +2445,31 @@ function createCurrentBatchPDF() {
 }
 
 function createAllBatchPDF() {
-  const list = (state.batchChallans || []).filter(x => x.kind !== 'collage');
+  const list = state.batchChallans || [];
   if (!list.length) { alert('No generated challans available.'); return; }
   const { jsPDF } = window.jspdf;
-  const first = new Image();
-  first.onload = function() {
+  Promise.all(list.map(item => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ item: item, img: img });
+    img.onerror = () => reject(new Error('Could not load a generated challan or collage image.'));
+    img.src = item.dataUrl;
+  }))).then(images => {
+    const first = images[0].img;
     const orientation = first.width >= first.height ? 'landscape' : 'portrait';
     const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
-    const addImage = (dataUrl, isFirst) => {
-      const img = new Image();
-      img.onload = function() {
-        if (!isFirst) doc.addPage('a4', orientation);
-        const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
-        const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
-        const w = img.width * scale, h = img.height * scale;
-        doc.addImage(dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-        addNext();
-      };
-      img.src = dataUrl;
-    };
-    let index = 0;
-    const addNext = () => {
-      if (index >= list.length) {
-        const prefix = list[0].type === 'jobwork' ? 'jobwork' : 'dispatch';
-        doc.save(prefix + '_challans_' + list.map(x => x.challanNo).join('_') + '.pdf');
-        return;
-      }
-      const item = list[index++];
-      addImage(item.dataUrl, index === 1);
-    };
-    addNext();
-  };
-  first.src = list[0].dataUrl;
-}
-
-async function shareCurrentBatchPDF() {
-  const item = getCurrentBatchChallan();
-  if (!item) { alert('No generated challan preview available.'); return; }
-  const { jsPDF } = window.jspdf;
-  const img = new Image();
-  img.onload = async function() {
-    const orientation = img.width >= img.height ? 'landscape' : 'portrait';
-    const doc = new jsPDF({ orientation: orientation, unit: 'pt', format: 'a4' });
-    const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
-    const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
-    const w = img.width * scale, h = img.height * scale;
-    doc.addImage(item.dataUrl, 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
-    const filename = item.kind === 'collage' ? ('party_collage_' + String(item.partyName || 'party').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'') + '.pdf') : ((item.type === 'jobwork' ? 'jobwork_challan_' : 'dispatch_challan_') + item.challanNo + '.pdf');
-
-    try {
-      const blob = doc.output('blob');
-      const file = new File([blob], filename, { type:'application/pdf' });
-      if (navigator.share && (!navigator.canShare || navigator.canShare({ files:[file] }))) {
-        await navigator.share({
-          title: item.kind === 'collage' ? ('Party Collage — ' + item.partyName) : ((item.type === 'jobwork' ? 'Jobwork Challan ' : 'Dispatch Challan ') + item.challanNo),
-          text: item.kind === 'collage' ? ('Party: ' + item.partyName) : ('Challan No: ' + item.challanNo),
-          files:[file]
-        });
-        return;
-      }
-    } catch (err) {
-      if (err && err.name === 'AbortError') return;
-    }
-
-    doc.save(filename);
-  };
-  img.src = item.dataUrl;
+    images.forEach(({ item, img }, index) => {
+      const pageOrientation = img.width >= img.height ? 'landscape' : 'portrait';
+      if (index > 0) doc.addPage('a4', pageOrientation);
+      if (index === 0 && pageOrientation !== orientation) doc.setPage(1);
+      const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+      const scale = Math.min((pw - 24) / img.width, (ph - 24) / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      const format = item.dataUrl.indexOf('data:image/png') === 0 ? 'PNG' : 'JPEG';
+      doc.addImage(item.dataUrl, format, (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+    });
+    const prefix = list.find(x => x.kind !== 'collage')?.type === 'jobwork' ? 'jobwork' : 'dispatch';
+    doc.save(prefix + '_challans_and_collages.pdf');
+  }).catch(err => alert(err.message || 'Could not create the PDF.'));
 }
 
 function downloadAllBatchChallans() {
@@ -2651,7 +2610,7 @@ function loadChallanPhoto(rowIndex, challanNo, type) {
   function tryNext() {
     if (attempt >= candidates.length) {
       photoWrap.innerHTML = '<div class="challan-photo-error">Could not load the Drive image directly for canvas use.<br><br>' +
-        '<button class="btn blue" onclick="window.open(\'' + escapeAttr(link) + '\',\'_blank\',\'noopener\')">OPEN DRIVE IMAGE</button>' +
+        '<button class="btn blue" onclick="showPreview(\'' + escapeAttr(link) + '\',\'Photo Preview\')">OPEN DRIVE IMAGE</button>' +
         '<div class="challan-canvas-note">The Drive photo itself is available, but the browser may block canvas access.</div></div>';
       return;
     }
@@ -3822,6 +3781,7 @@ if (challanFilter.length && i === orderIdx) {
         cellContent =
           '<a href="' + escapeAttr(link) + '" target="_blank" rel="noopener noreferrer" ' +
           'data-link="' + escapeAttr(link) + '" ' +
+          'onclick="return handleLinkClick(event,this)" ' +
           'data-text="' + escapeAttr(displayVal) + '"' +
           (fg ? ' style="color:' + fg + ';"' : '') +
           '>' +
@@ -3917,10 +3877,20 @@ function escapeAttr(s) {
 
 /* ========= LINK PREVIEW ========= */
 function handleLinkClick(e, el) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
   const url = el && el.getAttribute('data-link');
-  if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  if (url) showPreview(url, el.getAttribute('data-text') || 'Photo Preview');
   return false;
 }
+document.addEventListener('click', function(e) {
+  const link = e.target && e.target.closest ? e.target.closest('a') : null;
+  if (!link) return;
+  const url = link.getAttribute('data-link') || link.getAttribute('href');
+  if (!url || !/drive\.google\.com\/(?:file\/d\/|open\?|uc\?)/i.test(url)) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  showPreview(url, link.getAttribute('data-text') || link.textContent.trim() || 'Photo Preview');
+}, true);
 function showPreview(url, title) {
   state.previewUrl = url;
   document.getElementById('previewTitle').textContent = title || 'Preview';
@@ -3931,9 +3901,9 @@ function showPreview(url, title) {
   if (m) fileId = m[1];
   if (!fileId) { m = url.match(/[?&]id=([^&]+)/); if (m) fileId = m[1]; }
   if (fileId) {
-    content.innerHTML = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" ' +
-                        'allow="autoplay" ' +
-                        'style="width:min(88vw,900px);height:min(72vh,760px);border:1px solid #cbd5e1;border-radius:4px;background:#fff;"></iframe>';
+    content.innerHTML = '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w2400" alt="Photo preview" ' +
+                        'style="display:block;width:auto;max-width:min(88vw,760px);height:auto;max-height:76vh;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;background:#fff;" ' +
+                        'onerror="this.outerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
   } else {
     content.innerHTML = '<img src="' + url + '" alt="preview" ' +
                         'onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:20px;color:#334155;&quot;>Preview not available. Click OPEN FULL.</div>\'">';
