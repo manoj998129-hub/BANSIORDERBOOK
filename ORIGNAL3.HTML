@@ -206,6 +206,30 @@
   tr.blank-challan td.challan-col { background: #fecaca !important; }
   tr.order-group-start td { border-top:2px solid #d9a51b !important; }
   td a { text-decoration: underline; font-weight: 700; cursor: pointer; }
+  .progress-report-heading {
+    display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+    margin:0 0 6px; padding:7px 9px; border:1px solid var(--progress-color,#cbd5e1);
+    border-left:4px solid var(--progress-color,#64748b); border-radius:6px;
+    color:#1e293b; background:var(--progress-tint,#f8fafc);
+    font-size:11px; font-weight:800; letter-spacing:.02em;
+  }
+  .progress-report-count { margin-left:auto; font-size:10px; font-weight:700; opacity:.8; }
+  .progress-report-table { width:100%; min-width:620px; table-layout:auto; }
+  .progress-report-table th { white-space:normal; }
+  .progress-report-table td.progress-wrap-cell {
+    min-width:130px; max-width:250px; white-space:normal; overflow-wrap:anywhere;
+  }
+  .progress-report-table td.progress-stage-cell,
+  .progress-report-table td.progress-days-cell { background:var(--progress-tint,#f8fafc) !important; }
+  .progress-report-table td.progress-days-cell { text-align:center; font-weight:700; }
+  .progress-stage-badge {
+    display:inline-block; padding:2px 5px; border-radius:4px; font-size:9px;
+    line-height:1.25; font-weight:800; white-space:normal; overflow-wrap:anywhere;
+  }
+  .progress-report-message {
+    padding:10px; border:1px solid #f0c36d; border-radius:6px;
+    background:#fff8e6; color:#654d1b; line-height:1.45;
+  }
 
   #preview {
     position: fixed; inset: 0;
@@ -1025,6 +1049,11 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+  .progress-report-table th, .progress-report-table td {
+    padding:4px 5px; font-size:10px;
+  }
+  .progress-report-heading { font-size:10px; }
+  .progress-report-table { min-width:560px; }
   .challan-result-head > * { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
   .challan-result-body { width: 100%; }
   .challan-result-table {
@@ -1207,12 +1236,12 @@
   <div class="filters-box">
     <div class="section-kicker">Filter orders</div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f-party" oninput="renderAll()" onchange="renderAll()"    placeholder="👥 Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f-order" oninput="renderAll()" onchange="renderAll()"    placeholder="📄 Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="🧾 Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f-design" oninput="renderAll()" onchange="renderAll()"   placeholder="🗂️ DS No (comma for multi)" data-col="design"></div>
       <div class="ac-wrap"><input id="f-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f-job" oninput="renderAll()" onchange="renderAll()"      placeholder="🛠️ Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('all')">CLEAR</button>
@@ -1239,20 +1268,22 @@
       <label for="reportType" style="font-weight:700;color:#0f172a;">REPORT</label>
       <select id="reportType" aria-label="Select report" style="width:100%;padding:7px;margin-top:4px;border:1px solid #cbd5e1;border-radius:4px;background:#f8fafc;font-size:11px;">
         <option value="no-challan">No Challan</option>
-        <option value="fabric-ordered">Fabric Ordered</option>
-        <option value="fabric-cutwork">Fabric Cutwork Done</option>
-        <option value="fabric-jobwork">Fabric Given and Program Given to Jobwork</option>
-        <option value="fabric-received">Fabric Received from Jobwork</option>
-        <option value="dispatch-done">Dispatch Done</option>
+        <option value="fabric-ordered">🧵 FABRIC ORDERED</option>
+        <option value="fabric-cutwork">✂️ FABRIC CUTWORK DONE</option>
+        <option value="fabric-jobwork">🚚 FABRIC GIVEN AND PROGRAM GIVEN TO JOBWORK</option>
+        <option value="fabric-received">📦 FABRIC RECEIVED FROM JOBWORK</option>
+        <option value="dispatch-done">✅ DISPATCH DONE</option>
+        <option value="order-cancelled">🚫 ORDER CANCELLED</option>
+        <option value="progress-history">◷ LAST 10 DAYS PROGRESS HISTORY</option>
       </select>
     </div>
     <div class="filters">
-      <div class="ac-wrap"><input id="f2-party" oninput="renderAll()" onchange="renderAll()"    placeholder="Party Name"    data-col="party"></div>
-      <div class="ac-wrap"><input id="f2-order" oninput="renderAll()" onchange="renderAll()"    placeholder="Order No (comma for multi)"  data-col="order"></div>
-      <div class="ac-wrap"><input id="f2-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="Challan No (comma for multi)" data-col="challan"></div>
-      <div class="ac-wrap"><input id="f2-design" oninput="renderAll()" onchange="renderAll()"   placeholder="DS No (comma for multi)" data-col="design"></div>
+      <div class="ac-wrap"><input id="f2-party" oninput="renderAll()" onchange="renderAll()"    placeholder="👥 Party Name"    data-col="party"></div>
+      <div class="ac-wrap"><input id="f2-order" oninput="renderAll()" onchange="renderAll()"    placeholder="📄 Order No (comma for multi)"  data-col="order"></div>
+      <div class="ac-wrap"><input id="f2-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="🧾 Challan No (comma for multi)" data-col="challan"></div>
+      <div class="ac-wrap"><input id="f2-design" oninput="renderAll()" onchange="renderAll()"   placeholder="🗂️ DS No (comma for multi)" data-col="design"></div>
       <div class="ac-wrap"><input id="f2-material" oninput="renderAll()" onchange="renderAll()" placeholder="Material (METRIAL)" data-col="material"></div>
-      <div class="ac-wrap"><input id="f2-job" oninput="renderAll()" onchange="renderAll()"      placeholder="Job Work"      data-col="job"></div>
+      <div class="ac-wrap"><input id="f2-job" oninput="renderAll()" onchange="renderAll()"      placeholder="🛠️ Job Work"      data-col="job"></div>
     </div>
     <div class="toolbar">
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
@@ -3509,7 +3540,334 @@ wireFilterInputs();
 function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
 function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
 
+/* ========= PROGRESS REPORTS ========= */
+const PROGRESS_STAGES = [
+  {
+    key:'ordered', value:'fabric-ordered', label:'FABRIC ORDERED', icon:'🧵',
+    color:'#DCEBFF', ink:'#1e3a8a', dateHeading:'ORDERED DATE',
+    aliases:['fabricordered','fabricorder']
+  },
+  {
+    key:'cutwork', value:'fabric-cutwork', label:'FABRIC CUTWORK DONE', icon:'✂️',
+    color:'#D8F3E5', ink:'#14532d', dateHeading:'CUTWORK DATE',
+    aliases:['fabriccutworkdone','fabriccutwork']
+  },
+  {
+    key:'jobwork', value:'fabric-jobwork', label:'FABRIC GIVEN AND PROGRAM GIVEN TO JOBWORK', icon:'🚚',
+    color:'#FFF0D5', ink:'#713f12', dateHeading:'GIVEN TO JOBWORK DATE',
+    aliases:['fabricgivenandprogramgiventojobwork','programgiventojobwork','giventojobwork']
+  },
+  {
+    key:'received', value:'fabric-received', label:'FABRIC RECEIVED FROM JOBWORK', icon:'📦',
+    color:'#EDE2FF', ink:'#4c1d95', dateHeading:'RECEIVED FROM JOBWORK DATE',
+    aliases:['fabricreceivedfromjobwork','receivedfromjobwork']
+  },
+  {
+    key:'dispatch', value:'dispatch-done', label:'DISPATCH DONE', icon:'✅',
+    color:'#D9F2F2', ink:'#134e4a', dateHeading:'DISPATCH DATE',
+    aliases:['dispatchdone']
+  },
+  {
+    key:'cancelled', value:'order-cancelled', label:'ORDER CANCELLED', icon:'🚫',
+    color:'#FFE0E0', ink:'#7f1d1d', dateHeading:'CANCELLED DATE',
+    aliases:['ordercancelled','ordercanceled','cancelled','canceled']
+  }
+];
+const PROGRESS_HISTORY_VALUE = 'progress-history';
+
+function normalizeProgressHeader(value) {
+  return (value == null ? '' : value.toString()).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function isProgressTimestampHeader(value) {
+  const h = normalizeProgressHeader(value);
+  return h.includes('timestamp') || h.includes('datetime') ||
+    h.includes('date') || h.includes('time') || h.endsWith('at');
+}
+
+function progressHeaderMatches(header, aliases) {
+  const h = normalizeProgressHeader(header);
+  return !!h && aliases.some(alias => h.includes(alias));
+}
+
+function resolveProgressColumns() {
+  const headers = state.data.headers || [];
+  const columns = {};
+  PROGRESS_STAGES.forEach(stage => {
+    const checkboxIndex = headers.findIndex(h =>
+      progressHeaderMatches(h, stage.aliases) && !isProgressTimestampHeader(h)
+    );
+    const timestampIndex = headers.findIndex(h =>
+      progressHeaderMatches(h, stage.aliases) && isProgressTimestampHeader(h)
+    );
+    columns[stage.key] = { checkboxIndex, timestampIndex };
+  });
+  // The supplied sheet specification says checkboxes occupy P:U and their
+  // paired timestamps V:AA. Use that offset only when all six actual headers
+  // confirm the documented checkbox order and the loaded schema is wide enough.
+  const checkboxMapMatchesDocumentedOrder = headers.length >= 27 &&
+    PROGRESS_STAGES.every((stage, index) => columns[stage.key].checkboxIndex === 15 + index);
+  if (checkboxMapMatchesDocumentedOrder) {
+    PROGRESS_STAGES.forEach((stage, index) => {
+      if (columns[stage.key].timestampIndex < 0) {
+        columns[stage.key].timestampIndex = 21 + index;
+      }
+    });
+  }
+  return columns;
+}
+
+function progressColumnsIssue(reportType, columns) {
+  const required = [];
+  if (reportType === PROGRESS_HISTORY_VALUE) {
+    PROGRESS_STAGES.forEach(stage => {
+      if (columns[stage.key].timestampIndex < 0) required.push(stage.label + ' timestamp');
+    });
+  } else {
+    const stage = PROGRESS_STAGES.find(item => item.value === reportType);
+    if (!stage) return 'This report type is not recognized.';
+    if (columns[stage.key].checkboxIndex < 0) required.push(stage.label + ' checkbox');
+    const stageIndex = PROGRESS_STAGES.indexOf(stage);
+    if (stage.key === 'cutwork' && columns.ordered.checkboxIndex < 0) {
+      required.push(PROGRESS_STAGES[0].label + ' checkbox');
+    }
+    if (stageIndex < PROGRESS_STAGES.length - 1 &&
+        columns[PROGRESS_STAGES[stageIndex + 1].key].checkboxIndex < 0) {
+      required.push(PROGRESS_STAGES[stageIndex + 1].label + ' checkbox');
+    }
+    if (columns[stage.key].timestampIndex < 0) required.push(stage.label + ' timestamp');
+  }
+  if (!required.length) return '';
+  return 'Progress reports need matching checkbox and timestamp column headers in the loaded sheet. ' +
+    'Could not identify: ' + required.join(', ') + '. No fixed column positions were assumed.';
+}
+
+function isProgressChecked(value) {
+  if (value === true || value === 1) return true;
+  if (typeof value !== 'string') return false;
+  return ['true','1','yes','checked','y'].includes(value.trim().toLowerCase());
+}
+
+function parseProgressTimestamp(value) {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : new Date(value.getTime());
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    // Support Unix milliseconds and Google Sheets serial date values.
+    if (value > 100000000000) {
+      const epochDate = new Date(value);
+      return Number.isNaN(epochDate.getTime()) ? null : epochDate;
+    }
+    if (value > 20000 && value < 100000) {
+      const serialDate = new Date(1899, 11, 30);
+      serialDate.setDate(serialDate.getDate() + Math.floor(value));
+      const fraction = value % 1;
+      serialDate.setMilliseconds(Math.round(fraction * 86400000));
+      return serialDate;
+    }
+    return null;
+  }
+  const text = value == null ? '' : value.toString().trim();
+  if (!text) return null;
+  const dayFirst = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?\s*(AM|PM)?)?$/i);
+  if (dayFirst) {
+    let hours = Number(dayFirst[4] || 0);
+    const ampm = (dayFirst[8] || '').toUpperCase();
+    if (ampm === 'PM' && hours < 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+    const date = new Date(
+      Number(dayFirst[3]), Number(dayFirst[2]) - 1, Number(dayFirst[1]),
+      hours, Number(dayFirst[5] || 0), Number(dayFirst[6] || 0),
+      Number((dayFirst[7] || '0').padEnd(3, '0'))
+    );
+    if (date.getFullYear() !== Number(dayFirst[3]) ||
+        date.getMonth() !== Number(dayFirst[2]) - 1 ||
+        date.getDate() !== Number(dayFirst[1])) return null;
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const dateOnly = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (dateOnly) {
+    const date = new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  let date = new Date(text);
+  if (!Number.isNaN(date.getTime())) return date;
+  const leadingDate = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (leadingDate) {
+    date = new Date(Number(leadingDate[1]), Number(leadingDate[2]) - 1, Number(leadingDate[3]));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  return null;
+}
+
+function progressTimestampHasTime(value) {
+  if (value instanceof Date) {
+    return value.getHours() !== 0 || value.getMinutes() !== 0 ||
+      value.getSeconds() !== 0 || value.getMilliseconds() !== 0;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.abs(value % 1) > 0.0000001;
+  }
+  return /\d{1,2}:\d{2}/.test(value == null ? '' : value.toString());
+}
+
+function localCalendarDayNumber(date) {
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
+}
+
+function formatProgressDate(date) {
+  return date.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+}
+
+function formatProgressDateTime(date, includeTime = true) {
+  const options = { day:'numeric', month:'short', year:'numeric' };
+  if (includeTime) {
+    options.hour = 'numeric';
+    options.minute = '2-digit';
+  }
+  return date.toLocaleString(undefined, options);
+}
+
+function getProgressSourceRow(row) {
+  return row && row._progressSource ? row._progressSource : row;
+}
+
+function filterProgressRows(rows) {
+  const multi = {
+    order:parseMulti(document.getElementById('f2-order').value),
+    challan:parseMulti(document.getElementById('f2-challan').value),
+    design:parseMulti(document.getElementById('f2-design').value)
+  };
+  const single = {
+    party:norm(document.getElementById('f2-party').value),
+    material:norm(document.getElementById('f2-material').value),
+    job:norm(document.getElementById('f2-job').value)
+  };
+  const cols = state.cols;
+  let filtered = rows;
+
+  if (multi.order.length && cols.order >= 0) {
+    const selected = new Set(multi.order);
+    filtered = filtered.filter(item => {
+      const row = getProgressSourceRow(item);
+      const raw = norm(row.values[cols.order]);
+      const main = norm(row._mainOrder || row.values[cols.order]);
+      const sub = norm(row._subOrder);
+      return selected.has(raw) || selected.has(main) ||
+        (!!sub && selected.has(main + '/' + sub));
+    });
+  }
+  if (multi.challan.length && cols.challan >= 0) {
+    const selected = new Set(multi.challan);
+    filtered = filtered.filter(item => {
+      const row = getProgressSourceRow(item);
+      return selected.has(norm(row.values[cols.challan]));
+    });
+  }
+  if (multi.design.length && cols.design >= 0) {
+    const selected = new Set(multi.design);
+    filtered = filtered.filter(item => {
+      const row = getProgressSourceRow(item);
+      return selected.has(norm(row.values[cols.design]));
+    });
+  }
+  const contains = (item, index, value) => {
+    if (index < 0 || !value) return true;
+    const row = getProgressSourceRow(item);
+    return norm(row.values[index]).includes(value);
+  };
+  return filtered.filter(item =>
+    contains(item, cols.party, single.party) &&
+    contains(item, cols.material, single.material) &&
+    contains(item, cols.job, single.job)
+  );
+}
+
+function getProgressStageRows(stage, columns) {
+  const stageIndex = PROGRESS_STAGES.indexOf(stage);
+  const currentFlag = columns[stage.key].checkboxIndex;
+  const nextFlag = stageIndex < PROGRESS_STAGES.length - 1
+    ? columns[PROGRESS_STAGES[stageIndex + 1].key].checkboxIndex
+    : -1;
+  const currentDate = columns[stage.key].timestampIndex;
+  return filterProgressRows(state.data.rows.filter(row => {
+    const values = row.values || [];
+    if (stage.key === 'ordered') {
+      return isProgressChecked(values[currentFlag]) && !isProgressChecked(values[nextFlag]);
+    }
+    if (stage.key === 'cutwork') {
+      const priorFlag = columns.ordered.checkboxIndex;
+      return isProgressChecked(values[priorFlag]) &&
+        isProgressChecked(values[currentFlag]) && !isProgressChecked(values[nextFlag]);
+    }
+    if (stage.key === 'jobwork' || stage.key === 'received' || stage.key === 'dispatch') {
+      return isProgressChecked(values[currentFlag]) && !isProgressChecked(values[nextFlag]);
+    }
+    return isProgressChecked(values[currentFlag]);
+  }).map(row => Object.assign({}, row, {
+    _progressTimestamp: parseProgressTimestamp((row.values || [])[currentDate])
+  })));
+}
+
+function buildProgressHistoryRows(columns, now = new Date()) {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 9);
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const startTime = start.getTime();
+  const endTime = end.getTime();
+  const records = [];
+  state.data.rows.forEach(source => {
+    const events = PROGRESS_STAGES.map((stage, index) => {
+      const timestampIndex = columns[stage.key].timestampIndex;
+      const raw = (source.values || [])[timestampIndex];
+      const date = parseProgressTimestamp(raw);
+      return date ? { stage, index, date, hasTime:progressTimestampHasTime(raw) } : null;
+    }).filter(Boolean).sort((a, b) => a.date - b.date || a.index - b.index);
+    if (!events.length) return;
+    const latest = events[events.length - 1];
+    const latestIsUnique = events.length < 2 ||
+      latest.date.getTime() !== events[events.length - 2].date.getTime();
+    events.forEach((event, eventIndex) => {
+      if (event.date.getTime() < startTime || event.date.getTime() >= endTime) return;
+      const previous = eventIndex > 0 ? events[eventIndex - 1] : null;
+      let previousStage = null;
+      if (previous && previous.date.getTime() < event.date.getTime()) {
+        const isNextForwardStage = event.index > 0 && previous.index === event.index - 1;
+        const isCancellation = event.stage.key === 'cancelled' && previous.stage.key !== 'cancelled';
+        if (isNextForwardStage || isCancellation) previousStage = previous.stage;
+      }
+      records.push({
+        _progressSource:source,
+        _mainOrder:source._mainOrder,
+        _subOrder:source._subOrder,
+        _progressEvent:{
+          date:event.date,
+          hasTime:event.hasTime,
+          previousStage,
+          newStage:event.stage,
+          latestStage:latestIsUnique ? latest.stage : null
+        }
+      });
+    });
+  });
+  records.sort((a, b) =>
+    b._progressEvent.date - a._progressEvent.date ||
+    (a._progressEvent.newStage.label).localeCompare(b._progressEvent.newStage.label)
+  );
+  return filterProgressRows(records);
+}
+
 function getFiltered(tab) {
+  if (tab === 'nochallan') {
+    const selectedReport = document.getElementById('reportType').value;
+    if (selectedReport !== 'no-challan') {
+      const columns = resolveProgressColumns();
+      const issue = progressColumnsIssue(selectedReport, columns);
+      if (issue) return [];
+      if (selectedReport === PROGRESS_HISTORY_VALUE) {
+        return buildProgressHistoryRows(columns);
+      }
+      const stage = PROGRESS_STAGES.find(item => item.value === selectedReport);
+      return stage ? getProgressStageRows(stage, columns) : [];
+    }
+  }
   const prefix = tab === 'all' ? 'f-' : 'f2-';
 
   const fMulti = {
@@ -3650,6 +4008,167 @@ function clearFilters(tab) {
 /* ========= RENDER ========= */
 function renderAll() { renderTab('all'); renderTab('nochallan'); }
 
+function progressStageBadge(stage, labelOverride = '') {
+  if (!stage) return '<span aria-label="Not established">—</span>';
+  const label = labelOverride || (stage.icon + ' ' + stage.label);
+  return '<span class="progress-stage-badge" style="background:' + stage.color +
+    ';color:' + stage.ink + ';">' + escapeHtml(label) + '</span>';
+}
+
+function progressSourceCell(row, index, extraClass = '') {
+  const source = getProgressSourceRow(row);
+  const value = source && source.values && source.values[index] != null
+    ? source.values[index] : '';
+  const rawLink = source && source.links && source.links[index] ? source.links[index] : null;
+  const link = isLinkColumn(index) && rawLink ? rawLink : null;
+  const background = source && source.bgs && source.bgs[index] ? source.bgs[index] : '';
+  const foreground = source && source.fgs && source.fgs[index] ? source.fgs[index] : '';
+  const bold = source && source.bolds && source.bolds[index] ? 'font-weight:700;' : '';
+  const style = (background ? 'background:' + background + ';' : '') +
+    (foreground ? 'color:' + foreground + ';' : '') + bold;
+  let displayValue = value == null ? '' : value.toString();
+  if (index === state.cols.order && source && source._subOrder) {
+    displayValue = (source._mainOrder || '') + '/' + source._subOrder;
+  }
+  const content = link
+    ? '<a href="' + escapeAttr(link) + '" target="_blank" rel="noopener noreferrer" ' +
+      'data-link="' + escapeAttr(link) + '" onclick="return handleLinkClick(event,this)" ' +
+      'data-text="' + escapeAttr(displayValue) + '">' + escapeHtml(displayValue) + '</a>'
+    : escapeHtml(displayValue);
+  return '<td' + (extraClass ? ' class="' + extraClass + '"' : '') +
+    (style ? ' style="' + escapeAttr(style) + '"' : '') + '>' + content + '</td>';
+}
+
+function getStageReportColumns(stage, columns) {
+  const hidden = new Set();
+  PROGRESS_STAGES.forEach(item => {
+    if (columns[item.key].checkboxIndex >= 0) hidden.add(columns[item.key].checkboxIndex);
+    if (columns[item.key].timestampIndex >= 0) hidden.add(columns[item.key].timestampIndex);
+  });
+  const genericDateIndex = state.data.headers.findIndex(h =>
+    normalizeProgressHeader(h) === 'date'
+  );
+  const result = [];
+  let insertedDate = false;
+  state.data.headers.forEach((header, index) => {
+    if (hidden.has(index)) return;
+    if (index === genericDateIndex) {
+      result.push({ kind:'stage-date', title:stage.dateHeading });
+      result.push({ kind:'days', title:'DAYS' });
+      insertedDate = true;
+    } else {
+      result.push({ kind:'source', index, title:header || '' });
+    }
+  });
+  if (!insertedDate) {
+    result.push({ kind:'stage-date', title:stage.dateHeading });
+    result.push({ kind:'days', title:'DAYS' });
+  }
+  return result;
+}
+
+function renderProgressReport(reportType) {
+  const wrap = document.getElementById('wrap-nochallan');
+  const columns = resolveProgressColumns();
+  const issue = progressColumnsIssue(reportType, columns);
+  if (issue) {
+    wrap.innerHTML = '<div class="progress-report-message">' + escapeHtml(issue) +
+      ' Confirm the sheet header row and include the Apps Script/header mapping if you want me to align it precisely.</div>';
+    return;
+  }
+
+  const isHistory = reportType === PROGRESS_HISTORY_VALUE;
+  const stage = PROGRESS_STAGES.find(item => item.value === reportType);
+  const rows = getFiltered('nochallan');
+  const title = isHistory ? 'LAST 10 DAYS PROGRESS HISTORY' : stage.label;
+  const icon = isHistory ? '◷' : stage.icon;
+  const color = isHistory ? '#dbeafe' : stage.color;
+  const ink = isHistory ? '#1e3a8a' : stage.ink;
+  let html = '<div class="progress-report-heading" style="--progress-color:' + color +
+    ';--progress-tint:' + color + ';color:' + ink + ';">' +
+    '<span aria-hidden="true">' + icon + '</span><span>' + escapeHtml(title) + '</span>' +
+    '<span class="progress-report-count">' + rows.length + ' record' + (rows.length === 1 ? '' : 's') + '</span></div>';
+
+  if (!rows.length) {
+    html += '<div class="empty">No matching records for this report and filter combination.</div>';
+    wrap.innerHTML = html;
+    return;
+  }
+
+  if (isHistory) {
+    const historyColumns = [
+      { title:'ORDER NO', render:item => {
+        if (state.cols.order < 0) return '<td></td>';
+        return progressSourceCell(item, state.cols.order);
+      }, sourceIndex:state.cols.order },
+      { title:'SUB ORDER / DS NO', render:item => {
+        const source = getProgressSourceRow(item);
+        const parts = [];
+        if (source && source._subOrder) parts.push('Sub ' + source._subOrder);
+        if (state.cols.design >= 0 && source && source.values[state.cols.design] != null &&
+            source.values[state.cols.design].toString().trim()) {
+          parts.push(source.values[state.cols.design].toString());
+        }
+        return '<td>' + escapeHtml(parts.join(' · ')) + '</td>';
+      } },
+      { title:'PARTY NAME', sourceIndex:state.cols.party },
+      { title:'CHALLAN NO', sourceIndex:state.cols.challan },
+      { title:'STAGE MOVEMENT DATE / TIME', render:item =>
+        '<td class="progress-wrap-cell">' + escapeHtml(formatProgressDateTime(
+          item._progressEvent.date, item._progressEvent.hasTime
+        )) + '</td>' },
+      { title:'PREVIOUS STAGE', render:item =>
+        '<td>' + progressStageBadge(item._progressEvent.previousStage) + '</td>' },
+      { title:'NEW STAGE', render:item =>
+        '<td>' + progressStageBadge(item._progressEvent.newStage) + '</td>' },
+      { title:'CURRENT / LATEST RECORDED STAGE', render:item =>
+        '<td>' + progressStageBadge(item._progressEvent.latestStage) + '</td>' }
+    ];
+    html += '<table class="progress-report-table"><thead><tr>' +
+      historyColumns.map(col => '<th>' + escapeHtml(col.title) + '</th>').join('') +
+      '</tr></thead><tbody>';
+    rows.forEach(item => {
+      html += '<tr>';
+      historyColumns.forEach(col => {
+        if (col.render) html += col.render(item);
+        else if (col.sourceIndex >= 0) html += progressSourceCell(item, col.sourceIndex);
+        else html += '<td></td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    const reportColumns = getStageReportColumns(stage, columns);
+    html += '<table class="progress-report-table"><thead><tr>' +
+      reportColumns.map(col => '<th' +
+        ((col.kind === 'stage-date' || col.kind === 'days')
+          ? ' style="background:' + stage.color + ';color:' + stage.ink + ';"' : '') +
+        '>' + escapeHtml(col.title.toString()) + '</th>').join('') +
+      '</tr></thead><tbody>';
+    const timestampIndex = columns[stage.key].timestampIndex;
+    const todayNumber = localCalendarDayNumber(new Date());
+    rows.forEach(row => {
+      html += '<tr>';
+      reportColumns.forEach(col => {
+        if (col.kind === 'source') {
+          html += progressSourceCell(row, col.index);
+        } else if (col.kind === 'stage-date') {
+          const date = parseProgressTimestamp((row.values || [])[timestampIndex]);
+          html += '<td class="progress-stage-cell">' +
+            (date ? escapeHtml(formatProgressDate(date)) : '') + '</td>';
+        } else {
+          const date = parseProgressTimestamp((row.values || [])[timestampIndex]);
+          const age = date ? Math.max(0, todayNumber - localCalendarDayNumber(date)) : '';
+          html += '<td class="progress-days-cell">' + (age === '' ? '' : age) + '</td>';
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+  }
+  wrap.innerHTML = html;
+}
+
 function renderTab(tab) {
   const wrap = document.getElementById('wrap-' + tab);
 
@@ -3663,8 +4182,7 @@ function renderTab(tab) {
   }
 
   if (tab === 'nochallan' && document.getElementById('reportType').value !== 'no-challan') {
-    const reportName = document.getElementById('reportType').selectedOptions[0].text;
-    wrap.innerHTML = '<div class="empty">Filtering rules for “' + escapeHtml(reportName) + '” have not been defined yet.</div>';
+    renderProgressReport(document.getElementById('reportType').value);
     return;
   }
 
@@ -3924,7 +4442,116 @@ document.getElementById('preview').addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePreview(); });
 
 /* ========= PDF ========= */
+function downloadProgressPDF(reportType) {
+  const columns = resolveProgressColumns();
+  const issue = progressColumnsIssue(reportType, columns);
+  if (issue) { alert(issue); return; }
+  const rows = getFiltered('nochallan');
+  if (!rows.length) { alert('No rows to export'); return; }
+
+  const isHistory = reportType === PROGRESS_HISTORY_VALUE;
+  const stage = PROGRESS_STAGES.find(item => item.value === reportType);
+  let headers = [];
+  let body = [];
+  let color = isHistory ? '#dbeafe' : stage.color;
+  let ink = isHistory ? '#1e3a8a' : stage.ink;
+
+  if (isHistory) {
+    headers = ['ORDER NO','SUB ORDER / DS NO','PARTY NAME','CHALLAN NO',
+      'STAGE MOVEMENT DATE / TIME','PREVIOUS STAGE','NEW STAGE','CURRENT / LATEST RECORDED STAGE'];
+    body = rows.map(item => {
+      const source = getProgressSourceRow(item);
+      const order = state.cols.order >= 0 ? source.values[state.cols.order] : '';
+      const orderValue = source._subOrder
+        ? ((source._mainOrder || order || '') + '/' + source._subOrder)
+        : (order == null ? '' : order.toString());
+      const ds = state.cols.design >= 0 && source.values[state.cols.design] != null
+        ? source.values[state.cols.design].toString().trim() : '';
+      const subDs = [source._subOrder ? 'Sub ' + source._subOrder : '', ds].filter(Boolean).join(' · ');
+      const party = state.cols.party >= 0 && source.values[state.cols.party] != null
+        ? source.values[state.cols.party].toString() : '';
+      const challan = state.cols.challan >= 0 && source.values[state.cols.challan] != null
+        ? source.values[state.cols.challan].toString() : '';
+      const event = item._progressEvent;
+      const stageText = s => s ? (s.icon + ' ' + s.label) : '—';
+      return [orderValue, subDs, party, challan, formatProgressDateTime(event.date, event.hasTime),
+        stageText(event.previousStage), stageText(event.newStage), stageText(event.latestStage)];
+    });
+  } else {
+    const reportColumns = getStageReportColumns(stage, columns);
+    headers = reportColumns.map(col => col.title.toString());
+    const timestampIndex = columns[stage.key].timestampIndex;
+    const todayNumber = localCalendarDayNumber(new Date());
+    body = rows.map(row => reportColumns.map(col => {
+      if (col.kind === 'source') {
+        const source = getProgressSourceRow(row);
+        const value = source && source.values ? source.values[col.index] : '';
+        if (col.index === state.cols.order && source && source._subOrder) {
+          return (source._mainOrder || '') + '/' + source._subOrder;
+        }
+        return value == null ? '' : value.toString();
+      }
+      const date = parseProgressTimestamp((row.values || [])[timestampIndex]);
+      if (col.kind === 'stage-date') return date ? formatProgressDate(date) : '';
+      return date ? Math.max(0, todayNumber - localCalendarDayNumber(date)).toString() : '';
+    }));
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const rgb = hexToRgb(color) || [219,234,254];
+  doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+  doc.rect(0, 0, pageW, 42, 'F');
+  const inkRgb = hexToRgb(ink) || [30,41,59];
+  doc.setTextColor(inkRgb[0], inkRgb[1], inkRgb[2]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text((isHistory ? 'LAST 10 DAYS PROGRESS HISTORY' : stage.label) + ' — BANSI FAB', 20, 20);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Generated: ' + new Date().toLocaleString(), 20, 34);
+  doc.text('Total Rows: ' + rows.length, pageW - 20, 34, { align:'right' });
+  const fontSize = headers.length > 16 ? 5.5 : headers.length > 10 ? 6.5 : 8;
+  doc.autoTable({
+    head:[headers], body, startY:50, theme:'grid',
+    styles:{ fontSize, cellPadding:2, overflow:'linebreak', textColor:[15,23,42],
+      lineColor:[100,116,139], lineWidth:.35, valign:'middle' },
+    headStyles:{ fillColor:rgb, textColor:hexToRgb(ink) || [30,58,138],
+      fontSize, fontStyle:'bold', halign:'center', valign:'middle', cellPadding:3 },
+    didParseCell:function(data) {
+      if (!isHistory || data.section !== 'body') return;
+      const event = rows[data.row.index]._progressEvent;
+      const colorStage = data.column.index === 5 ? event.previousStage :
+        (data.column.index === 6 ? event.newStage :
+          (data.column.index === 7 ? event.latestStage : null));
+      if (colorStage) {
+        const badgeColor = hexToRgb(colorStage.color);
+        if (badgeColor) data.cell.styles.fillColor = badgeColor;
+        const badgeInk = hexToRgb(colorStage.ink);
+        if (badgeInk) data.cell.styles.textColor = badgeInk;
+      }
+    },
+    margin:{ left:12, right:12, top:48, bottom:22 },
+    didDrawPage:function() {
+      const page = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.text('Page ' + page, pageW - 20, pageH - 8, { align:'right' });
+      doc.text('Order Book Viewer', 12, pageH - 8);
+    }
+  });
+  const slug = isHistory ? 'progress_history' : stage.value.replace(/-/g,'_');
+  doc.save(slug + '_' + new Date().toISOString().slice(0,10) + '.pdf');
+}
+
 function downloadPDF(tab) {
+  if (tab === 'nochallan' &&
+      document.getElementById('reportType').value !== 'no-challan') {
+    downloadProgressPDF(document.getElementById('reportType').value);
+    return;
+  }
   if (!state.data.headers.length) { alert('No data'); return; }
   const rows = getFiltered(tab);
   if (!rows.length) { alert('No rows to export'); return; }
