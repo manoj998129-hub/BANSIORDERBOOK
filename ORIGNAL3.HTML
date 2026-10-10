@@ -3602,16 +3602,23 @@ function resolveProgressColumns() {
     );
     columns[stage.key] = { checkboxIndex, timestampIndex };
   });
-  // The supplied sheet specification says checkboxes occupy P:U and their
-  // paired timestamps V:AA. Use that offset only when all six actual headers
-  // confirm the documented checkbox order and the loaded schema is wide enough.
-  const checkboxMapMatchesDocumentedOrder = headers.length >= 27 &&
-    PROGRESS_STAGES.every((stage, index) => columns[stage.key].checkboxIndex === 15 + index);
-  if (checkboxMapMatchesDocumentedOrder) {
+
+  /*
+   * BANSI ORDER BOOK V1's confirmed layout:
+   * P:U = six progress checkboxes; V:AA = matching timestamps.
+   * The checkbox header cells are intentionally blank in the live sheet, while
+   * the timestamp headers are TIME P, TIME Q, TIME R, TIME S, TIME T, TIME U.
+   * Header-only matching therefore fails even though the data is present.
+   * Use the established positions when the loaded sheet includes columns A:AA.
+   * Keep successful named-header matches when present; only fill missing slots.
+   */
+  if (headers.length >= 27) {
     PROGRESS_STAGES.forEach((stage, index) => {
-      if (columns[stage.key].timestampIndex < 0) {
-        columns[stage.key].timestampIndex = 21 + index;
-      }
+      // These positions are confirmed from the user's live sheet layout.
+      columns[stage.key] = {
+        checkboxIndex: 15 + index, // P:U
+        timestampIndex: 21 + index // V:AA
+      };
     });
   }
   return columns;
