@@ -1884,7 +1884,7 @@ function clearOfflineCache() {
 /* ========= CHALLAN PRINT INFORMATION SETTINGS ========= */
 function getPrintSettingHeaders() {
   const live = Array.isArray(state.data.headers) ? state.data.headers : [];
-  const clean = live.map(h => (h == null ? '' : h.toString().trim())).filter(Boolean);
+  const clean = live.slice(0, 15).map(h => (h == null ? '' : h.toString().trim())).filter(Boolean);
   if (clean.length) return clean;
 
   /* Fallback only until Sheet data is loaded. These match the current Order Book headings. */
@@ -2026,7 +2026,14 @@ document.addEventListener('click', function(e) {
 /* ========= CHALLAN GENERATE ========= */
 function getSelectedChallanNumbers() {
   const input = document.getElementById('f-challan');
-  return input ? parseMulti(input.value) : [];
+  const values = input ? parseMulti(input.value) : [];
+  const seen = new Set();
+  return values.filter(ch => {
+    const key = norm(ch);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function generateChallan() {
@@ -4059,7 +4066,7 @@ function getStageReportColumns(stage, columns) {
   const result = [];
   let insertedDate = false;
   state.data.headers.forEach((header, index) => {
-    if (hidden.has(index)) return;
+    if (index >= 15 || hidden.has(index)) return;
     if (index === genericDateIndex) {
       result.push({ kind:'stage-date', title:stage.dateHeading });
       result.push({ kind:'days', title:'DAYS' });
@@ -4200,13 +4207,15 @@ function renderTab(tab) {
 
   // Order No is the only permanent freeze. Any other frozen columns live only
   // in memory and disappear when the app is closed/reloaded.
+  const visibleHeaders = state.data.headers.slice(0, 15);
+
   if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set();
   state.frozenColumns[tab].add(orderIdx);
   const frozenSet = state.frozenColumns[tab];
 
   let html = '<table><thead><tr>';
 
-  state.data.headers.forEach((h, i) => {
+  visibleHeaders.forEach((h, i) => {
     const isFrozen = frozenSet.has(i);
     const cls = i === orderIdx ? 'sticky-order' : '';
     html += '<th' + (isFrozen ? ' data-sticky-col="' + i + '"' : '') +
@@ -4222,7 +4231,7 @@ function renderTab(tab) {
 
     html += '<tr>';
 
-    state.data.headers.forEach((_, i) => {
+    visibleHeaders.forEach((_, i) => {
 
       const val = r.values[i] != null ? r.values[i] : '';
 
@@ -4581,7 +4590,8 @@ function downloadPDF(tab) {
   const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
   const challanFilter = document.getElementById(challanInputId) ? parseMulti(document.getElementById(challanInputId).value) : [];
   const orderPdfIdx = state.cols.order;
-  const body = rows.map(r => r.values.map((v, i) => {
+  const visibleHeaders = state.data.headers.slice(0, 15);
+  const body = rows.map(r => r.values.slice(0, visibleHeaders.length).map((v, i) => {
     if (i === orderPdfIdx && challanFilter.length) {
       const main = r._mainOrder || '';
       const sub = r._subOrder || '';
@@ -4590,7 +4600,7 @@ function downloadPDF(tab) {
     }
     return v == null ? '' : v.toString();
   }));
-  const colCount = state.data.headers.length;
+  const colCount = visibleHeaders.length;
   let fontSize = 8;
   if (colCount > 8)  fontSize = 7;
   if (colCount > 12) fontSize = 6;
@@ -4600,7 +4610,7 @@ function downloadPDF(tab) {
   const printableW = pageW - marginL - marginR;
 
   doc.autoTable({
-    head: [state.data.headers],
+    head: [visibleHeaders],
     body: body,
     startY: 50,
     theme: 'grid',
@@ -4629,7 +4639,7 @@ function downloadPDF(tab) {
     },
     columnStyles: (function() {
       const weights = [];
-      state.data.headers.forEach((h, i) => {
+      visibleHeaders.forEach((h, i) => {
         let maxLen = (h || '').toString().length;
         body.slice(0, 300).forEach(row => {
           const l = (row[i] || '').toString().length;
