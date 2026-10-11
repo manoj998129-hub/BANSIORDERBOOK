@@ -125,6 +125,16 @@
     color: #334155;
     margin-left: auto;
   }
+  .report-columns-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .report-columns-toggle input { width: 13px; height: 13px; margin: 0; }
   .compact-refresh { padding: 5px 9px; font-size: 10px; }
 
   .table-wrap {
@@ -1277,7 +1287,7 @@
         <option value="progress-history">◷ LAST 10 DAYS PROGRESS HISTORY</option>
       </select>
     </div>
-    <div class="filters">
+  <div class="filters">
       <div class="ac-wrap"><input id="f2-party" oninput="renderAll()" onchange="renderAll()"    placeholder="👥 Party Name"    data-col="party"></div>
       <div class="ac-wrap"><input id="f2-order" oninput="renderAll()" onchange="renderAll()"    placeholder="📄 Order No (comma for multi)"  data-col="order"></div>
       <div class="ac-wrap"><input id="f2-challan" oninput="renderAll()" onchange="renderAll()"  placeholder="🧾 Challan No (comma for multi)" data-col="challan"></div>
@@ -1289,6 +1299,7 @@
       <button class="btn gray" onclick="clearFilters('nochallan')">CLEAR</button>
       <button class="btn blue" onclick="downloadPDF('nochallan')">PDF</button>
       <button class="btn green compact-refresh" onclick="fetchData(true)">↻ REFRESH</button>
+      <label class="report-columns-toggle"><input id="report-view-all-columns" type="checkbox" onchange="renderTab('nochallan')"> VIEW ALL COLUMNS</label>
       <span class="status" id="status-nochallan">No data loaded</span>
     </div>
   </div>
@@ -4093,6 +4104,22 @@ function progressSourceCell(row, index, extraClass = '') {
     (style ? ' style="' + escapeAttr(style) + '"' : '') + '>' + content + '</td>';
 }
 
+function isOptionalReportColumn(header) {
+  const key = normalizeProgressHeader(header);
+  return key === 'party' || key === 'partyname' || key === 'detail' || key === 'details' ||
+    (key.includes('supplier') && /mater|metri|meteri/.test(key));
+}
+
+function isReportAllColumnsVisible() {
+  const checkbox = document.getElementById('report-view-all-columns');
+  return !!(checkbox && checkbox.checked);
+}
+
+function getOptionalReportSourceColumns() {
+  return state.data.headers.map((header, index) => ({ header, index }))
+    .filter(column => isOptionalReportColumn(column.header));
+}
+
 function getStageReportColumns(stage, columns) {
   const hidden = new Set();
   PROGRESS_STAGES.forEach(item => {
@@ -4105,7 +4132,8 @@ function getStageReportColumns(stage, columns) {
   const result = [];
   let insertedDate = false;
   state.data.headers.forEach((header, index) => {
-    if (index >= 15 || hidden.has(index)) return;
+    if (index >= 15 || hidden.has(index) ||
+        (!isReportAllColumnsVisible() && isOptionalReportColumn(header))) return;
     if (index === genericDateIndex) {
       result.push({ kind:'stage-date', title:stage.dateHeading });
       result.push({ kind:'days', title:'DAYS' });
@@ -4178,12 +4206,26 @@ function renderProgressReport(reportType) {
       { title:'CURRENT / LATEST RECORDED STAGE', render:item =>
         '<td>' + progressStageBadge(item._progressEvent.latestStage) + '</td>' }
     ];
+    const showAllColumns = isReportAllColumnsVisible();
+    const visibleHistoryColumns = historyColumns.filter(col =>
+      showAllColumns || col.sourceIndex < 0 ||
+      !isOptionalReportColumn(state.data.headers[col.sourceIndex])
+    );
+    if (showAllColumns) {
+      const includedSourceIndexes = new Set(visibleHistoryColumns
+        .filter(col => col.sourceIndex >= 0).map(col => col.sourceIndex));
+      getOptionalReportSourceColumns().forEach(col => {
+        if (!includedSourceIndexes.has(col.index)) {
+          visibleHistoryColumns.push({ title:col.header || '', sourceIndex:col.index });
+        }
+      });
+    }
     html += '<table class="progress-report-table"><thead><tr>' +
-      historyColumns.map(col => '<th>' + escapeHtml(col.title) + '</th>').join('') +
+      visibleHistoryColumns.map(col => '<th>' + escapeHtml(col.title) + '</th>').join('') +
       '</tr></thead><tbody>';
     rows.forEach(item => {
       html += '<tr>';
-      historyColumns.forEach(col => {
+      visibleHistoryColumns.forEach(col => {
         if (col.render) html += col.render(item);
         else if (col.sourceIndex >= 0) html += progressSourceCell(item, col.sourceIndex);
         else html += '<td></td>';
@@ -4246,7 +4288,9 @@ function renderTab(tab) {
 
   // Order No is the only permanent freeze. Any other frozen columns live only
   // in memory and disappear when the app is closed/reloaded.
-  const visibleHeaders = state.data.headers.slice(0, 15);
+  const visibleColumns = state.data.headers.slice(0, 15).map((header, index) => ({ header, index }))
+    .filter(column => tab !== 'nochallan' || isReportAllColumnsVisible() ||
+      !isOptionalReportColumn(column.header));
 
   if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set();
   state.frozenColumns[tab].add(orderIdx);
@@ -4254,14 +4298,14 @@ function renderTab(tab) {
 
   let html = '<table><thead><tr>';
 
-  visibleHeaders.forEach((h, i) => {
+  visibleColumns.forEach(({ header, index: i }) => {
     const isFrozen = frozenSet.has(i);
     const cls = i === orderIdx ? 'sticky-order' : '';
     html += '<th' + (isFrozen ? ' data-sticky-col="' + i + '"' : '') +
             (cls ? ' class="' + cls + '"' : '') +
             ' ondblclick="toggleColumnFreeze(\'' + tab + '\',' + i + ')"' +
             ' title="Double-tap to ' + (isFrozen ? 'unfreeze' : 'freeze') + ' this column">' +
-            escapeHtml(h || '') + '</th>';
+            escapeHtml(header || '') + '</th>';
   });
 
   html += '</tr></thead><tbody>';
@@ -4270,7 +4314,7 @@ function renderTab(tab) {
 
     html += '<tr>';
 
-    visibleHeaders.forEach((_, i) => {
+    visibleColumns.forEach(({ index: i }) => {
 
       const val = r.values[i] != null ? r.values[i] : '';
 
@@ -4515,6 +4559,10 @@ function downloadProgressPDF(reportType) {
   if (isHistory) {
     headers = ['ORDER NO','SUB ORDER / DS NO','PARTY NAME','CHALLAN NO',
       'STAGE MOVEMENT DATE / TIME','PREVIOUS STAGE','NEW STAGE','CURRENT / LATEST RECORDED STAGE'];
+    const showAllColumns = isReportAllColumnsVisible();
+    const optionalColumns = getOptionalReportSourceColumns().filter(col =>
+      col.index !== state.cols.party
+    );
     body = rows.map(item => {
       const source = getProgressSourceRow(item);
       const order = state.cols.order >= 0 ? source.values[state.cols.order] : '';
@@ -4530,9 +4578,23 @@ function downloadProgressPDF(reportType) {
         ? source.values[state.cols.challan].toString() : '';
       const event = item._progressEvent;
       const stageText = s => s ? (s.icon + ' ' + s.label) : '—';
-      return [orderValue, subDs, party, challan, formatProgressDateTime(event.date, event.hasTime),
+      const values = [orderValue, subDs, party, challan, formatProgressDateTime(event.date, event.hasTime),
         stageText(event.previousStage), stageText(event.newStage), stageText(event.latestStage)];
+      if (showAllColumns) {
+        optionalColumns.forEach(col => {
+          const value = source && source.values ? source.values[col.index] : '';
+          values.push(value == null ? '' : value.toString());
+        });
+      } else if (isOptionalReportColumn(state.data.headers[state.cols.party])) {
+        values.splice(2, 1);
+      }
+      return values;
     });
+    if (!showAllColumns && isOptionalReportColumn(state.data.headers[state.cols.party])) {
+      headers.splice(2, 1);
+    } else if (showAllColumns) {
+      optionalColumns.forEach(col => headers.push(col.header || ''));
+    }
   } else {
     const reportColumns = getStageReportColumns(stage, columns);
     headers = reportColumns.map(col => col.title.toString());
@@ -4629,8 +4691,12 @@ function downloadPDF(tab) {
   const challanInputId = tab === 'all' ? 'f-challan' : 'f2-challan';
   const challanFilter = document.getElementById(challanInputId) ? parseMulti(document.getElementById(challanInputId).value) : [];
   const orderPdfIdx = state.cols.order;
-  const visibleHeaders = state.data.headers.slice(0, 15);
-  const body = rows.map(r => r.values.slice(0, visibleHeaders.length).map((v, i) => {
+  const visibleColumns = state.data.headers.slice(0, 15).map((header, index) => ({ header, index }))
+    .filter(column => tab !== 'nochallan' || isReportAllColumnsVisible() ||
+      !isOptionalReportColumn(column.header));
+  const visibleHeaders = visibleColumns.map(column => column.header);
+  const body = rows.map(r => visibleColumns.map(({ index: i }) => {
+    const v = r.values[i];
     if (i === orderPdfIdx && challanFilter.length) {
       const main = r._mainOrder || '';
       const sub = r._subOrder || '';
@@ -4668,7 +4734,7 @@ function downloadPDF(tab) {
     didParseCell: function (data) {
       if (data.section !== 'body') return;
       const r = rows[data.row.index];
-      const i = data.column.index;
+      const i = visibleColumns[data.column.index].index;
       const bg = (r.bgs && r.bgs[i]) ? r.bgs[i] : '';
       const fg = (r.fgs && r.fgs[i]) ? r.fgs[i] : '';
       const bold = (r.bolds && r.bolds[i]) ? true : false;
