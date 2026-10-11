@@ -3678,7 +3678,7 @@ function filterOrderStatusVisibility(rows) {
     if (isMarked(row, 'dispatch')) markedMainOrders.dispatch.add(rawOrder);
     if (isMarked(row, 'cancelled')) markedMainOrders.cancelled.add(rawOrder);
   });
-  return rows.filter(row => {
+  const isVisibleByStatus = row => {
     const rawOrder = orderIndex >= 0 ? norm((row.values || [])[orderIndex]) : '';
     const mainOrder = norm(row._mainOrder || rawOrder);
     const completed = isMarked(row, 'dispatch') ||
@@ -3686,6 +3686,23 @@ function filterOrderStatusVisibility(rows) {
     const cancelled = isMarked(row, 'cancelled') ||
       (!!mainOrder && markedMainOrders.cancelled.has(mainOrder));
     return (showCompleted || !completed) && (showCancelled || !cancelled);
+  };
+  const ordersWithSuborders = new Set();
+  const ordersWithVisibleSuborders = new Set();
+  state.data.rows.forEach(row => {
+    if (!row._subOrder) return;
+    const mainOrder = norm(row._mainOrder);
+    if (!mainOrder) return;
+    ordersWithSuborders.add(mainOrder);
+    if (isVisibleByStatus(row)) ordersWithVisibleSuborders.add(mainOrder);
+  });
+  return rows.filter(row => {
+    if (!isVisibleByStatus(row)) return false;
+    const rawOrder = orderIndex >= 0 ? norm((row.values || [])[orderIndex]) : '';
+    const isMainOrder = rawOrder && !/^\d{1,2}$/.test(rawOrder);
+    if (isMainOrder && ordersWithSuborders.has(rawOrder) &&
+        !ordersWithVisibleSuborders.has(rawOrder)) return false;
+    return true;
   });
 }
 initOrderStatusVisibility();
