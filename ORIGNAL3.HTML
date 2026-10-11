@@ -55,6 +55,39 @@
     padding: 8px;
     margin-bottom: 8px;
   }
+  .all-orders-filter-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .all-orders-filter-heading .section-kicker { margin: 0; }
+  .order-status-visibility {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .order-status-visibility label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .order-status-visibility input {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    accent-color: var(--primary);
+  }
   .filters {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1244,7 +1277,14 @@
 <!-- ===== TAB 1: ALL ORDERS ===== -->
 <div class="panel active" id="panel-all">
   <div class="filters-box">
-    <div class="section-kicker">Filter orders</div>
+    <div class="all-orders-filter-heading">
+      <div class="section-kicker">Filter orders</div>
+      <div class="order-status-visibility">
+        <label><input id="show-completed-orders" type="checkbox"> COMPLETED ORDER</label>
+        <label><input id="show-cancelled-orders" type="checkbox"> CANCELLED ORDER</label>
+        <label><input id="hide-important-columns" type="checkbox"> HIDE IMP</label>
+      </div>
+    </div>
     <div class="filters">
       <div class="ac-wrap"><input id="f-party" oninput="renderAll()" onchange="renderAll()"    placeholder="👥 Party Name"    data-col="party"></div>
       <div class="ac-wrap"><input id="f-order" oninput="renderAll()" onchange="renderAll()"    placeholder="📄 Order No (comma for multi)"  data-col="order"></div>
@@ -3432,14 +3472,17 @@ function buildOrderGroups() {
 
   const groups = [];
   let lastMain = '';
+  let lastMainOrderLink = '';
 
   state.data.rows.forEach(r => {
     const v = (r.values[oi] || '').toString().trim();
+    const rowOrderLink = r.links && r.links[oi] ? r.links[oi] : '';
 
     // Empty order cell belongs to previous main order
     if (!v) {
       r._mainOrder = lastMain;
       r._subOrder = '';
+      r._orderLink = rowOrderLink || lastMainOrderLink;
       return;
     }
 
@@ -3450,10 +3493,15 @@ function buildOrderGroups() {
     if (isSub) {
       r._mainOrder = lastMain;
       r._subOrder = v;
+      if (rowOrderLink) lastMainOrderLink = rowOrderLink;
+      r._orderLink = rowOrderLink || lastMainOrderLink;
     } else {
+      const repeatsCurrentMain = norm(v) === norm(lastMain);
       lastMain = v;
+      lastMainOrderLink = rowOrderLink || (repeatsCurrentMain ? lastMainOrderLink : '');
       r._mainOrder = lastMain;
       r._subOrder = '';
+      r._orderLink = lastMainOrderLink;
 
       if (!groups.includes(v)) {
         groups.push(v);
@@ -3571,6 +3619,76 @@ wireFilterInputs();
 /* ========= FILTER ========= */
 function norm(s) { return (s == null ? '' : s.toString()).toLowerCase().trim(); }
 function parseMulti(v) { return norm(v).split(',').map(s => s.trim()).filter(s => s.length > 0); }
+
+const ORDER_VISIBILITY_STORAGE_KEYS = {
+  completed:'bansiShowCompletedOrders.v1',
+  cancelled:'bansiShowCancelledOrders.v1',
+  hideImportant:'bansiHideImportantColumns.v1'
+};
+
+function initOrderStatusVisibility() {
+  const controls = [
+    { id:'show-completed-orders', key:ORDER_VISIBILITY_STORAGE_KEYS.completed },
+    { id:'show-cancelled-orders', key:ORDER_VISIBILITY_STORAGE_KEYS.cancelled },
+    { id:'hide-important-columns', key:ORDER_VISIBILITY_STORAGE_KEYS.hideImportant }
+  ];
+  controls.forEach(control => {
+    const checkbox = document.getElementById(control.id);
+    if (!checkbox) return;
+    try { checkbox.checked = localStorage.getItem(control.key) === 'true'; } catch (e) {}
+    checkbox.addEventListener('change', () => {
+      try { localStorage.setItem(control.key, checkbox.checked ? 'true' : 'false'); } catch (e) {}
+      renderAll();
+    });
+  });
+}
+
+function filterOrderStatusVisibility(rows) {
+  const showCompleted = document.getElementById('show-completed-orders').checked;
+  const showCancelled = document.getElementById('show-cancelled-orders').checked;
+  const orderIndex = state.cols.order;
+  const progressColumns = resolveProgressColumns();
+  const maxValuesLength = state.data.rows.reduce((max, row) =>
+    Math.max(max, (row.values || []).length), 0
+  );
+  const stageIndexes = {
+    dispatch: {
+      checkbox:progressColumns.dispatch.checkboxIndex >= 0
+        ? progressColumns.dispatch.checkboxIndex : (maxValuesLength > 19 ? 19 : -1),
+      timestamp:progressColumns.dispatch.timestampIndex >= 0
+        ? progressColumns.dispatch.timestampIndex : (maxValuesLength > 25 ? 25 : -1)
+    },
+    cancelled: {
+      checkbox:progressColumns.cancelled.checkboxIndex >= 0
+        ? progressColumns.cancelled.checkboxIndex : (maxValuesLength > 20 ? 20 : -1),
+      timestamp:progressColumns.cancelled.timestampIndex >= 0
+        ? progressColumns.cancelled.timestampIndex : (maxValuesLength > 26 ? 26 : -1)
+    }
+  };
+  const isMarked = (row, stageKey) => {
+    const values = row.values || [];
+    const indexes = stageIndexes[stageKey];
+    return (indexes.checkbox >= 0 && isProgressChecked(values[indexes.checkbox])) ||
+      (indexes.timestamp >= 0 && !!parseProgressTimestamp(values[indexes.timestamp]));
+  };
+  const markedMainOrders = { dispatch:new Set(), cancelled:new Set() };
+  state.data.rows.forEach(row => {
+    const rawOrder = orderIndex >= 0 ? norm((row.values || [])[orderIndex]) : '';
+    if (!rawOrder || /^\d{1,2}$/.test(rawOrder)) return;
+    if (isMarked(row, 'dispatch')) markedMainOrders.dispatch.add(rawOrder);
+    if (isMarked(row, 'cancelled')) markedMainOrders.cancelled.add(rawOrder);
+  });
+  return rows.filter(row => {
+    const rawOrder = orderIndex >= 0 ? norm((row.values || [])[orderIndex]) : '';
+    const mainOrder = norm(row._mainOrder || rawOrder);
+    const completed = isMarked(row, 'dispatch') ||
+      (!!mainOrder && markedMainOrders.dispatch.has(mainOrder));
+    const cancelled = isMarked(row, 'cancelled') ||
+      (!!mainOrder && markedMainOrders.cancelled.has(mainOrder));
+    return (showCompleted || !completed) && (showCancelled || !cancelled);
+  });
+}
+initOrderStatusVisibility();
 
 /* ========= PROGRESS REPORTS ========= */
 const PROGRESS_STAGES = [
@@ -4055,11 +4173,12 @@ function getFiltered(tab) {
     return norm(r.values[idx]).includes(val);
   };
 
-  return rows.filter(r =>
+  const filteredRows = rows.filter(r =>
     match(r, ci.party, fSingle.party) &&
     match(r, ci.material, fSingle.material) &&
     match(r, ci.job, fSingle.job)
   );
+  return tab === 'all' ? filterOrderStatusVisibility(filteredRows) : filteredRows;
 }
 
 function clearFilters(tab) {
@@ -4084,7 +4203,9 @@ function progressSourceCell(row, index, extraClass = '') {
   const source = getProgressSourceRow(row);
   const value = source && source.values && source.values[index] != null
     ? source.values[index] : '';
-  const rawLink = source && source.links && source.links[index] ? source.links[index] : null;
+  const rawLink = source && index === state.cols.order && source._orderLink
+    ? source._orderLink
+    : (source && source.links && source.links[index] ? source.links[index] : null);
   const link = isLinkColumn(index) && rawLink ? rawLink : null;
   const background = source && source.bgs && source.bgs[index] ? source.bgs[index] : '';
   const foreground = source && source.fgs && source.fgs[index] ? source.fgs[index] : '';
@@ -4108,6 +4229,11 @@ function isOptionalReportColumn(header) {
   const key = normalizeProgressHeader(header);
   return key === 'party' || key === 'partyname' || key === 'detail' || key === 'details' ||
     (key.includes('supplier') && /mater|metri|meteri/.test(key));
+}
+
+function isImportantColumnHidden(header) {
+  const key = normalizeProgressHeader(header);
+  return key === 'party' || key === 'partyname' || key === 'detail' || key === 'details';
 }
 
 function isReportAllColumnsVisible() {
@@ -4289,8 +4415,13 @@ function renderTab(tab) {
   // Order No is the only permanent freeze. Any other frozen columns live only
   // in memory and disappear when the app is closed/reloaded.
   const visibleColumns = state.data.headers.slice(0, 15).map((header, index) => ({ header, index }))
-    .filter(column => tab !== 'nochallan' || isReportAllColumnsVisible() ||
-      !isOptionalReportColumn(column.header));
+    .filter(column => {
+      if (tab === 'nochallan') {
+        return isReportAllColumnsVisible() || !isOptionalReportColumn(column.header);
+      }
+      const hideImportant = document.getElementById('hide-important-columns').checked;
+      return !hideImportant || !isImportantColumnHidden(column.header);
+    });
 
   if (!state.frozenColumns[tab]) state.frozenColumns[tab] = new Set();
   state.frozenColumns[tab].add(orderIdx);
@@ -4328,8 +4459,9 @@ function renderTab(tab) {
       const cls = classNames.length ? ' class="' + classNames.join(' ') + '"' : '';
       const stickyAttr = isFrozen ? ' data-sticky-col="' + i + '"' : '';
 
-      const rawLink =
-        r.links && r.links[i] ? r.links[i] : null;
+      const rawLink = i === orderIdx && r._orderLink
+        ? r._orderLink
+        : (r.links && r.links[i] ? r.links[i] : null);
 
       const link =
         (isLinkColumn(i) && rawLink) ? rawLink : null;
@@ -4692,8 +4824,13 @@ function downloadPDF(tab) {
   const challanFilter = document.getElementById(challanInputId) ? parseMulti(document.getElementById(challanInputId).value) : [];
   const orderPdfIdx = state.cols.order;
   const visibleColumns = state.data.headers.slice(0, 15).map((header, index) => ({ header, index }))
-    .filter(column => tab !== 'nochallan' || isReportAllColumnsVisible() ||
-      !isOptionalReportColumn(column.header));
+    .filter(column => {
+      if (tab === 'nochallan') {
+        return isReportAllColumnsVisible() || !isOptionalReportColumn(column.header);
+      }
+      const hideImportant = document.getElementById('hide-important-columns').checked;
+      return !hideImportant || !isImportantColumnHidden(column.header);
+    });
   const visibleHeaders = visibleColumns.map(column => column.header);
   const body = rows.map(r => visibleColumns.map(({ index: i }) => {
     const v = r.values[i];
