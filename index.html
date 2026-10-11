@@ -22,7 +22,7 @@
     font-size: 11px;
     font-weight: 700;
   }
-  #offline-banner.show { display: block; }
+  #offline-banner.show { display: none; }
 
   #tabs {
     display: flex;
@@ -3245,22 +3245,16 @@ async function syncIncremental() {
     const url = getDataUrl();
     if (!url) return;
 
-    // If there is no compatible cache/version, the first sync is a safe FULL fetch.
-    const cached = localStorage.getItem('offlineData');
-    let cacheObj = null;
-    try { cacheObj = cached ? JSON.parse(cached) : null; } catch (e) {}
-    const hasCompatibleCache = cacheObj && cacheObj.formatVersion === 2 &&
-      Array.isArray(cacheObj.headers) && Array.isArray(cacheObj.rows) &&
-      (cacheObj.rows.length === 0 || cacheObj.rows.every(r => Number(r && r.sheetRow) > 1)) &&
-      (cacheObj.rows.length === 0 || cacheObj.rows.every(r =>
-        r && Array.isArray(r.values) && Array.isArray(r.bgs) &&
-        Array.isArray(r.fgs) && Array.isArray(r.bolds) && Array.isArray(r.links)
-      )) && !!cacheObj.version;
+    // The in-memory data was loaded through the versioned cache path already.
+    // Avoid parsing the entire offline cache again on every 30-second sync.
+    const hasCompatibleCache = !state.cacheNeedsFull &&
+      Array.isArray(state.data.headers) && state.data.headers.length > 0 &&
+      Array.isArray(state.data.rows) && !!state.syncVersion;
 
     let requestUrl;
     if (hasCompatibleCache) {
       requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') +
-        'mode=delta&since=' + encodeURIComponent(cacheObj.version);
+        'mode=delta&since=' + encodeURIComponent(state.syncVersion);
     } else {
       requestUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'mode=full';
     }
@@ -3270,7 +3264,21 @@ async function syncIncremental() {
     if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) throw new Error('Not JSON');
     const json = JSON.parse(text);
 
-    if (json.syncMode === 'delta' && hasCompatibleCache) {
+    const isCompatibleDelta = json.syncMode === 'delta' && hasCompatibleCache;
+    const changedRows = json.changedRows || [];
+    const deletedRows = json.deletedRows || [];
+    const hasChanges = changedRows.length > 0 || deletedRows.length > 0 || !!json.headersChanged;
+
+    // Do not rebuild the cache, autocomplete lists, or tables when Sheets is unchanged.
+    if (isCompatibleDelta && !hasChanges) {
+      state.syncVersion = json.version || state.syncVersion;
+      const when = new Date().toLocaleString();
+      setStatus('all', '✓ Up to date — ' + when);
+      setStatus('nochallan', '✓ Up to date — ' + when);
+      return;
+    }
+
+    if (isCompatibleDelta) {
       applyDeltaPayload(json);
     } else {
       applyFullPayload(json);
@@ -3285,7 +3293,7 @@ async function syncIncremental() {
 
     const when = new Date().toLocaleString();
     const changed = json.syncMode === 'delta'
-      ? ((json.changedRows || []).length + (json.deletedRows || []).length)
+      ? (changedRows.length + deletedRows.length)
       : state.data.rows.length;
     const msg = json.syncMode === 'delta'
       ? (changed ? '✓ Synced ' + changed + ' changed row(s) — ' + when : '✓ Up to date — ' + when)
@@ -3313,7 +3321,12 @@ async function syncIncremental() {
 async function fetchData(forceFull = false) {
   // Refresh buttons use a direct full fetch. Normal/background calls use delta.
   if (!forceFull) return syncIncremental();
-  if (syncInProgress) return;
+  if (syncInProgress) {
+    const message = 'Sync already in progress. Please wait for it to finish, then refresh again.';
+    setStatus('all', message);
+    setStatus('nochallan', message);
+    return;
+  }
 
   const url = getDataUrl();
   if (!url) { renderAll(); return; }
@@ -3907,7 +3920,11 @@ function getFiltered(tab) {
     if (ci.challan < 0) return [];
     // This report is for pending sub-orders only; main order header rows are
     // not challan-pending entries on their own.
-    rows = rows.filter(r => r._subOrder && norm(r.values[ci.challan]) === '');
+    const cancelledColumn = resolveProgressColumns().cancelled.checkboxIndex;
+    rows = rows.filter(r => r._subOrder &&
+      norm(r.values[ci.challan]) === '' &&
+      !(cancelledColumn >= 0 && isProgressChecked((r.values || [])[cancelledColumn]))
+    );
   }
 
   /* ===== ORDER FILTER ===== */
