@@ -3920,11 +3920,33 @@ function getFiltered(tab) {
     if (ci.challan < 0) return [];
     // This report is for pending sub-orders only; main order header rows are
     // not challan-pending entries on their own.
-    const cancelledColumn = resolveProgressColumns().cancelled.checkboxIndex;
-    rows = rows.filter(r => r._subOrder &&
-      norm(r.values[ci.challan]) === '' &&
-      !(cancelledColumn >= 0 && isProgressChecked((r.values || [])[cancelledColumn]))
+    const cancelledProgress = resolveProgressColumns().cancelled;
+    const hasProgressValues = index => state.data.rows.some(row =>
+      (row.values || []).length > index
     );
+    const cancelledCheckboxIndex = cancelledProgress.checkboxIndex >= 0
+      ? cancelledProgress.checkboxIndex
+      : (hasProgressValues(20) ? 20 : -1); // U
+    const cancelledTimestampIndex = cancelledProgress.timestampIndex >= 0
+      ? cancelledProgress.timestampIndex
+      : (hasProgressValues(26) ? 26 : -1); // AA
+    const isCancelled = row => {
+      const values = row.values || [];
+      const cancelledByCheckbox = cancelledCheckboxIndex >= 0 &&
+        isProgressChecked(values[cancelledCheckboxIndex]);
+      const cancelledByDate = cancelledTimestampIndex >= 0 &&
+        !!parseProgressTimestamp(values[cancelledTimestampIndex]);
+      return cancelledByCheckbox || cancelledByDate;
+    };
+    const cancelledMainOrders = new Set(rows
+      .filter(r => !r._subOrder && isCancelled(r))
+      .map(r => norm(r._mainOrder || (ci.order >= 0 ? r.values[ci.order] : '')))
+      .filter(Boolean));
+    rows = rows.filter(r => {
+      if (!r._subOrder || norm(r.values[ci.challan]) !== '') return false;
+      const mainOrder = norm(r._mainOrder || (ci.order >= 0 ? r.values[ci.order] : ''));
+      return !isCancelled(r) && !cancelledMainOrders.has(mainOrder);
+    });
   }
 
   /* ===== ORDER FILTER ===== */
