@@ -2342,6 +2342,7 @@ async function createPartyWiseCollages(items) {
 
   const out = [];
   for (const group of groups) {
+    if (group.items.length <= 1) continue;
     try {
       const images = [];
       for (const item of group.items) {
