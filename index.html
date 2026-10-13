@@ -237,6 +237,25 @@
     max-width: 78px;
     white-space: nowrap;
   }
+  /* Slightly widen only the Date column so dates stay on one line. */
+  #wrap-all th.date-column, #wrap-all td.date-column,
+  #wrap-nochallan th.date-column, #wrap-nochallan td.date-column {
+    width: 82px;
+    min-width: 82px;
+    max-width: 82px;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  #wrap-nochallan .progress-report-table th.progress-date-column,
+  #wrap-nochallan .progress-report-table td.progress-date-column {
+    width: 88px;
+    min-width: 88px;
+    max-width: 88px;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
   #wrap-all th.sticky-party, #wrap-all td.sticky-party,
   #wrap-nochallan th.sticky-party, #wrap-nochallan td.sticky-party {
     /* kept as a class for compatibility; no longer permanently frozen */
@@ -278,35 +297,82 @@
     overflow:hidden; background:var(--surface); box-shadow:0 1px 2px rgba(15,23,42,.04);
   }
   .jobwork-party-heading {
-    position:relative; display:flex; align-items:center; justify-content:center; min-width:0; padding:8px 9px;
+    display:flex; align-items:center; justify-content:center; position:relative; gap:8px; min-width:0; padding:8px 42px;
     background:#fff0d5; color:#713f12; border-bottom:1px solid #f0d8ac;
-    font-size:12px; font-weight:800;
+    font-size:12px; font-weight:800; text-align:center !important;
   }
-  .jobwork-party-name { min-width:0; max-width:calc(100% - 76px); overflow-wrap:anywhere; text-align:center; }
+  .jobwork-party-name { display:block; width:100%; min-width:0; overflow-wrap:anywhere; text-align:center !important; }
   .jobwork-whatsapp-btn {
-    position:absolute; right:9px; top:50%; transform:translateY(-50%);
-    display:inline-grid; place-items:center; flex:0 0 30px; width:30px; height:30px;
+    display:inline-grid; place-items:center; position:absolute; right:8px; flex:0 0 30px; width:30px; height:30px;
     margin-left:0; border:0; border-radius:50%; background:#25D366; color:#fff;
     font-size:18px; line-height:1; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.16);
   }
-  .jobwork-compact-table { width:100%; min-width:0 !important; margin-left:auto; margin-right:auto; table-layout:fixed; border-collapse:collapse; text-align:center; }
+  .jobwork-compact-table {
+    display:table; width:min(100%, 520px); min-width:0 !important; margin:0 auto !important;
+    table-layout:fixed; border-collapse:collapse;
+  }
   .jobwork-compact-table th, .jobwork-compact-table td {
-    padding:6px 7px; font-size:11px; line-height:1.25; overflow-wrap:anywhere; text-align:center;
+    padding:6px 7px; font-size:11px; line-height:1.25; overflow-wrap:anywhere; text-align:center !important;
   }
   .jobwork-compact-table th:nth-child(1), .jobwork-compact-table td:nth-child(1) { width:38%; }
   .jobwork-compact-table th:nth-child(2), .jobwork-compact-table td:nth-child(2) { width:42%; }
   .jobwork-compact-table th:nth-child(3), .jobwork-compact-table td:nth-child(3) { width:20%; text-align:center; }
   .jobwork-compact-table td:last-child { font-weight:800; }
   .jobwork-party-total {
-    padding:7px 9px; text-align:center; background:#f8fafc; color:#334155;
+    display:block; width:100%; box-sizing:border-box; margin:0 auto; padding:7px 9px;
+    text-align:center !important; background:#f8fafc; color:#334155;
     border-top:1px solid #e2e8f0; font-size:11px; font-weight:800;
   }
   @media (max-width:480px) {
     .jobwork-party-heading { padding:7px; font-size:11px; }
     .jobwork-compact-table th, .jobwork-compact-table td { padding:6px 5px; font-size:10px; }
-    .jobwork-whatsapp-btn { right:7px; width:28px; height:28px; flex-basis:28px; }
+    .jobwork-whatsapp-btn { width:28px; height:28px; flex-basis:28px; }
   }
 
+  /* Compact layout only for the two requested job-work stage reports. */
+  #wrap-nochallan .jobwork-stage-compact th,
+  #wrap-nochallan .jobwork-stage-compact td {
+    padding: 3px 4px;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+  #wrap-nochallan .jobwork-stage-compact th.jobwork-date-heading,
+  #wrap-nochallan .jobwork-stage-compact td.jobwork-date-cell {
+    width: 68px;
+    min-width: 68px;
+    max-width: 68px;
+    white-space: nowrap !important;
+  }
+  #wrap-nochallan .jobwork-stage-compact th.jobwork-days-heading,
+  #wrap-nochallan .jobwork-stage-compact td.jobwork-days-cell {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    text-align: center;
+  }
+  #wrap-nochallan .jobwork-stage-compact th.jobwork-order-heading,
+  #wrap-nochallan .jobwork-stage-compact td.jobwork-order-cell {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  #wrap-nochallan .progress-history-compact {
+    width: 100%;
+    min-width: 0 !important;
+    table-layout: fixed;
+  }
+  #wrap-nochallan .progress-history-compact th,
+  #wrap-nochallan .progress-history-compact td {
+    padding: 3px 4px;
+    font-size: 9px;
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  #wrap-nochallan .progress-history-compact th {
+    padding: 4px 3px;
+  }
   #preview {
     position: fixed; inset: 0;
     background: rgba(15,23,42,0.85);
@@ -3922,16 +3988,14 @@ function localCalendarDayNumber(date) {
 }
 
 function formatProgressDate(date) {
-  return date.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+  return [String(date.getDate()).padStart(2, '0'), String(date.getMonth() + 1).padStart(2, '0'), String(date.getFullYear()).slice(-2)].join('/');
 }
 
 function formatProgressDateTime(date, includeTime = true) {
-  const options = { day:'numeric', month:'short', year:'numeric' };
-  if (includeTime) {
-    options.hour = 'numeric';
-    options.minute = '2-digit';
-  }
-  return date.toLocaleString(undefined, options);
+  const dateText = formatProgressDate(date);
+  if (!dateText || !includeTime) return dateText;
+  return dateText + ' ' + date.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
 }
 
 function getProgressSourceRow(row) {
@@ -4356,7 +4420,6 @@ function getJobWorkReportGroups() {
   const stage = PROGRESS_STAGES.find(item => item.value === 'fabric-jobwork');
   const rows = stage ? getProgressStageRows(stage, columns) : [];
   const jobIndex = state.cols.job;
-  const dateIndex = getJobWorkChallanDateIndex();
   const todayNumber = localCalendarDayNumber(new Date());
   const groups = new Map();
   rows.forEach(item => {
@@ -4365,8 +4428,8 @@ function getJobWorkReportGroups() {
     const rawParty = jobIndex >= 0 && values[jobIndex] != null ? values[jobIndex].toString().trim() : '';
     const party = rawParty || 'Unassigned Job Work Party';
     const key = norm(party) || '__unassigned__';
-    let date = dateIndex >= 0 ? parseProgressTimestamp(values[dateIndex]) : null;
-    if (!date) date = item._progressTimestamp || null;
+    // Job Work Report date and Days must both use the Fabric Given and Program Given to Jobwork stage timestamp.
+    const date = item._progressTimestamp || null;
     const age = date ? Math.max(0, todayNumber - localCalendarDayNumber(date)) : null;
     const challan = state.cols.challan >= 0 && values[state.cols.challan] != null
       ? values[state.cols.challan].toString().trim() : '';
@@ -4384,14 +4447,14 @@ function shareJobWorkParty(button) {
     alert('No pending jobwork challans found for this party.');
     return;
   }
-  const lines = group.records.map((record, index) => {
-    const dateText = record.date ? formatProgressDate(record.date) : 'Date not available';
-    const challanText = record.challan || 'Challan number not available';
-    const daysText = record.age == null ? 'Days: —' : 'Days: ' + record.age;
-    return (index + 1) + '. ' + dateText + ' | Challan No.: ' + challanText + ' | ' + daysText;
+  const lines = group.records.map(record => {
+    const dateText = record.date ? formatProgressDate(record.date) : '—';
+    const challanText = record.challan || '—';
+    const daysText = record.age == null ? '—' : String(record.age);
+    return dateText + ' | ' + challanText + ' | ' + daysText;
   });
   const message = 'BANSI FAB — PENDING JOB WORK CHALLANS\nParty: ' + group.party +
-    '\n\n' + lines.join('\n') + '\n\nTotal pending challans: ' + group.records.length;
+    '\n\nDATE | CHALLAN | DAYS\n' + lines.join('\n') + '\n\nTotal pending challans: ' + group.records.length;
   window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener');
 }
 
@@ -4511,7 +4574,7 @@ function renderProgressReport(reportType) {
         }
       });
     }
-    html += '<table class="progress-report-table"><thead><tr>' +
+    html += '<table class="progress-report-table progress-history-compact"><thead><tr>' +
       visibleHistoryColumns.map(col => '<th>' + escapeHtml(col.title) + '</th>').join('') +
       '</tr></thead><tbody>';
     rows.forEach(item => {
@@ -4526,11 +4589,20 @@ function renderProgressReport(reportType) {
     html += '</tbody></table>';
   } else {
     const reportColumns = getStageReportColumns(stage, columns);
-    html += '<table class="progress-report-table"><thead><tr>' +
+    html += '<table class="progress-report-table' + ((stage.value === 'fabric-jobwork' || stage.value === 'fabric-received') ? ' jobwork-stage-compact' : '') + '"><thead><tr>' +
       reportColumns.map(col => '<th' +
+        ((col.kind === 'stage-date' && stage.value === 'fabric-ordered')
+          ? ' class="progress-date-column"' : '') +
+        ((col.kind === 'stage-date' && (stage.value === 'fabric-jobwork' || stage.value === 'fabric-received'))
+          ? ' class="jobwork-date-heading"' : '') +
+        ((col.kind === 'days' && (stage.value === 'fabric-jobwork' || stage.value === 'fabric-received'))
+          ? ' class="jobwork-days-heading"' : '') +
+        ((col.kind === 'source' && col.index === state.cols.order && (stage.value === 'fabric-jobwork' || stage.value === 'fabric-received'))
+          ? ' class="jobwork-order-heading"' : '') +
         ((col.kind === 'stage-date' || col.kind === 'days')
           ? ' style="background:' + stage.color + ';color:' + stage.ink + ';"' : '') +
-        '>' + escapeHtml(col.title.toString()) + '</th>').join('') +
+        '>' + ((col.kind === 'stage-date' && stage.value === 'fabric-jobwork') ? 'GIVEN TO<br>JOBWORK DATE' :
+          (col.kind === 'stage-date' && stage.value === 'fabric-received') ? 'RECEIVED FROM<br>JOBWORK DATE' : escapeHtml(col.title.toString())) + '</th>').join('') +
       '</tr></thead><tbody>';
     const timestampIndex = columns[stage.key].timestampIndex;
     const todayNumber = localCalendarDayNumber(new Date());
@@ -4538,15 +4610,17 @@ function renderProgressReport(reportType) {
       html += '<tr>';
       reportColumns.forEach(col => {
         if (col.kind === 'source') {
-          html += progressSourceCell(row, col.index);
+          html += progressSourceCell(row, col.index, ((stage.value === 'fabric-jobwork' || stage.value === 'fabric-received') && col.index === state.cols.order) ? 'jobwork-order-cell' : '');
         } else if (col.kind === 'stage-date') {
           const date = parseProgressTimestamp((row.values || [])[timestampIndex]);
-          html += '<td class="progress-stage-cell">' +
+          html += '<td class="progress-stage-cell' +
+            (stage.value === 'fabric-ordered' ? ' progress-date-column' : '') +
+            ((stage.value === 'fabric-jobwork' || stage.value === 'fabric-received') ? ' jobwork-date-cell' : '') + '">' +
             (date ? escapeHtml(formatProgressDate(date)) : '') + '</td>';
         } else {
           const date = parseProgressTimestamp((row.values || [])[timestampIndex]);
           const age = date ? Math.max(0, todayNumber - localCalendarDayNumber(date)) : '';
-          html += '<td class="progress-days-cell">' + (age === '' ? '' : age) + '</td>';
+          html += '<td class="progress-days-cell' + ((stage.value === 'fabric-jobwork' || stage.value === 'fabric-received') ? ' jobwork-days-cell' : '') + '">' + (age === '' ? '' : age) + '</td>';
         }
       });
       html += '</tr>';
@@ -4597,8 +4671,10 @@ function renderTab(tab) {
   visibleColumns.forEach(({ header, index: i }) => {
     const isFrozen = frozenSet.has(i);
     const cls = i === orderIdx ? 'sticky-order' : '';
+    const isDateColumn = normalizeProgressHeader(header) === 'date';
+    const headerClasses = [cls, isDateColumn ? 'date-column' : ''].filter(Boolean).join(' ');
     html += '<th' + (isFrozen ? ' data-sticky-col="' + i + '"' : '') +
-            (cls ? ' class="' + cls + '"' : '') +
+            (headerClasses ? ' class="' + headerClasses + '"' : '') +
             ' ondblclick="toggleColumnFreeze(\'' + tab + '\',' + i + ')"' +
             ' title="Double-tap to ' + (isFrozen ? 'unfreeze' : 'freeze') + ' this column">' +
             escapeHtml(header || '') + '</th>';
@@ -4620,7 +4696,8 @@ function renderTab(tab) {
 
       const isFrozen = frozenSet.has(i);
       const stickyClass = i === orderIdx ? 'sticky-order' : '';
-      const classNames = [stickyClass, isBlankChallan ? 'challan-col' : ''].filter(Boolean);
+      const dateClass = normalizeProgressHeader(state.data.headers[i]) === 'date' ? 'date-column' : '';
+      const classNames = [stickyClass, dateClass, isBlankChallan ? 'challan-col' : ''].filter(Boolean);
       const cls = classNames.length ? ' class="' + classNames.join(' ') + '"' : '';
       const stickyAttr = isFrozen ? ' data-sticky-col="' + i + '"' : '';
 
