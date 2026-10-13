@@ -257,10 +257,15 @@
     font-size:11px; font-weight:800; letter-spacing:.02em;
   }
   .progress-report-count { margin-left:auto; font-size:10px; font-weight:700; opacity:.8; }
-  .progress-report-table { width:100%; min-width:620px; table-layout:auto; }
-  .progress-report-table th { white-space:normal; }
+  /* Compact report tables: narrow columns, wrapped two-line headings, no forced wide date/order columns. */
+  .progress-report-table { width:100%; min-width:0; table-layout:fixed; }
+  .progress-report-table th, .progress-report-table td {
+    padding:3px 3px; font-size:9px; line-height:1.15; white-space:normal;
+    overflow-wrap:anywhere; word-break:normal; vertical-align:middle;
+  }
+  .progress-report-table th { padding:4px 3px; font-size:8.5px; line-height:1.1; text-align:center; }
   .progress-report-table td.progress-wrap-cell {
-    min-width:130px; max-width:250px; white-space:normal; overflow-wrap:anywhere;
+    min-width:0; max-width:none; white-space:normal; overflow-wrap:anywhere;
   }
   .progress-report-table td.progress-stage-cell,
   .progress-report-table td.progress-days-cell { background:var(--progress-tint,#f8fafc) !important; }
@@ -272,6 +277,38 @@
   .progress-report-message {
     padding:10px; border:1px solid #f0c36d; border-radius:6px;
     background:#fff8e6; color:#654d1b; line-height:1.45;
+  }
+  .jobwork-party-group {
+    margin:0 0 9px; border:1px solid #dbe3ec; border-radius:8px;
+    overflow:hidden; background:var(--surface); box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  .jobwork-party-heading {
+    display:flex; align-items:center; gap:8px; min-width:0; padding:8px 9px;
+    background:#fff0d5; color:#713f12; border-bottom:1px solid #f0d8ac;
+    font-size:12px; font-weight:800;
+  }
+  .jobwork-party-name { min-width:0; overflow-wrap:anywhere; }
+  .jobwork-whatsapp-btn {
+    display:inline-grid; place-items:center; flex:0 0 30px; width:30px; height:30px;
+    margin-left:auto; border:0; border-radius:50%; background:#25D366; color:#fff;
+    font-size:18px; line-height:1; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.16);
+  }
+  .jobwork-compact-table { width:100%; min-width:0 !important; table-layout:fixed; border-collapse:collapse; }
+  .jobwork-compact-table th, .jobwork-compact-table td {
+    padding:6px 7px; font-size:11px; line-height:1.25; overflow-wrap:anywhere;
+  }
+  .jobwork-compact-table th:nth-child(1), .jobwork-compact-table td:nth-child(1) { width:38%; }
+  .jobwork-compact-table th:nth-child(2), .jobwork-compact-table td:nth-child(2) { width:42%; }
+  .jobwork-compact-table th:nth-child(3), .jobwork-compact-table td:nth-child(3) { width:20%; text-align:center; }
+  .jobwork-compact-table td:last-child { font-weight:800; }
+  .jobwork-party-total {
+    padding:7px 9px; text-align:right; background:#f8fafc; color:#334155;
+    border-top:1px solid #e2e8f0; font-size:11px; font-weight:800;
+  }
+  @media (max-width:480px) {
+    .jobwork-party-heading { padding:7px; font-size:11px; }
+    .jobwork-compact-table th, .jobwork-compact-table td { padding:6px 5px; font-size:10px; }
+    .jobwork-whatsapp-btn { width:28px; height:28px; flex-basis:28px; }
   }
 
   #preview {
@@ -1236,6 +1273,52 @@
       font-size: 9px;
     }
   }
+
+  /* Global compact report layout: keep short-value columns tight in every report. */
+  #wrap-all table, #wrap-nochallan table {
+    width: max-content; min-width: 100%; max-width: none; table-layout: auto;
+  }
+  #wrap-all th, #wrap-all td, #wrap-nochallan th, #wrap-nochallan td {
+    min-width: 38px; max-width: 118px; padding: 2px 3px;
+    font-size: 9px; line-height: 1.12; white-space: normal !important;
+    overflow-wrap: anywhere; word-break: normal; vertical-align: middle;
+  }
+  #wrap-all th, #wrap-nochallan th {
+    padding: 3px 2px; font-size: 8px; line-height: 1.08;
+    text-align: center; font-weight: 700;
+  }
+  #wrap-all th.compact-col-order, #wrap-all td.compact-col-order,
+  #wrap-nochallan th.compact-col-order, #wrap-nochallan td.compact-col-order {
+    width: 1%; min-width: 36px; max-width: 64px; padding-left: 2px; padding-right: 2px;
+  }
+  #wrap-all th.compact-col-challan, #wrap-all td.compact-col-challan,
+  #wrap-nochallan th.compact-col-challan, #wrap-nochallan td.compact-col-challan {
+    width: 1%; min-width: 34px; max-width: 58px; padding-left: 2px; padding-right: 2px;
+  }
+  #wrap-all th.compact-col-date, #wrap-all td.compact-col-date,
+  #wrap-nochallan th.compact-col-date, #wrap-nochallan td.compact-col-date {
+    width: 1%; min-width: 42px; max-width: 68px; padding-left: 2px; padding-right: 2px;
+  }
+  #wrap-all th.compact-col-days, #wrap-all td.compact-col-days,
+  #wrap-nochallan th.compact-col-days, #wrap-nochallan td.compact-col-days {
+    width: 1%; min-width: 24px; max-width: 38px; text-align: center; padding-left: 1px; padding-right: 1px;
+  }
+  #wrap-all th.compact-col-material, #wrap-all td.compact-col-material,
+  #wrap-nochallan th.compact-col-material, #wrap-nochallan td.compact-col-material {
+    width: 1%; min-width: 38px; max-width: 68px; padding-left: 2px; padding-right: 2px;
+  }
+  #wrap-all th.sticky-order, #wrap-all td.sticky-order,
+  #wrap-nochallan th.sticky-order, #wrap-nochallan td.sticky-order {
+    min-width: 36px; max-width: 64px; width: 1%; white-space: normal !important;
+  }
+  .progress-report-table { width: 100%; min-width: 0 !important; table-layout: fixed; }
+  .progress-report-table th, .progress-report-table td {
+    padding: 2px 2px !important; font-size: 8px !important; line-height: 1.1;
+    white-space: normal; overflow-wrap: anywhere; word-break: normal;
+  }
+  .progress-report-table th { font-size: 7.5px !important; padding: 3px 2px !important; }
+  .progress-report-table .progress-days-cell { min-width: 22px; text-align: center; }
+
 </style>
 </head>
 <body>
@@ -1325,6 +1408,7 @@
         <option value="dispatch-done">✅ DISPATCH DONE</option>
         <option value="order-cancelled">🚫 ORDER CANCELLED</option>
         <option value="progress-history">◷ LAST 10 DAYS PROGRESS HISTORY</option>
+        <option value="jobwork-report">📲 JOB WORK REPORT</option>
       </select>
     </div>
   <div class="filters">
@@ -4033,6 +4117,11 @@ function getFiltered(tab) {
     const selectedReport = document.getElementById('reportType').value;
     if (selectedReport !== 'no-challan') {
       const columns = resolveProgressColumns();
+      if (selectedReport === 'jobwork-report') {
+        const jobworkStage = PROGRESS_STAGES.find(item => item.value === 'fabric-jobwork');
+        if (progressColumnsIssue('fabric-jobwork', columns)) return [];
+        return jobworkStage ? getProgressStageRows(jobworkStage, columns) : [];
+      }
       const issue = progressColumnsIssue(selectedReport, columns);
       if (issue) return [];
       if (selectedReport === PROGRESS_HISTORY_VALUE) {
@@ -4292,7 +4381,145 @@ function getStageReportColumns(stage, columns) {
   return result;
 }
 
+function getJobWorkChallanDateIndex() {
+  const headers = state.data.headers || [];
+  const normalized = headers.map(header => normalizeProgressHeader(header));
+  // Prefer the actual challan/date field. Progress timestamps such as TIME R
+  // are deliberately excluded; they are only a fallback if the source has no date field.
+  let index = normalized.findIndex((h, i) => {
+    const raw = (headers[i] == null ? '' : headers[i].toString()).trim().toLowerCase();
+    if (!h || h.includes('timestamp') || h.includes('datetime') || h.includes('time') || h.endsWith('at')) return false;
+    return h === 'date' || h === 'challandate' || h === 'dateofchallan' ||
+      h === 'challanissuedate' || h === 'challancreationdate';
+  });
+  if (index < 0) {
+    index = normalized.findIndex((h, i) => {
+      const raw = (headers[i] == null ? '' : headers[i].toString()).trim().toLowerCase();
+      return h.includes('challan') && h.includes('date') && !h.includes('timestamp') && !h.includes('datetime') && !h.includes('time') && !h.endsWith('at');
+    });
+  }
+  return index;
+}
+
+function getJobWorkReportGroups() {
+  const columns = resolveProgressColumns();
+  const stage = PROGRESS_STAGES.find(item => item.value === 'fabric-jobwork');
+  const rows = stage ? getProgressStageRows(stage, columns) : [];
+  const jobIndex = state.cols.job;
+  // Match the source FABRIC GIVEN AND PROGRAM GIVEN TO JOBWORK report exactly:
+  // both its displayed date and Days value come from the stage's TIME R timestamp,
+  // never from the order/challan date. The source rows are read live on every render/share.
+  const todayNumber = localCalendarDayNumber(new Date());
+  const groups = new Map();
+  rows.forEach(item => {
+    const source = getProgressSourceRow(item);
+    const values = source && source.values ? source.values : [];
+    const rawParty = jobIndex >= 0 && values[jobIndex] != null ? values[jobIndex].toString().trim() : '';
+    const party = rawParty || 'Unassigned Job Work Party';
+    const key = norm(party) || '__unassigned__';
+    const date = item._progressTimestamp || null;
+    const age = date ? Math.max(0, todayNumber - localCalendarDayNumber(date)) : null;
+    const challan = state.cols.challan >= 0 && values[state.cols.challan] != null
+      ? values[state.cols.challan].toString().trim() : '';
+    if (!groups.has(key)) groups.set(key, { key, party, records: [] });
+    groups.get(key).records.push({ source:item, date, age, challan });
+  });
+  return Array.from(groups.values()).sort((a,b) => a.party.localeCompare(b.party, undefined, {sensitivity:'base'}));
+}
+
+function shareJobWorkParty(button) {
+  const party = button && button.getAttribute('data-party') ? button.getAttribute('data-party') : '';
+  const targetKey = (button && button.getAttribute('data-party-key')) || norm(party) || '__unassigned__';
+  const group = getJobWorkReportGroups().find(item => item.key === targetKey);
+  if (!group || !group.records.length) {
+    alert('No pending jobwork challans found for this party.');
+    return;
+  }
+  const lines = group.records.map((record, index) => {
+    const dateText = record.date
+      ? [String(record.date.getDate()).padStart(2, '0'), String(record.date.getMonth() + 1).padStart(2, '0'), String(record.date.getFullYear()).slice(-2)].join('/')
+      : '—';
+    const challanText = record.challan || '—';
+    const daysText = record.age == null ? '—' : String(record.age);
+    return (index + 1) + ' | ' + dateText + ' | ' + challanText + ' | ' + daysText;
+  });
+  const message = 'WORK CHALLANS\nPARTY: ' + group.party +
+    '\n\nNO. | DATE | CHALLAN | DAYS\n' + lines.join('\n') +
+    '\n\nTOTAL PENDING: ' + group.records.length;
+  window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener');
+}
+
+function renderJobWorkReport() {
+  const wrap = document.getElementById('wrap-nochallan');
+  const columns = resolveProgressColumns();
+  const issue = progressColumnsIssue('fabric-jobwork', columns);
+  if (issue) {
+    wrap.innerHTML = '<div class="progress-report-message">' + escapeHtml(issue) + '</div>';
+    return;
+  }
+  const groups = getJobWorkReportGroups();
+  const total = groups.reduce((sum, group) => sum + group.records.length, 0);
+  let html = '<div class="progress-report-heading" style="--progress-color:#f2c779;--progress-tint:#fff0d5;color:#713f12;">' +
+    '<span aria-hidden="true">📲</span><span>JOB WORK REPORT</span>' +
+    '<span class="progress-report-count">' + total + ' pending challan' + (total === 1 ? '' : 's') + '</span></div>';
+  if (!groups.length) {
+    html += '<div class="empty">No pending jobwork challans for this report and filter combination.</div>';
+    wrap.innerHTML = html;
+    return;
+  }
+  groups.forEach(group => {
+    // Oldest challans first so long-pending work is easy to spot.
+    group.records.sort((a,b) => {
+      if (a.date && b.date) return a.date - b.date;
+      if (a.date) return -1;
+      if (b.date) return 1;
+      return (a.challan || '').localeCompare(b.challan || '', undefined, {numeric:true});
+    });
+    html += '<section class="jobwork-party-group">' +
+      '<div class="jobwork-party-heading"><span class="jobwork-party-name">' + escapeHtml(group.party) + '</span>' +
+      '<button type="button" class="jobwork-whatsapp-btn" title="Share all pending challans for ' + escapeAttr(group.party) + ' on WhatsApp" ' +
+      'aria-label="Share all pending challans for ' + escapeAttr(group.party) + ' on WhatsApp" data-party="' + escapeAttr(group.party) + '" data-party-key="' + escapeAttr(group.key) + '" onclick="shareJobWorkParty(this)">☏</button></div>' +
+      '<table class="progress-report-table jobwork-compact-table"><thead><tr><th>Date</th><th>Challan No.</th><th>Days</th></tr></thead><tbody>';
+    group.records.forEach(record => {
+      html += '<tr><td>' + (record.date ? escapeHtml(formatProgressDate(record.date)) : '—') + '</td>' +
+        '<td>' + (record.challan ? escapeHtml(record.challan) : '—') + '</td>' +
+        '<td class="progress-days-cell">' + (record.age == null ? '—' : record.age) + '</td></tr>';
+    });
+    html += '</tbody></table><div class="jobwork-party-total">Total pending challans: ' + group.records.length + '</div></section>';
+  });
+  wrap.innerHTML = html;
+}
+
+function compactProgressColumnWeight(title) {
+  const key = normalizeProgressHeader(title || '');
+  if (key === 'days' || key.includes('ageindays')) return 3;
+  if (key === 'orderno' || key.includes('ordernumber')) return 3;
+  if (key.includes('challanno') || key === 'challan') return 3;
+  if (key === 'date' || key.includes('date') || key.includes('datetime')) return 4;
+  if (key.includes('party')) return 6;
+  if (key.includes('material')) return 4;
+  if (key.includes('dsno') || key.includes('designno')) return 3;
+  if (key.includes('fabriccode') || key.includes('code')) return 7;
+  if (key.includes('totalset') || key.includes('set')) return 7;
+  if (key.includes('meterperpcs') || key.includes('mtrperpcs')) return 8;
+  if (key === 'total' || key.startsWith('total')) return 8;
+  if (key.includes('note') || key.includes('remark')) return 5;
+  if (key.includes('stage') || key.includes('movement')) return 8;
+  return 5;
+}
+
+function compactProgressColgroup(columns) {
+  const weights = columns.map(col => compactProgressColumnWeight(col.title));
+  const total = weights.reduce((sum, weight) => sum + weight, 0) || 1;
+  return '<colgroup>' + weights.map(weight => '<col style="width:' +
+    (weight / total * 100).toFixed(2) + '%">').join('') + '</colgroup>';
+}
+
 function renderProgressReport(reportType) {
+  if (reportType === 'jobwork-report') {
+    renderJobWorkReport();
+    return;
+  }
   const wrap = document.getElementById('wrap-nochallan');
   const columns = resolveProgressColumns();
   const issue = progressColumnsIssue(reportType, columns);
@@ -4363,7 +4590,7 @@ function renderProgressReport(reportType) {
         }
       });
     }
-    html += '<table class="progress-report-table"><thead><tr>' +
+    html += '<table class="progress-report-table">' + compactProgressColgroup(visibleHistoryColumns) + '<thead><tr>' +
       visibleHistoryColumns.map(col => '<th>' + escapeHtml(col.title) + '</th>').join('') +
       '</tr></thead><tbody>';
     rows.forEach(item => {
@@ -4378,7 +4605,7 @@ function renderProgressReport(reportType) {
     html += '</tbody></table>';
   } else {
     const reportColumns = getStageReportColumns(stage, columns);
-    html += '<table class="progress-report-table"><thead><tr>' +
+    html += '<table class="progress-report-table">' + compactProgressColgroup(reportColumns) + '<thead><tr>' +
       reportColumns.map(col => '<th' +
         ((col.kind === 'stage-date' || col.kind === 'days')
           ? ' style="background:' + stage.color + ';color:' + stage.ink + ';"' : '') +
@@ -4406,6 +4633,16 @@ function renderProgressReport(reportType) {
     html += '</tbody></table>';
   }
   wrap.innerHTML = html;
+}
+
+function compactReportColumnClass(header) {
+  const key = String(header || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (key.includes('challan')) return 'compact-col-challan';
+  if (key === 'days' || key.includes('ageindays') || key === 'day') return 'compact-col-days';
+  if (key.includes('date') || key.includes('datetime')) return 'compact-col-date';
+  if (key.includes('material') || key.includes('metrial')) return 'compact-col-material';
+  if (key.includes('order') && !key.includes('jobwork')) return 'compact-col-order';
+  return '';
 }
 
 function renderTab(tab) {
@@ -4448,7 +4685,7 @@ function renderTab(tab) {
 
   visibleColumns.forEach(({ header, index: i }) => {
     const isFrozen = frozenSet.has(i);
-    const cls = i === orderIdx ? 'sticky-order' : '';
+    const cls = [i === orderIdx ? 'sticky-order' : '', compactReportColumnClass(header)].filter(Boolean).join(' ');
     html += '<th' + (isFrozen ? ' data-sticky-col="' + i + '"' : '') +
             (cls ? ' class="' + cls + '"' : '') +
             ' ondblclick="toggleColumnFreeze(\'' + tab + '\',' + i + ')"' +
@@ -4472,7 +4709,7 @@ function renderTab(tab) {
 
       const isFrozen = frozenSet.has(i);
       const stickyClass = i === orderIdx ? 'sticky-order' : '';
-      const classNames = [stickyClass, isBlankChallan ? 'challan-col' : ''].filter(Boolean);
+      const classNames = [stickyClass, compactReportColumnClass(state.data.headers[i]), isBlankChallan ? 'challan-col' : ''].filter(Boolean);
       const cls = classNames.length ? ' class="' + classNames.join(' ') + '"' : '';
       const stickyAttr = isFrozen ? ' data-sticky-col="' + i + '"' : '';
 
@@ -4813,7 +5050,39 @@ function downloadProgressPDF(reportType) {
   doc.save(slug + '_' + new Date().toISOString().slice(0,10) + '.pdf');
 }
 
+function downloadJobWorkReportPDF() {
+  const groups = getJobWorkReportGroups();
+  if (!groups.length) { alert('No pending jobwork challans to export'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
+  const body = [];
+  groups.forEach(group => {
+    body.push([{ content:group.party + ' — ' + group.records.length + ' pending challans', colSpan:3, styles:{ fillColor:[255,240,213], textColor:[113,63,18], fontStyle:'bold' } }]);
+    group.records.forEach(record => body.push([
+      record.date ? formatProgressDate(record.date) : '—',
+      record.challan || '—',
+      record.age == null ? '—' : String(record.age)
+    ]));
+    body.push([{ content:'Total pending challans: ' + group.records.length, colSpan:3, styles:{ halign:'right', fontStyle:'bold', fillColor:[248,250,252] } }]);
+  });
+  doc.setFontSize(15);
+  doc.text('BANSI FAB — JOB WORK REPORT', 24, 28);
+  doc.setFontSize(8);
+  doc.text('Generated: ' + formatProgressDate(new Date()), 24, 42);
+  doc.autoTable({ startY:52, head:[['Date','Challan No.','Days']], body, theme:'grid',
+    styles:{ fontSize:8, cellPadding:4, overflow:'linebreak' },
+    headStyles:{ fillColor:[30,41,59], textColor:255 },
+    columnStyles:{ 0:{cellWidth:125}, 1:{cellWidth:245}, 2:{cellWidth:55, halign:'center'} },
+    margin:{left:24,right:24,top:52,bottom:24}
+  });
+  doc.save('job_work_report_' + new Date().toISOString().slice(0,10) + '.pdf');
+}
+
 function downloadPDF(tab) {
+  if (tab === 'nochallan' && document.getElementById('reportType').value === 'jobwork-report') {
+    downloadJobWorkReportPDF();
+    return;
+  }
   if (tab === 'nochallan' &&
       document.getElementById('reportType').value !== 'no-challan') {
     downloadProgressPDF(document.getElementById('reportType').value);
